@@ -799,7 +799,7 @@ const CreateNetworkPolicy = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] p-6 space-y-6">
+    <div className="min-h-screen p-6 space-y-6">
 
       {/* ===================== STEP HEADER WITH PROGRESS BAR ===================== */}
       <div className="w-full bg-[#020617] border border-[#2d2e30] rounded-xl p-6 text-white">

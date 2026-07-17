@@ -6,6 +6,7 @@ import {
 import { useTheme } from '../context/ThemeContext'
 // import printerApi from '../api/printerApi'
 import { alert as showAlert } from '../components/ui/AlertModal'
+import { dashboardService } from '../services/dashboardService'
 
 /* ─────────────────────────────────────────────────────────────
    DATA
@@ -25,17 +26,17 @@ const DEVICES_BY_BRANCH = {
 }
 
 const PRINTER_TYPES = [
-  { value: 'Local',   label: 'Local Printer'   },
-  { value: 'Network', label: 'Network Printer'  },
-  { value: 'Virtual', label: 'Virtual Printer'  },
+  { value: 'Local', label: 'Local Printer' },
+  { value: 'Network', label: 'Network Printer' },
+  { value: 'Virtual', label: 'Virtual Printer' },
 ]
 
 const DUMMY_POLICIES = [
-  { id: 1, branch: 'HQ – Mumbai',        device: 'DESKTOP-MUM01', printerType: 'Local',   mode: 'Prevent', addedOn: '2025-05-01' },
-  { id: 2, branch: 'Branch – Delhi',     device: 'DESKTOP-DEL01', printerType: 'Network', mode: 'Allow',   addedOn: '2025-05-03' },
-  { id: 3, branch: 'Branch – Bengaluru', device: 'LAPTOP-BLR02',  printerType: 'Local',   mode: 'Prevent', addedOn: '2025-05-07' },
-  { id: 4, branch: 'HQ – Mumbai',        device: 'LAPTOP-MUM04',  printerType: 'Virtual', mode: 'Allow',   addedOn: '2025-05-10' },
-  { id: 5, branch: 'Branch – Chennai',   device: 'DESKTOP-CHN01', printerType: 'Network', mode: 'Prevent', addedOn: '2025-05-12' },
+  { id: 1, branch: 'HQ – Mumbai', device: 'DESKTOP-MUM01', printerType: 'Local', mode: 'Prevent', addedOn: '2025-05-01' },
+  { id: 2, branch: 'Branch – Delhi', device: 'DESKTOP-DEL01', printerType: 'Network', mode: 'Allow', addedOn: '2025-05-03' },
+  { id: 3, branch: 'Branch – Bengaluru', device: 'LAPTOP-BLR02', printerType: 'Local', mode: 'Prevent', addedOn: '2025-05-07' },
+  { id: 4, branch: 'HQ – Mumbai', device: 'LAPTOP-MUM04', printerType: 'Virtual', mode: 'Allow', addedOn: '2025-05-10' },
+  { id: 5, branch: 'Branch – Chennai', device: 'DESKTOP-CHN01', printerType: 'Network', mode: 'Prevent', addedOn: '2025-05-12' },
 ]
 
 /* ─────────────────────────────────────────────────────────────
@@ -51,9 +52,9 @@ function Dropdown({
   error = false,
 }) {
   const { isDark } = useTheme()
-  const [open, setOpen]   = useState(false)
+  const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const containerRef      = useRef(null)
+  const containerRef = useRef(null)
 
   const normalised = options.map(o =>
     typeof o === 'string' ? { value: o, label: o } : o
@@ -146,8 +147,8 @@ function Dropdown({
                   placeholder="Search…"
                   className={`w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none border transition-all duration-150
                               ${isDark
-                                ? 'bg-[#2a2a2a] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
-                                : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`}
+                      ? 'bg-[#2a2a2a] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`}
                 />
                 {query && (
                   <button onClick={() => setQuery('')} className="absolute right-2 text-slate-400 hover:text-slate-200">
@@ -323,7 +324,7 @@ function GlassCard({ children, className = '' }) {
     <div
       className={`rounded-2xl border ${className}`}
       style={{
-        background: isDark ? '#242424' : 'rgba(255,255,255,0.95)',
+        background: isDark ? '#020617' : 'rgba(255,255,255,0.95)',
         backdropFilter: isDark ? 'none' : 'blur(24px)',
         WebkitBackdropFilter: isDark ? 'none' : 'blur(24px)',
         borderColor: isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0',
@@ -342,17 +343,17 @@ function GlassCard({ children, className = '' }) {
 ───────────────────────────────────────────────────────────── */
 function AddForm({ onAdd }) {
   const { isDark } = useTheme()
-  const [form, setForm]       = useState({ branch: '', device: '', printerType: '', mode: '' })
+  const [form, setForm] = useState({ branch: '', device: '', printerType: '', mode: '' })
   const [submitted, setSubmitted] = useState(false)
-  const [success, setSuccess]     = useState(false)
+  const [success, setSuccess] = useState(false)
 
   const set = k => v =>
     setForm(f => ({ ...f, [k]: v, ...(k === 'branch' ? { device: '' } : {}) }))
 
-  const branchOptions  = BRANCHES.map(b => ({ value: String(b.id), label: b.name }))
-  const deviceOptions  = form.branch ? (DEVICES_BY_BRANCH[Number(form.branch)] || []) : []
-  const modeOptions    = [
-    { value: 'Allow',   label: 'Allow'   },
+  const branchOptions = BRANCHES.map(b => ({ value: String(b.id), label: b.name }))
+  const deviceOptions = form.branch ? (DEVICES_BY_BRANCH[Number(form.branch)] || []) : []
+  const modeOptions = [
+    { value: 'Allow', label: 'Allow' },
     { value: 'Prevent', label: 'Prevent' },
   ]
   const isValid = form.branch && form.device && form.printerType && form.mode
@@ -365,13 +366,13 @@ function AddForm({ onAdd }) {
 
     try {
       await printerApi.post('/api/printer', {
-        client:       'NA',
-        deviceType:   form.printerType.toLowerCase(),
+        client: 'NA',
+        deviceType: form.printerType.toLowerCase(),
         modeOfAccess: form.mode.toLowerCase(),
         targets: [
           {
-            hostName:  form.device,
-            branch:    branchName,
+            hostName: form.device,
+            branch: branchName,
             ipAddress: '192.168.0.44',
           },
         ],
@@ -380,11 +381,11 @@ function AddForm({ onAdd }) {
       onAdd({ ...form, branchName })
 
       await showAlert({
-        icon:              'success',
-        title:             'Policy Saved',
-        text:              `Printer policy for ${form.device} has been added successfully.`,
-        timer:             2500,
-        timerProgressBar:  true,
+        icon: 'success',
+        title: 'Policy Saved',
+        text: `Printer policy for ${form.device} has been added successfully.`,
+        timer: 2500,
+        timerProgressBar: true,
         showConfirmButton: false,
       })
 
@@ -397,9 +398,9 @@ function AddForm({ onAdd }) {
         'Something went wrong. Please try again.'
 
       showAlert({
-        icon:              'error',
-        title:             'Submission Failed',
-        text:              message,
+        icon: 'error',
+        title: 'Submission Failed',
+        text: message,
         confirmButtonText: 'Retry',
       })
     }
@@ -447,7 +448,7 @@ function AddForm({ onAdd }) {
         {/* Printer Type */}
         <div>
           <label className={labelCls}>
-Device Type <span className="text-rose-500 normal-case tracking-normal">*</span>
+            Device Type <span className="text-rose-500 normal-case tracking-normal">*</span>
           </label>
           <Dropdown
             value={form.printerType}
@@ -501,9 +502,9 @@ Device Type <span className="text-rose-500 normal-case tracking-normal">*</span>
    POLICY TABLE
 ───────────────────────────────────────────────────────────── */
 function PolicyTable({ policies, onDelete }) {
-  const { isDark }                    = useTheme()
-  const [search, setSearch]           = useState('')
-  const [filterMode, setFilterMode]   = useState('')
+  const { isDark } = useTheme()
+  const [search, setSearch] = useState('')
+  const [filterMode, setFilterMode] = useState('')
 
   const filtered = policies.filter(p => {
     const q = search.toLowerCase()
@@ -518,9 +519,9 @@ function PolicyTable({ policies, onDelete }) {
   const tdCls = `px-4 py-3 text-[12px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`
 
   const filterOptions = [
-    { value: '',        label: 'All Modes' },
-    { value: 'Allow',   label: 'Allow'     },
-    { value: 'Prevent', label: 'Prevent'   },
+    { value: '', label: 'All Modes' },
+    { value: 'Allow', label: 'Allow' },
+    { value: 'Prevent', label: 'Prevent' },
   ]
 
   return (
@@ -598,8 +599,8 @@ function PolicyTable({ policies, onDelete }) {
                   key={p.id}
                   className={`border-b last:border-b-0 transition-colors duration-150
                               ${isDark
-                                ? 'border-white/[0.04] hover:bg-[#2e2e2e]'
-                                : 'border-slate-50 hover:bg-slate-50/60'}`}
+                      ? 'border-white/[0.04] hover:bg-[#2e2e2e]'
+                      : 'border-slate-50 hover:bg-slate-50/60'}`}
                 >
                   <td className={`${tdCls} text-[11px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{i + 1}</td>
                   <td className={tdCls}>{p.branch}</td>
@@ -640,15 +641,15 @@ function PolicyTable({ policies, onDelete }) {
 function TabBar({ active, onChange }) {
   const { isDark } = useTheme()
   const tabs = [
-    { id: 'add',  label: 'Add Policy',    icon: Plus },
-    { id: 'view', label: 'View Policies', icon: Eye  },
+    { id: 'add', label: 'Add Policy', icon: Plus },
+    { id: 'view', label: 'View Policies', icon: Eye },
   ]
 
   return (
     <div
       className="inline-flex items-center gap-1.5 rounded-2xl p-1.5 mb-6 border"
       style={{
-        background: isDark ? '#1f1f1f' : 'rgba(255,255,255,0.60)',
+        background: isDark ? '#020617' : 'rgba(255,255,255,0.60)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(203,213,225,0.70)',
@@ -680,9 +681,10 @@ function TabBar({ active, onChange }) {
    PAGE
 ───────────────────────────────────────────────────────────── */
 export default function PrinterControl() {
-  const { isDark }              = useTheme()
-  const [tab, setTab]           = useState('add')
+  const { isDark } = useTheme()
+  const [tab, setTab] = useState('add')
   const [policies, setPolicies] = useState(DUMMY_POLICIES)
+  const [branches, setBranches] = useState([])
 
   const handleAdd = ({ branchName, device, printerType, mode }) => {
     setPolicies(prev => [
@@ -698,11 +700,29 @@ export default function PrinterControl() {
     ])
   }
 
+  const loadPageData = async () => {
+  
+      const [ALLBranch] = await Promise.all([
+        dashboardService.getBranch()
+        
+      ]);
+      console.log("All Branches Fetched ", ALLBranch.data);
+      setBranches(ALLBranch.data);
+
+    };
+
+  useEffect(() => {
+    loadPageData();
+  }, []);
+
+
+
   const handleDelete = id => setPolicies(prev => prev.filter(p => p.id !== id))
 
   return (
     <div className="w-full">
-
+      <br>
+      </br>
       {/* Page header */}
       <div className="flex items-start justify-between mb-7">
         <div className="flex items-center gap-3">
@@ -741,7 +761,7 @@ export default function PrinterControl() {
 
       <TabBar active={tab} onChange={setTab} />
 
-      {tab === 'add'  && <AddForm onAdd={p => { handleAdd(p); setTab('view') }} />}
+      {tab === 'add' && <AddForm onAdd={p => { handleAdd(p); setTab('view') }} />}
       {tab === 'view' && <PolicyTable policies={policies} onDelete={handleDelete} />}
     </div>
   )

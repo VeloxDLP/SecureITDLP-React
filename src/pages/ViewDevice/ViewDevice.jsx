@@ -85,7 +85,7 @@ export default function DeviceDashboard() {
       fontFamily:
         "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       color: "#cbd5e1",
-      backgroundColor: "#020617", // New background color
+      // backgroundColor: "#", // New background color
       minHeight: "100vh",
     },
     tabsRow: {
@@ -114,7 +114,7 @@ export default function DeviceDashboard() {
       boxShadow: "0 0 0 3px rgba(79,108,247,0.15)",
     },
     panel: {
-      // background: "#020617", // Card background - darker
+      background: "#020617", // Card background - darker
       border: "1px solid #1a2a4a",
       borderRadius: "15px",
       overflow: "hidden",
