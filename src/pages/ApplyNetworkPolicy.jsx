@@ -212,7 +212,7 @@ function ApplyNetworkPolicy() {
             <div className="rounded-xl border border-[#2B3345] bg-[#020617] p-6">
               {/* Policy Header */}
               <div className="flex items-center gap-3 pb-5 mb-6  border-[#2B3345]">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-#020617]">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#020617]">
                   <ShieldCheck size={20} className="text-[#4F7CFF]" />
                 </div>
                 <div>
@@ -292,22 +292,9 @@ function ApplyNetworkPolicy() {
             /* No Policy Selected View */
             <div className="rounded-xl border border-[#2B3345] bg-[#020617]">
               <div className="flex h-[280px] flex-col items-center justify-center px-6 text-center">
-                {/* Icon */}
+                {/* Icon - Using ShieldCheck from lucide-react */}
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#24304F]">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="30"
-                    height="30"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#4F7CFF"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    <path d="M9 12l2 2 4-4" />
-                  </svg>
+                  <ShieldCheck size={30} color="#4F7CFF" strokeWidth={2} />
                 </div>
 
                 {/* Title */}
@@ -382,7 +369,6 @@ function ApplyNetworkPolicy() {
                         key={endpoint.id}
                         className="flex items-center gap-3 rounded-lg border border-[#2B3345] bg-[#1A2235] px-3 py-2 group hover:border-[#4F7CFF] transition flex-shrink-0"
                       >
-                    
                         {/* Desktop Icon */}
                         <Monitor size={16} className="text-[#4F7CFF] flex-shrink-0" />
                         <span className="text-xs text-white flex-1 truncate">{endpoint.name}</span>
@@ -399,20 +385,9 @@ function ApplyNetworkPolicy() {
                 </div>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center text-center">
+                  {/* Icon - Using ShieldCheck from lucide-react */}
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#24304F]">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#4F7CFF"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M6 9l6 6 6-6" />
-                    </svg>
+                    <ShieldCheck size={24} color="#4F7CFF" strokeWidth={2} />
                   </div>
                   <h3 className="mt-3 text-lg font-semibold text-white">
                     No Branch Selected
