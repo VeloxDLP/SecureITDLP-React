@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Security Hub | Superfast Cyber Defense Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at 20% 30%, #030c1a, #000307);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Inter', 'Poppins', system-ui, -apple-system, 'SF Pro Text', sans-serif;
+            padding: 20px;
+        }
+
+        /* glass-card container for depth */
+        .hub-container {
+            background: rgba(2, 12, 27, 0.45);
+            backdrop-filter: blur(3px);
+            border-radius: 64px;
+            padding: 20px 28px 24px 28px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(120, 180, 255, 0.1);
+            border: 1px solid rgba(58, 127, 212, 0.25);
+            transition: all 0.2s;
+        }
+
+        svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 1000px;
+            margin: 0 auto;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.4));
+        }
+
+        /* additional micro-interactions: subtle tooltip style on hover for each node? not needed but adds polish */
+        @keyframes softPulse {
+            0% { text-shadow: 0 0 0px rgba(61,216,232,0);}
+            100% { text-shadow: 0 0 4px rgba(61,216,232,0.5);}
+        }
+
+        /* enhance responsive touch */
+        @media (max-width: 640px) {
+            .hub-container {
+                padding: 12px 16px;
+                border-radius: 36px;
+            }
+            svg text {
+                font-size: 11px;
+                dominant-baseline: hanging;
+            }
+        }
+
+        /* optional glow for text labels on hover - purely interactive delight */
+        svg text {
+            transition: filter 0.2s ease;
+            cursor: default;
+        }
+
+        svg g[class^="l"]:hover text {
+            filter: drop-shadow(0 0 5px #3dd8e8);
+            animation: softPulse 0.6s ease-in-out infinite alternate;
+        }
+    </style>
+</head>
+<body>
+<div class="hub-container">
+    <svg width="100%" viewBox="0 0 620 600" role="img" xmlns="http://www.w3.org/2000/svg">
+        <title>Security Operations Hub</title>
+        <desc>Real-time security monitoring — network protection, web control, data classification, email DLP, endpoint DLP with orbiting vigilance</desc>
+        <defs>
+            <!-- Background gradient: deep cyber blue -->
+            <radialGradient id="bg" cx="45%" cy="50%" r="55%">
+                <stop offset="0%" stop-color="#0b1a35"/>
+                <stop offset="100%" stop-color="#000810"/>
+            </radialGradient>
+            <!-- Central node core gradient -->
+            <radialGradient id="cg" cx="50%" cy="45%" r="55%">
+                <stop offset="0%" stop-color="#122f60"/>
+                <stop offset="100%" stop-color="#050e25"/>
+            </radialGradient>
+            <!-- Peripheral node gradient -->
+            <radialGradient id="ng" cx="40%" cy="35%" r="60%">
+                <stop offset="0%" stop-color="#1b3c75"/>
+                <stop offset="100%" stop-color="#060f28"/>
+            </radialGradient>
+            <!-- Soft glow filter for central lock -->
+            <filter id="sg" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="b"/>
+                <feMerge>
+                    <feMergeNode in="b"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+            <!-- Optional shine for nodes: additional filter used by parent groups? keeping consistent -->
+            <filter id="nodeGlow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="2.8" result="blur"/>
+                <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+
+        <!-- Deep space background -->
+        <rect width="620" height="600" fill="url(#bg)"/>
+
+        <!-- Pulsing radar rings from central hub -->
+        <circle class="rp1" cx="245" cy="300" r="108" fill="none" stroke="#3a7fd4" stroke-width="1" opacity="0"/>
+        <circle class="rp2" cx="245" cy="300" r="108" fill="none" stroke="#3a7fd4" stroke-width="1" opacity="0"/>
+
+        <!-- Orbiting dashed ring (clockwise) -->
+        <circle class="spin1" cx="245" cy="300" r="118" fill="none" stroke="#2a65c0" stroke-width="1.2" stroke-dasharray="7 5" opacity="0.55"/>
+
+        <!-- Counter-rotating tracking dots (six small satellites) -->
+        <g class="spin2" opacity="0.4">
+            <circle cx="245" cy="122" r="2.5" fill="#3a7fd4"/>
+            <circle cx="390" cy="199" r="2"   fill="#3a7fd4"/>
+            <circle cx="390" cy="401" r="2"   fill="#3a7fd4"/>
+            <circle cx="245" cy="478" r="2.5" fill="#3a7fd4"/>
+            <circle cx="100" cy="401" r="2"   fill="#3a7fd4"/>
+            <circle cx="100" cy="199" r="2"   fill="#3a7fd4"/>
+        </g>
+
+        <!-- Main hub structural rings -->
+        <circle cx="245" cy="300" r="108" fill="url(#cg)" stroke="#1e4a90" stroke-width="1.5"/>
+        <circle cx="245" cy="300" r="94"  fill="none" stroke="#1a3a75" stroke-width="0.7" opacity="0.6"/>
+        <circle cx="245" cy="300" r="78"  fill="none" stroke="#152e60" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.45"/>
+
+        <!-- Central security lock with glow animation -->
+        <g filter="url(#sg)" style="animation:glowLock 2s ease-in-out infinite">
+            <!-- lock body -->
+            <rect x="218" y="308" width="54" height="42" rx="6" fill="none" stroke="#6ab4e8" stroke-width="2.5"/>
+            <!-- shackle -->
+            <path d="M228 308 L228 293 Q245 277 262 293 L262 308" fill="none" stroke="#6ab4e8" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- keyhole outer -->
+            <circle cx="245" cy="326" r="6" fill="none" stroke="#6ab4e8" stroke-width="2"/>
+            <!-- keyhole slot -->
+            <line x1="245" y1="332" x2="245" y2="341" stroke="#6ab4e8" stroke-width="2" stroke-linecap="round"/>
+        </g>
+
+        <!-- Spoke lines connecting central core to each peripheral node (drawing animation) -->
+        <g stroke="#3a7fd4" stroke-width="0.9" fill="none" opacity="0.5">
+            <path class="s1" d="M215 215 L215 160"/>
+            <path class="s2" d="M295 220 L345 175"/>
+            <path class="s3" d="M353 300 L430 300"/>
+            <path class="s4" d="M305 380 L355 430"/>
+            <path class="s5" d="M215 390 L215 455"/>
+        </g>
+
+        <!-- NODE 1: Network Protection (top) -->
+        <g class="n1" style="transform-origin:215px 125px">
+            <circle cx="215" cy="125" r="36" fill="url(#ng)" stroke="#2a6fd4" stroke-width="1.5"/>
+            <circle cx="215" cy="125" r="29" fill="none" stroke="#1a4070" stroke-width="0.5"/>
+            <g stroke="#6ab4e8" stroke-width="1.7" fill="none">
+                <circle cx="215" cy="125" r="4" fill="#6ab4e8"/>
+                <circle cx="203" cy="116" r="2.8" fill="#6ab4e8"/>
+                <circle cx="227" cy="116" r="2.8" fill="#6ab4e8"/>
+                <circle cx="203" cy="134" r="2.8" fill="#6ab4e8"/>
+                <circle cx="227" cy="134" r="2.8" fill="#6ab4e8"/>
+                <line x1="215" y1="125" x2="203" y2="116"/>
+                <line x1="215" y1="125" x2="227" y2="116"/>
+                <line x1="215" y1="125" x2="203" y2="134"/>
+                <line x1="215" y1="125" x2="227" y2="134"/>
+            </g>
+        </g>
+        <g class="l1" font-family="sans-serif" font-size="13" font-weight="500" fill="#3dd8e8">
+            <text x="255" y="118">Network</text>
+            <text x="255" y="134">Protection</text>
+        </g>
+
+        <!-- NODE 2: Web Control (top-right) -->
+        <g class="n2" style="transform-origin:345px 175px">
+            <circle cx="345" cy="175" r="36" fill="url(#ng)" stroke="#2a6fd4" stroke-width="1.5"/>
+            <circle cx="345" cy="175" r="29" fill="none" stroke="#1a4070" stroke-width="0.5"/>
+            <g stroke="#6ab4e8" stroke-width="1.7" fill="none">
+                <circle cx="345" cy="175" r="14"/>
+                <ellipse cx="345" cy="175" rx="6" ry="14"/>
+                <line x1="331" y1="175" x2="359" y2="175"/>
+                <path d="M332 167 Q345 170 358 167"/>
+                <path d="M332 183 Q345 180 358 183"/>
+            </g>
+        </g>
+        <g class="l2" font-family="sans-serif" font-size="13" font-weight="500" fill="#3dd8e8">
+            <text x="395" y="170">Web</text>
+            <text x="395" y="186">Control</text>
+        </g>
+
+        <!-- NODE 3: Data Classification (right) -->
+        <g class="n3" style="transform-origin:430px 300px">
+            <circle cx="430" cy="300" r="36" fill="url(#ng)" stroke="#2a6fd4" stroke-width="1.5"/>
+            <circle cx="430" cy="300" r="29" fill="none" stroke="#1a4070" stroke-width="0.5"/>
+            <g stroke="#6ab4e8" stroke-width="1.7" fill="none">
+                <path d="M430 282 L415 290 L415 303 Q415 316 430 322 Q445 316 445 303 L445 290 Z"/>
+                <line x1="430" y1="291" x2="430" y2="312"/>
+                <polyline points="425,296 430,291 435,296"/>
+                <polyline points="425,307 430,312 435,307"/>
+            </g>
+        </g>
+        <g class="l3" font-family="sans-serif" font-size="13" font-weight="500" fill="#3dd8e8">
+            <text x="475" y="295">Data</text>
+            <text x="475" y="311">Classification</text>
+        </g>
+
+        <!-- NODE 4: Email DLP (bottom-right) -->
+        <g class="n4" style="transform-origin:355px 430px">
+            <circle cx="355" cy="430" r="36" fill="url(#ng)" stroke="#2a6fd4" stroke-width="1.5"/>
+            <circle cx="355" cy="430" r="29" fill="none" stroke="#1a4070" stroke-width="0.5"/>
+            <g stroke="#6ab4e8" stroke-width="1.7" fill="none">
+                <rect x="340" y="418" width="26" height="18" rx="3"/>
+                <polyline points="340,418 355,428 366,418"/>
+                <circle cx="368" cy="436" r="7" fill="#060f28" stroke="#6ab4e8" stroke-width="1.7"/>
+                <line x1="368" y1="431" x2="368" y2="441"/>
+                <line x1="363" y1="436" x2="373" y2="436"/>
+            </g>
+        </g>
+        <g class="l4" font-family="sans-serif" font-size="13" font-weight="500" fill="#3dd8e8">
+            <text x="405" y="425">Email</text>
+            <text x="405" y="441">DLP</text>
+        </g>
+
+        <!-- NODE 5: Endpoint DLP (bottom-left) -->
+        <g class="n5" style="transform-origin:215px 470px">
+            <circle cx="215" cy="470" r="36" fill="url(#ng)" stroke="#2a6fd4" stroke-width="1.5"/>
+            <circle cx="215" cy="470" r="29" fill="none" stroke="#1a4070" stroke-width="0.5"/>
+            <g stroke="#6ab4e8" stroke-width="1.7" fill="none">
+                <rect x="201" y="457" width="12" height="12" rx="2"/>
+                <rect x="217" y="457" width="12" height="12" rx="2"/>
+                <rect x="201" y="473" width="12" height="12" rx="2"/>
+                <circle cx="223" cy="479" r="7" fill="#060f28" stroke="#6ab4e8" stroke-width="1.7"/>
+                <line x1="223" y1="474" x2="223" y2="484"/>
+                <line x1="218" y1="479" x2="228" y2="479"/>
+            </g>
+        </g>
+        <g class="l5" font-family="sans-serif" font-size="13" font-weight="500" fill="#3dd8e8">
+            <text x="255" y="465">Endpoint</text>
+            <text x="255" y="481">DLP</text>
+        </g>
+        
+        <!-- Additional micro-decoration: scanning signal lines near central hub ( subtle upgrade ) -->
+        <g opacity="0.3" pointer-events="none">
+            <circle cx="245" cy="300" r="118" fill="none" stroke="#53b0ff" stroke-width="0.5" stroke-dasharray="2 6" />
+        </g>
+    </svg>
+</div>
+
+<!-- Extra style ensures that keyframes from the SVG are properly applied and no clipping issues -->
+<style>
+    /* Force hardware acceleration for animations and ensure SVG elements respect keyframes */
+    svg * {
+        transform-origin: inherit;
+        backface-visibility: hidden;
+    }
+    @keyframes orbitCW { 
+        0% { transform: rotate(0deg); } 
+        100% { transform: rotate(360deg); } 
+    }
+    @keyframes orbitCCW { 
+        0% { transform: rotate(0deg); } 
+        100% { transform: rotate(-360deg); } 
+    }
+    @keyframes pulse { 
+        0%, 100% { opacity: 0.2; } 
+        50% { opacity: 0.6; } 
+    }
+    @keyframes glowLock { 
+        0%, 100% { opacity: 0.4; filter: drop-shadow(0 0 1px #6ab4e8); } 
+        50% { opacity: 1; filter: drop-shadow(0 0 8px #6ab4e8); } 
+    }
+    @keyframes nodePop {
+        0% { transform: scale(0.2); opacity: 0; }
+        40% { opacity: 0.5; transform: scale(1.05); }
+        80% { transform: scale(1.02); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes labelIn { 
+        from { opacity: 0; transform: translateX(12px); } 
+        to { opacity: 1; transform: translateX(0); } 
+    }
+    @keyframes spokeDraw { 
+        from { stroke-dashoffset: 220; } 
+        to { stroke-dashoffset: 0; } 
+    }
+    @keyframes ringPulse { 
+        0% { r: 108; opacity: 0.6; stroke-width: 1.2; }
+        100% { r: 178; opacity: 0; stroke-width: 0.6; }
+    }
+    
+    /* Assign animation timings and easing */
+    .spin1 { 
+        transform-origin: 245px 300px; 
+        animation: orbitCW 2.2s linear infinite; 
+    }
+    .spin2 { 
+        transform-origin: 245px 300px; 
+        animation: orbitCCW 2.4s linear infinite; 
+    }
+    .n1 { animation: nodePop 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1) 0s both; }
+    .n2 { animation: nodePop 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1) 0.15s both; }
+    .n3 { animation: nodePop 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1) 0.3s both; }
+    .n4 { animation: nodePop 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1) 0.45s both; }
+    .n5 { animation: nodePop 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1) 0.6s both; }
+    
+    /* label slide-in */
+    .l1 { animation: labelIn 0.2s ease-out 0.08s both; }
+    .l2 { animation: labelIn 0.2s ease-out 0.22s both; }
+    .l3 { animation: labelIn 0.2s ease-out 0.36s both; }
+    .l4 { animation: labelIn 0.2s ease-out 0.5s both; }
+    .l5 { animation: labelIn 0.2s ease-out 0.64s both; }
+    
+    /* spoke connection draws */
+    .s1 { stroke-dasharray: 220; animation: spokeDraw 0.28s ease-out 0.04s both; }
+    .s2 { stroke-dasharray: 220; animation: spokeDraw 0.28s ease-out 0.16s both; }
+    .s3 { stroke-dasharray: 220; animation: spokeDraw 0.28s ease-out 0.28s both; }
+    .s4 { stroke-dasharray: 220; animation: spokeDraw 0.28s ease-out 0.4s both; }
+    .s5 { stroke-dasharray: 220; animation: spokeDraw 0.28s ease-out 0.52s both; }
+    
+    /* Radar pulses */
+    .rp1 { animation: ringPulse 1.6s ease-out 0.2s infinite; transform-origin: 245px 300px; }
+    .rp2 { animation: ringPulse 1.6s ease-out 0.8s infinite; transform-origin: 245px 300px; }
+    
+    /* Additional lock glow enhanced */
+    g[filter="url(#sg)"] {
+        animation: glowLock 2.1s ease-in-out infinite;
+        transform-origin: 245px 330px;
+    }
+    
+    /* Optional micro-oscillation for the central nodes to give 'scan' feeling - subtle */
+    @keyframes subtleNodeBreath {
+        0% { filter: drop-shadow(0 0 0px rgba(58, 127, 212, 0.3)); }
+        100% { filter: drop-shadow(0 0 4px rgba(58, 127, 212, 0.7)); }
+    }
+    circle[r="108"]:nth-of-type(3) {
+        animation: subtleNodeBreath 3s infinite alternate;
+    }
+    
+    /* Mobile font size adaptation inside svg */
+    @media (max-width: 560px) {
+        svg text {
+            font-size: 12px;
+        }
+        .l1 text, .l2 text, .l3 text, .l4 text, .l5 text {
+            dominant-baseline: auto;
+        }
+        text:first-of-type { font-weight: 600; }
+    }
+    
+    /* ensure stroke-dashoffset reset for any non-supported */
+    .s1, .s2, .s3, .s4, .s5 {
+        stroke-dashoffset: 0; /* fallback: but animation will override */
+    }
+</style>
+</body>
+</html>

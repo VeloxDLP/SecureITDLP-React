@@ -1,0 +1,86 @@
+.security-hub-container {
+  background: #000810;
+  padding: 20px;
+  border-radius: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.security-hub-container svg {
+  width: 100%;
+  height: auto;
+}
+
+/* Keyframes for animations */
+@keyframes orbitCW {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbitCCW {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes glowLock {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes nodePop {
+  0% { transform: scale(0.2); opacity: 0; }
+  40% { opacity: 0.5; }
+  80% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes labelIn {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes spokeDraw {
+  from { stroke-dashoffset: 220; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes ringPulse {
+  0% { r: 108; opacity: 0.6; }
+  100% { r: 178; opacity: 0; }
+}
+
+/* Animation classes */
+.spin1 {
+  transform-origin: 245px 300px;
+  animation: orbitCW 2s linear infinite;
+}
+
+.spin2 {
+  transform-origin: 245px 300px;
+  animation: orbitCCW 2s linear infinite;
+}
+
+.n1 { animation: nodePop 1.8s ease-out 0s both; }
+.n2 { animation: nodePop 1.8s ease-out 0.5s both; }
+.n3 { animation: nodePop 1.8s ease-out 1s both; }
+.n4 { animation: nodePop 1.8s ease-out 1.5s both; }
+.n5 { animation: nodePop 1.8s ease-out 2s both; }
+
+.l1 { animation: labelIn 0.1s ease 0.05s both; }
+.l2 { animation: labelIn 0.1s ease 0.11s both; }
+.l3 { animation: labelIn 0.1s ease 0.17s both; }
+.l4 { animation: labelIn 0.1s ease 0.23s both; }
+.l5 { animation: labelIn 0.1s ease 0.29s both; }
+
+.s1 { stroke-dasharray: 220; animation: spokeDraw 0.1s ease 0s both; }
+.s2 { stroke-dasharray: 220; animation: spokeDraw 0.1s ease 0.06s both; }
+.s3 { stroke-dasharray: 220; animation: spokeDraw 0.1s ease 0.12s both; }
+.s4 { stroke-dasharray: 220; animation: spokeDraw 0.1s ease 0.18s both; }
+.s5 { stroke-dasharray: 220; animation: spokeDraw 0.1s ease 0.24s both; }
+
+.rp1 { animation: ringPulse 1.2s ease-out 0.4s infinite; }
+.rp2 { animation: ringPulse 1.2s ease-out 1.0s infinite; }

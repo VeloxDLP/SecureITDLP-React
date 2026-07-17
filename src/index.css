@@ -1,0 +1,128 @@
+/* ── Tailwind layers ─────────────────────────────────────────── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { font-size: 13px; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+}
+
+/* ── Custom utilities ────────────────────────────────────────── */
+@layer utilities {
+
+  /* ── Glass — warm charcoal tones ─────────────────────────── */
+  .glass-dark {
+    background: rgba(30, 30, 30, 0);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .glass-light {
+    background: rgba(255, 255, 255, 0);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+  }
+  .glass-modal {
+    background: rgba(25, 25, 25, 0.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .glass-modal-light {
+    background: rgba(255, 255, 255, 0.452);
+    backdrop-filter: blur(15px);
+    /* -webkit-backdrop-filter: blur(24px); */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* ── Notification glass ───────────────────────────────────── */
+  .glass-notif-dark {
+    background: rgba(22, 22, 22, 0.88);
+    backdrop-filter: blur(40px) saturate(160%);
+    -webkit-backdrop-filter: blur(40px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow:
+      0 24px 64px rgba(0, 0, 0, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  }
+  .glass-notif-light {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow:
+      0 24px 64px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+
+  /* ── Subtle grid backgrounds ──────────────────────────────── */
+  .bg-grid-dark {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .bg-grid-light {
+    background-image:
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* ── Layout transitions ───────────────────────────────────── */
+  .sidebar-expanded  { width: 236px; }
+  .sidebar-collapsed { width: 60px;  }
+  .sidebar-transition {
+    transition: width 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  .main-expanded  { margin-left: 236px; }
+  .main-collapsed { margin-left: 60px;  }
+  .main-transition {
+    transition: margin-left 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ── Nav label fade ───────────────────────────────────────── */
+  .nav-label {
+    transition: opacity 0.2s ease, max-width 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .nav-label-visible { opacity: 1;  max-width: 160px; }
+  .nav-label-hidden  { opacity: 0;  max-width: 0;     }
+
+  /* ── Card hover — lift + border highlight ─────────────────── */
+  .stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease,
+                border-color 0.2s ease, background-color 0.2s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 0 1px rgba(112,148,255,0.2);
+  }
+
+  /* ── Attack row hover ─────────────────────────────────────── */
+  .attack-row {
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  /* ── Sidebar overflow for pill tooltips ──────────────────── */
+  .sidebar-collapsed.sidebar-transition {
+    overflow: visible;
+  }
+}
