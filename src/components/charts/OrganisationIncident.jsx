@@ -418,7 +418,7 @@ export default function OrganisationIncident({
                   </span>
 
                   <div className="flex items-center gap-2">
-                    <select
+                    {/* <select
                       value={pageSize}
                       onChange={(e) => {
                         setPageSize(Number(e.target.value));
@@ -429,7 +429,7 @@ export default function OrganisationIncident({
                       {[5, 10, 20, 50].map((size) => (
                         <option key={size} value={size}>{size} / page</option>
                       ))}
-                    </select>
+                    </select> */}
 
                     <button
                       type="button"
@@ -449,7 +449,7 @@ export default function OrganisationIncident({
                       type="button"
                       disabled={safePage === totalPages}
                       onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
+                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-black px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
                     >
                       Next
                       <ChevronRight size={14} />

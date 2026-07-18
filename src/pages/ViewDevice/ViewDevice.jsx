@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Settings, Eye, Search, Plus, Minus, Info } from "lucide-react";
 import { dashboardService } from "../../services/dashboardService";
+import { useTheme } from '../../context/ThemeContext';
 
 export default function DeviceDashboard() {
+  const { isDark } = useTheme();
   const [viewDeviceData, setViewDeviceData] = useState([]);
   const [mode, setMode] = useState("view");
   const [search, setSearch] = useState("");
@@ -10,7 +12,6 @@ export default function DeviceDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
- 
   useEffect(() => {
     fetchDeviceData();
   }, []);
@@ -21,7 +22,6 @@ export default function DeviceDashboard() {
       const response = await dashboardService.getViewDevice();
       console.log("Viewdevice", response.data);
       
-     
       const mappedData = response.data.map(item => ({
         branch: item.branchName,
         host: item.ipAddress,
@@ -38,14 +38,12 @@ export default function DeviceDashboard() {
     } catch (err) {
       console.error("Error fetching device data:", err);
       setError("Failed to load device data. Please try again.");
-    
       setViewDeviceData(getFallbackData());
     } finally {
       setLoading(false);
     }
   };
 
-  // Helper function to format date
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     try {
@@ -64,7 +62,6 @@ export default function DeviceDashboard() {
     }
   };
 
-  
   const getFallbackData = () => [
     {
       branch: "PALGHAR",
@@ -76,16 +73,15 @@ export default function DeviceDashboard() {
       zone: "Low",
       serverIp: "28.11.22.5",
     },
-  
   ];
 
-  const styles = {
+  // Dynamic styles based on theme
+  const getStyles = () => ({
     page: {
       padding: "24px",
-      fontFamily:
-        "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      color: "#cbd5e1",
-      // backgroundColor: "#", // New background color
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      color: isDark ? "#cbd5e1" : "#1e293b",
+      backgroundColor: isDark ? "#0a0a1a" : "#f1f5f9",
       minHeight: "100vh",
     },
     tabsRow: {
@@ -102,20 +98,20 @@ export default function DeviceDashboard() {
       fontSize: "14px",
       fontWeight: 500,
       cursor: "pointer",
-      border: "1px solid #29304a",
-      background: "#0a1628", // Darker card color
-      color: "#8b95ad",
+      border: isDark ? "1px solid #29304a" : "1px solid #e2e8f0",
+      background: isDark ? "#0a1628" : "#ffffff",
+      color: isDark ? "#8b95ad" : "#64748b",
       transition: "all 0.15s ease",
     },
     tabActive: {
-      background: "#0f1f3a", // Darker active tab
-      color: "#ffffff",
-      border: "1px solid #4f6cf7",
-      boxShadow: "0 0 0 3px rgba(79,108,247,0.15)",
+      background: isDark ? "#0f1f3a" : "#eff6ff",
+      color: isDark ? "#ffffff" : "#1e293b",
+      border: isDark ? "1px solid #4f6cf7" : "1px solid #4f6cf7",
+      boxShadow: isDark ? "0 0 0 3px rgba(79,108,247,0.15)" : "0 0 0 3px rgba(79,108,247,0.1)",
     },
     panel: {
-      background: "#020617", // Card background - darker
-      border: "1px solid #1a2a4a",
+      background: isDark ? "#020617" : "#ffffff",
+      border: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
       borderRadius: "15px",
       overflow: "hidden",
       padding: "10px",
@@ -125,34 +121,38 @@ export default function DeviceDashboard() {
       alignItems: "center",
       justifyContent: "space-between",
       marginBottom: "20px",
+      flexWrap: "wrap",
+      gap: "10px",
     },
     panelTitle: {
       fontSize: "22px",
       fontWeight: 500,
-      color: "#cdd5e6",
+      color: isDark ? "#cdd5e6" : "#1e293b",
       margin: 0,
     },
     headerRight: {
       display: "flex",
       alignItems: "center",
       gap: "10px",
+      flexWrap: "wrap",
     },
     pillBtn: {
-      background: "#020617",
-      border: "1px solid #1a2a4a",
-      color: "#b7c0d8",
+      background: isDark ? "#020617" : "#f8fafc",
+      border: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
+      color: isDark ? "#b7c0d8" : "#475569",
       fontSize: "12px",
       fontWeight: 500,
       padding: "6px 12px",
       borderRadius: "8px",
       cursor: "pointer",
+      transition: "all 0.15s ease",
     },
     searchWrap: {
       display: "flex",
       alignItems: "center",
       gap: "6px",
-      background: "#020617",
-      border: "1px solid #1a2a4a",
+      background: isDark ? "#020617" : "#f8fafc",
+      border: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
       borderRadius: "8px",
       padding: "6px 12px",
     },
@@ -160,7 +160,7 @@ export default function DeviceDashboard() {
       background: "transparent",
       border: "none",
       outline: "none",
-      color: "#e2e8f0",
+      color: isDark ? "#e2e8f0" : "#1e293b",
       fontSize: "14px",
       width: "150px",
     },
@@ -172,7 +172,7 @@ export default function DeviceDashboard() {
     headerRowCard: {
       display: "flex",
       alignItems: "center",
-      background: "#0f1f3a", // Header card - darker
+      background: isDark ? "#0f1f3a" : "#f1f5f9",
       borderRadius: "15px",
       padding: "16px 24px",
       gap: "20px",
@@ -180,13 +180,14 @@ export default function DeviceDashboard() {
     headerCell: {
       fontSize: "16px",
       fontWeight: 600,
-      color: "#aab3cc",
+      color: isDark ? "#aab3cc" : "#475569",
       flex: 1,
     },
     rowGroup: {
-      background: "#020617", // Row group - darker
+      background: isDark ? "#020617" : "#ffffff",
       borderRadius: "12px",
       overflow: "hidden",
+      border: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
     },
     rowCard: {
       display: "flex",
@@ -194,6 +195,7 @@ export default function DeviceDashboard() {
       padding: "12px 24px",
       gap: "20px",
       cursor: "pointer",
+      transition: "background 0.15s ease",
     },
     plusBtnUp: {
       width: "15px",
@@ -225,19 +227,19 @@ export default function DeviceDashboard() {
     },
     cell: {
       fontSize: "14px",
-      color: "#e2e8f0",
+      color: isDark ? "#e2e8f0" : "#1e293b",
       flex: 1,
     },
     hostLink: {
-      color: "#5b8def",
+      color: isDark ? "#5b8def" : "#4f6cf7",
       fontWeight: 500,
       letterSpacing: "0.10px",
       textDecoration: "none",
       cursor: "pointer",
     },
     detailsPanel: {
-      background: "#020617", // Details panel - same as page background
-      borderTop: "1px solid #1a2a4a",
+      background: isDark ? "#020617" : "#f8fafc",
+      borderTop: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
       padding: "18px 24px 22px 64px",
     },
     detailsHeading: {
@@ -246,11 +248,11 @@ export default function DeviceDashboard() {
       gap: "8px",
       fontSize: "14px",
       fontWeight: 600,
-      color: "#7bdc8f",
+      color: isDark ? "#7bdc8f" : "#16a34a",
       marginBottom: "12px",
     },
     detailsDivider: {
-      borderBottom: "1px solid #1a2a4a",
+      borderBottom: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
       marginBottom: "16px",
     },
     detailsGrid: {
@@ -262,7 +264,7 @@ export default function DeviceDashboard() {
     detailLabel: {
       fontSize: "11px",
       fontWeight: 600,
-      color: "#7c87a3",
+      color: isDark ? "#7c87a3" : "#64748b",
       letterSpacing: "0.5px",
       marginBottom: "8px",
       textTransform: "uppercase",
@@ -270,7 +272,7 @@ export default function DeviceDashboard() {
     detailValue: {
       fontSize: "14px",
       fontWeight: 600,
-      color: "#e2e8f0",
+      color: isDark ? "#e2e8f0" : "#1e293b",
     },
     detailItem: {
       display: "flex",
@@ -283,11 +285,11 @@ export default function DeviceDashboard() {
     },
     eyeButton: {
       background: "transparent",
-      border: "1px solid #1a2a4a",
+      border: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
       borderRadius: "6px",
       padding: "4px 8px",
       cursor: "pointer",
-      color: "#8b95ad",
+      color: isDark ? "#8b95ad" : "#64748b",
       display: "flex",
       alignItems: "center",
       gap: "4px",
@@ -296,17 +298,17 @@ export default function DeviceDashboard() {
       marginTop: "4px",
     },
     eyeButtonHover: {
-      background: "#0f1f3a",
+      background: isDark ? "#0f1f3a" : "#eff6ff",
       borderColor: "#4f6cf7",
-      color: "#ffffff",
+      color: isDark ? "#ffffff" : "#1e293b",
     },
     statusPill: {
       display: "inline-flex",
       alignItems: "center",
       gap: "6px",
-      background: "rgba(34,197,94,0.12)",
-      color: "#4ade80",
-      border: "1px solid rgba(34,197,94,0.3)",
+      background: isDark ? "rgba(34,197,94,0.12)" : "rgba(34,197,94,0.1)",
+      color: isDark ? "#4ade80" : "#16a34a",
+      border: isDark ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(34,197,94,0.2)",
       borderRadius: "20px",
       padding: "3px 12px",
       fontSize: "13px",
@@ -316,9 +318,9 @@ export default function DeviceDashboard() {
       display: "inline-flex",
       alignItems: "center",
       gap: "6px",
-      background: "rgba(239, 68, 68, 0.12)",
-      color: "#f87171",
-      border: "1px solid rgba(239, 68, 68, 0.3)",
+      background: isDark ? "rgba(239,68,68,0.12)" : "rgba(239,68,68,0.1)",
+      color: isDark ? "#f87171" : "#dc2626",
+      border: isDark ? "1px solid rgba(239,68,68,0.3)" : "1px solid rgba(239,68,68,0.2)",
       borderRadius: "20px",
       padding: "3px 12px",
       fontSize: "13px",
@@ -328,25 +330,27 @@ export default function DeviceDashboard() {
       width: "6px",
       height: "6px",
       borderRadius: "50%",
-      background: "#4ade80",
+      background: isDark ? "#4ade80" : "#16a34a",
     },
     statusDotDown: {
       width: "6px",
       height: "6px",
       borderRadius: "50%",
-      background: "#f87171",
+      background: isDark ? "#f87171" : "#dc2626",
     },
     loading: {
       textAlign: "center",
       padding: "40px",
-      color: "#8b95ad",
+      color: isDark ? "#8b95ad" : "#64748b",
     },
     error: {
       textAlign: "center",
       padding: "40px",
-      color: "#f87171",
+      color: isDark ? "#f87171" : "#dc2626",
     },
-  };
+  });
+
+  const styles = getStyles();
 
   const filtered = viewDeviceData.filter((d) =>
     [d.branch, d.host, d.ip, d.user].some((v) =>
@@ -358,7 +362,6 @@ export default function DeviceDashboard() {
     setExpanded(expanded === i ? null : i);
   };
 
-  // Get status style based on agent status
   const getStatusStyle = (status) => {
     if (status?.toLowerCase() === "up") {
       return styles.statusPill;
@@ -373,7 +376,6 @@ export default function DeviceDashboard() {
     return styles.statusDotDown;
   };
 
-  // Get plus button style based on agent status
   const getPlusButtonStyle = (status) => {
     if (status?.toLowerCase() === "up") {
       return styles.plusBtnUp;
@@ -381,9 +383,7 @@ export default function DeviceDashboard() {
     return styles.plusBtnDown;
   };
 
-  // Handle eye button click
   const handleEyeClick = (device) => {
-
     console.log("Eye button clicked for device:", device);
     alert(`Viewing details for device: ${device.host}`);
   };
@@ -399,10 +399,6 @@ export default function DeviceDashboard() {
   return (
     <div style={styles.page}>
       <div style={styles.tabsRow}>
-        {/* <div style={styles.tabBase} onClick={() => setMode("set")}>
-          <Settings size={15} />
-          Set Mode
-        </div> */}
         <div
           style={{
             ...styles.tabBase,
@@ -410,7 +406,7 @@ export default function DeviceDashboard() {
           }}
           onClick={() => setMode("view")}
         >
-          <Eye size={15} />
+          <Eye size={16} />
           View Mode
         </div>
       </div>
@@ -424,7 +420,7 @@ export default function DeviceDashboard() {
             <button style={styles.pillBtn}>CSV</button>
             <button style={styles.pillBtn}>PDF</button>
             <div style={styles.searchWrap}>
-              <Search size={13} color="#7c87a3" />
+              <Search size={13} color={isDark ? "#7c87a3" : "#94a3b8"} />
               <input
                 style={styles.searchInput}
                 placeholder="Search identities"
@@ -446,13 +442,21 @@ export default function DeviceDashboard() {
 
           {/* Data Rows */}
           {filtered.length === 0 ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#8b95ad" }}>
+            <div style={{ padding: "40px", textAlign: "center", color: isDark ? "#8b95ad" : "#94a3b8" }}>
               No devices found
             </div>
           ) : (
             filtered.map((d, i) => (
               <div key={i} style={styles.rowGroup}>
-                <div style={styles.rowCard} onClick={() => toggleExpand(i)}>
+                <div 
+                  style={{
+                    ...styles.rowCard,
+                    ...(expanded === i && {
+                      background: isDark ? "rgba(79,108,247,0.05)" : "rgba(79,108,247,0.03)",
+                    }),
+                  }} 
+                  onClick={() => toggleExpand(i)}
+                >
                   <button 
                     style={getPlusButtonStyle(d.agentStatus)} 
                     title="Toggle details"
@@ -503,18 +507,19 @@ export default function DeviceDashboard() {
                           <button 
                             style={styles.eyeButton}
                             onClick={(e) => {
-                              e.stopPropagation(); // Prevent triggering the parent click
+                              e.stopPropagation();
                               handleEyeClick(d);
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.background = styles.eyeButtonHover.background;
-                              e.currentTarget.style.borderColor = styles.eyeButtonHover.borderColor;
-                              e.currentTarget.style.color = styles.eyeButtonHover.color;
+                              const hoverStyle = styles.eyeButtonHover;
+                              e.currentTarget.style.background = hoverStyle.background;
+                              e.currentTarget.style.borderColor = hoverStyle.borderColor;
+                              e.currentTarget.style.color = hoverStyle.color;
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.background = "transparent";
-                              e.currentTarget.style.borderColor = "#1a2a4a";
-                              e.currentTarget.style.color = "#8b95ad";
+                              e.currentTarget.style.borderColor = isDark ? "#1a2a4a" : "#e2e8f0";
+                              e.currentTarget.style.color = isDark ? "#8b95ad" : "#64748b";
                             }}
                           >
                             <Eye size={18} />
