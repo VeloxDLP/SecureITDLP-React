@@ -309,7 +309,7 @@ function ApplyNetworkPolicy() {
                   </SectionHeader>
                   <div className="flex flex-wrap gap-2">
                     {policyDetails.application.map((item) => (
-                      <Pill key={item} theme="green">{item}</Pill>
+                      <Pill key={item} theme="navy">{item}</Pill>
                     ))}
                   </div>
                 </div>
