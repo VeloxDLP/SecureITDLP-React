@@ -427,6 +427,7 @@ function AddForm({ branches, onAdd }) {
           <Dropdown
             value={form.branch}
             onChange={set('branch')}
+            // onChange={GetDevicesOnBranch(form.branch)}
             options={branchOptions}
             placeholder="Select Branch"
             searchable
@@ -503,6 +504,12 @@ function AddForm({ branches, onAdd }) {
     </GlassCard>
   )
 }
+
+// function GetDevicesOnBranch(branch){
+//   alert("selcted Branch is "+branch);
+// }
+
+
 
 /* ─────────────────────────────────────────────────────────────
    POLICY TABLE
