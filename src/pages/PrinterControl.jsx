@@ -341,7 +341,13 @@ function GlassCard({ children, className = '' }) {
 /* ─────────────────────────────────────────────────────────────
    ADD FORM
 ───────────────────────────────────────────────────────────── */
-function AddForm({ onAdd }) {
+function AddForm({ branches, onAdd }) {
+
+  const branchOptions = branches.map(branch => ({
+        value: branch,
+        label: branch
+    }));
+    
   const { isDark } = useTheme()
   const [form, setForm] = useState({ branch: '', device: '', printerType: '', mode: '' })
   const [submitted, setSubmitted] = useState(false)
@@ -350,7 +356,7 @@ function AddForm({ onAdd }) {
   const set = k => v =>
     setForm(f => ({ ...f, [k]: v, ...(k === 'branch' ? { device: '' } : {}) }))
 
-  const branchOptions = BRANCHES.map(b => ({ value: String(b.id), label: b.name }))
+  // const branchOptions = BRANCHES.map(b => ({ value: String(b.id), label: b.name }))
   const deviceOptions = form.branch ? (DEVICES_BY_BRANCH[Number(form.branch)] || []) : []
   const modeOptions = [
     { value: 'Allow', label: 'Allow' },
@@ -761,7 +767,7 @@ export default function PrinterControl() {
 
       <TabBar active={tab} onChange={setTab} />
 
-      {tab === 'add' && <AddForm onAdd={p => { handleAdd(p); setTab('view') }} />}
+      {tab === 'add' && <AddForm branches={branches} onAdd={p => { handleAdd(p); setTab('view') }} />}
       {tab === 'view' && <PolicyTable policies={policies} onDelete={handleDelete} />}
     </div>
   )
