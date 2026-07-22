@@ -211,7 +211,7 @@ function ApplyNetworkPolicy() {
                 onClick={() => handlePolicySelect(policy.id)}
               >
                 {/* Radio Button */}
-                <div className="flex-shrink-0">
+                {/* <div className="flex-shrink-0">
                   <input
                     type="radio"
                     name="policy"
@@ -223,7 +223,7 @@ function ApplyNetworkPolicy() {
                         : 'accent-blue-600'
                     }`}
                   />
-                </div>
+                </div> */}
                 
                 <div className="flex-1">
                   <h3 className={`text-base font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
@@ -393,7 +393,7 @@ function ApplyNetworkPolicy() {
                     }`}
                     onClick={() => handleBranchSelect(b.id)}
                   >
-                    <input
+                    {/* <input
                       type="radio"
                       name="branch"
                       checked={selectedBranch === b.id}
@@ -403,7 +403,7 @@ function ApplyNetworkPolicy() {
                           ? 'accent-[#5A7BFF] bg-[#0b1220] border-[#2d3748]'
                           : 'accent-blue-600'
                       }`}
-                    />
+                    /> */}
                     <Building2 size={14} className={`flex-shrink-0 ${
                       selectedBranch === b.id 
                         ? isDark ? 'text-[#5A7BFF]' : 'text-blue-600'

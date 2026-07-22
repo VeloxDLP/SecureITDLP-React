@@ -16,7 +16,7 @@ const NAV = [
   // { label: 'App Whitelisting', icon: ShieldCheck, path: '/whitelisting' },
   // { label: 'App Blacklisting', icon: ShieldOff, path: '/blacklisting' },
   { label: 'USB Protection', icon: Usb, path: '/usb' },
-  { label: 'Network DLP', icon: Globe, path: '/web' },
+  { label: 'Website Control', icon: Globe, path: '/web' },
   // { label: 'Self Protection',         icon: Lock,            path: '/self-protection' },
   { label: 'Printer Control', icon: Shield, path: '/PrinterControl' },
   { label: 'Data Classification', icon: ScanSearch, path: '/scan' },

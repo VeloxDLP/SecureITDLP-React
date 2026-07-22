@@ -235,6 +235,62 @@ const CreateNetworkPolicy = () => {
     }
   };
 
+  // Small pill used across the Summary cards
+  const Pill = ({ children, tone = "slate" }) => {
+    const tones = {
+      slate:
+        "bg-slate-100 text-slate-600 border-slate-200 dark:bg-[#1a2744] dark:text-gray-300 dark:border-[#2d3748]",
+      blue:
+        "bg-blue-50 text-blue-600 border-blue-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
+      green:
+        "bg-green-50 text-green-600 border-green-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
+      orange:
+        "bg-orange-50 text-orange-600 border-orange-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
+      pink:
+        "bg-pink-50 text-pink-600 border-pink-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#1a2744]",
+      purple:
+        "bg-purple-50 text-purple-600 border-purple-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
+    };
+    return (
+      <span
+        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${tones[tone]}`}
+      >
+        {children}
+      </span>
+    );
+  };
+
+  // Row with a label on the left and pills (or empty state) on the right
+  const SummaryRow = ({ label, values, tone, emptyText = "Not specified" }) => (
+    <div className="flex items-start justify-between gap-6 py-1.5">
+      <span className="text-sm text-slate-400 dark:text-gray-500 whitespace-nowrap pt-0.5">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-1.5 justify-end">
+        {values && values.length > 0 ? (
+          values.map((v, i) => (
+            <Pill key={i} tone={tone}>
+              {v}
+            </Pill>
+          ))
+        ) : (
+          <span className="text-sm text-slate-500 dark:text-gray-500">{emptyText}</span>
+        )}
+      </div>
+    </div>
+  );
+
+  // Compact card with icon and title
+  const SummaryCard = ({ icon: Icon, title, children }) => (
+    <div className="rounded-lg p-3 border bg-white border-slate-200 dark:bg-[#0b1220] dark:border-[#1a2a4a]">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon size={14} className="text-blue-600 dark:text-[#5A7BFF]" />
+        <h5 className="text-sm font-medium text-slate-700 dark:text-gray-200">{title}</h5>
+      </div>
+      <div className="space-y-0.5">{children}</div>
+    </div>
+  );
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
@@ -431,7 +487,9 @@ const CreateNetworkPolicy = () => {
                           onClick={() => removeKeyword(index)}
                           className="text-slate-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition ml-1"
                         >
-                          <X size={14} />
+                          <X size={14
+                            
+                          } />
                         </button>
                       </div>
                     ))}
@@ -624,115 +682,48 @@ const CreateNetworkPolicy = () => {
 
       case 6:
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className={`rounded-lg p-4 border transition-all ${
-                (policyName || description)
-                  // ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
-                  // : 'bg-slate-50 border-slate-200 dark:bg-[#0b1220] dark:border-[#333e52]'
-              }`}>
-                <h5 className="text-sm font-medium text-slate-500 dark:text-gray-400 mb-3">General Information</h5>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-slate-400 dark:text-gray-500">Policy Name</span>
-                    <span className={`text-sm ${policyName ? 'text-blue-600 dark:text-[#5A7BFF]' : 'text-slate-700 dark:text-gray-200'}`}>
-                      {policyName || "Not specified"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-slate-400 dark:text-gray-500">Description</span>
-                    <span className={`text-sm ${description ? 'text-blue-600 dark:text-[#5A7BFF]' : 'text-slate-700 dark:text-gray-200'}`}>
-                      {description || "Not specified"}
-                    </span>
-                  </div>
-                </div>
-              </div>
+          <div className="space-y-3">
+            {/* Summary Header */}
+            {/* <div className="bg-blue-50 border border-blue-200 dark:bg-[#0f1f3d] dark:border-[#1a3a6a] rounded-lg px-4 py-2.5 flex items-center gap-2">
+              <ClipboardCheck size={16} className="text-blue-600 dark:text-[#5A7BFF]" />
+              <h4 className="text-sm font-medium text-blue-700 dark:text-[#5A7BFF]">
+                Review all the details before creating the policy
+              </h4>
+            </div> */}
 
-              <div className={`rounded-lg p-4 border transition-all ${
-                selectedFileTypes.length > 0
-                  ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
-                  : 'bg-slate-50 border-slate-200 dark:bg-[#0b1220] dark:border-[#2d3748]'
-              }`}>
-                <h5 className="text-sm font-medium text-slate-500 dark:text-gray-400 mb-3">File Type</h5>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-slate-400 dark:text-gray-500">File Types</span>
-                    <span className={`text-sm ${selectedFileTypes.length > 0 ? 'text-blue-600 dark:text-[#5A7BFF]' : 'text-slate-700 dark:text-gray-200'}`}>
-                      {selectedFileTypes.length > 0 ? selectedFileTypes.join(", ") : "Not specified"}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            {/* Compact Grid */}
+            <div className="grid grid-cols-3 gap-3">
+              {/* General Information */}
+              <SummaryCard icon={Info} title="General Information">
+                <SummaryRow label="Policy Name" values={policyName ? [policyName] : []} tone="blue" />
+                <SummaryRow label="Description" values={description ? [description] : []} tone="blue" />
+              </SummaryCard>
 
-              <div className={`rounded-lg p-4 border transition-all ${
-                selectedApplications.length > 0
-                  ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
-                  : 'bg-slate-50 border-slate-200 dark:bg-[#0b1220] dark:border-[#2d3748]'
-              }`}>
-                <h5 className="text-sm font-medium text-slate-500 dark:text-gray-400 mb-3">Applications</h5>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-slate-400 dark:text-gray-500">Applications</span>
-                    <span className={`text-sm ${selectedApplications.length > 0 ? 'text-blue-600 dark:text-[#5A7BFF]' : 'text-slate-700 dark:text-gray-200'}`}>
-                      {selectedApplications.length > 0 ? selectedApplications.join(", ") : "Not specified"}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              {/* File Type */}
+              <SummaryCard icon={File} title="File Type">
+                <SummaryRow label="" values={selectedFileTypes} tone="blue" />
+              </SummaryCard>
 
-              <div className={`rounded-lg p-4 border transition-all ${
-                (keywords.length > 0 || regularExpressions.length > 0)
-                  ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
-                  : 'bg-slate-50 border-slate-200 dark:bg-[#0b1220] dark:border-[#2d3748]'
-              }`}>
-                <h5 className="text-sm font-medium text-slate-500 dark:text-gray-400 mb-3">Policy Condition</h5>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-slate-400 dark:text-gray-500">Keywords</span>
-                    <span className={`text-sm ${keywords.length > 0 ? 'text-blue-600 dark:text-[#5A7BFF]' : 'text-slate-700 dark:text-gray-200'}`}>
-                      {keywords.length > 0 ? keywords.join(", ") : "None"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-slate-400 dark:text-gray-500">Regular Expressions</span>
-                    <span className={`text-sm ${regularExpressions.length > 0 ? 'text-blue-600 dark:text-[#5A7BFF]' : 'text-slate-700 dark:text-gray-200'}`}>
-                      {regularExpressions.length > 0 ? regularExpressions.join(", ") : "None"}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              {/* Applications */}
+              <SummaryCard icon={FolderOpen} title="Applications">
+                <SummaryRow label="" values={selectedApplications} tone="green" />
+              </SummaryCard>
 
-              <div className={`rounded-lg p-4 border transition-all ${
-                selectedChannels.length > 0
-                  ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
-                  : 'bg-slate-50 border-slate-200 dark:bg-[#0b1220] dark:border-[#2d3748]'
-              }`}>
-                <h5 className="text-sm font-medium text-slate-500 dark:text-gray-400 mb-3">Channel Control</h5>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-slate-400 dark:text-gray-500">Channels</span>
-                    <span className={`text-sm ${selectedChannels.length > 0 ? 'text-blue-600 dark:text-[#5A7BFF]' : 'text-slate-700 dark:text-gray-200'}`}>
-                      {selectedChannels.length > 0 ? selectedChannels.join(", ") : "Not specified"}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              {/* Policy Condition */}
+              <SummaryCard icon={FileCode} title="Policy Condition">
+                <SummaryRow label="Keywords" values={keywords} tone="orange" emptyText="None" />
+                <SummaryRow label="Regular Expressions" values={regularExpressions} tone="orange" emptyText="None" />
+              </SummaryCard>
 
-              <div className={`rounded-lg p-4 border transition-all ${
-                selectedSeverityLevels.length > 0
-                  ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
-                  : 'bg-slate-50 border-slate-200 dark:bg-[#0b1220] dark:border-[#2d3748]'
-              }`}>
-                <h5 className="text-sm font-medium text-slate-500 dark:text-gray-400 mb-3">Severity Levels</h5>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-slate-400 dark:text-gray-500">Severity Levels</span>
-                    <span className={`text-sm ${selectedSeverityLevels.length > 0 ? 'text-blue-600 dark:text-[#5A7BFF]' : 'text-slate-700 dark:text-gray-200'}`}>
-                      {selectedSeverityLevels.length > 0 ? selectedSeverityLevels.join(", ") : "Not specified"}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              {/* Channels */}
+              <SummaryCard icon={Clock3} title="Channels">
+                <SummaryRow label="" values={selectedChannels} tone="pink" />
+              </SummaryCard>
+
+              {/* Severity Levels */}
+              <SummaryCard icon={Shield} title="Severity Levels">
+                <SummaryRow label="" values={selectedSeverityLevels} tone="purple" />
+              </SummaryCard>
             </div>
           </div>
         );
@@ -814,11 +805,11 @@ const CreateNetworkPolicy = () => {
 
       {/* ===================== STEP CONTENT CARD ===================== */}
 
-      <div className="bg-white border border-slate-200 text-slate-800 dark:bg-[#020617] dark:border-[#1a2a4a] dark:text-white rounded-xl p-6">
+      <div className="bg-white border border-slate-200 text-slate-800 dark:bg-[#020617] dark:border-[#1a2a4a] dark:text-white rounded-xl p-4">
 
         {/* Heading */}
 
-        <div className="flex items-start gap-3 mb-8">
+        <div className="flex items-start gap-2 mb-4">
 
           <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-[#243b6b] flex items-center justify-center">
             <Settings2 size={16} className="text-blue-600 dark:text-[#82a5ff]" />
