@@ -21,6 +21,7 @@ const NAV = [
   { label: 'Printer Control', icon: Shield, path: '/PrinterControl' },
   { label: 'Data Classification', icon: ScanSearch, path: '/scan' },
   { label: 'Drive Control', icon: FolderSearch, path: '/remediation' },
+  { label: ' Active Policy', icon: FolderSearch, path: '/ActivePolicy' },
   { label: ' Create Network Policy', icon: FolderSearch, path: '/NetworkPolicy' },
     { label: ' Apply Network Policy', icon: FolderSearch, path: '/ApplyNetworkPolicy' },
     { label: 'View Devices', icon: Monitor, path: '/devices' },

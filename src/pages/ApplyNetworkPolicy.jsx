@@ -45,49 +45,49 @@ function ApplyNetworkPolicy() {
     },
     {
       id: 2,
-      name: "Farewell Policy",
+      name: "Security Policy",
       description:
         "Configure policy, source, destination, control, details.",
     },
     {
       id: 3,
-      name: "Farewell Policy",
+      name: "Network Policy",
       description:
         "Configure policy, source, destination, control, details.",
     },
     {
       id: 4,
-      name: "Farewell Policy",
+      name: "Access Policy",
       description:
         "Configure policy, source, destination, control, details.",
     },
     {
       id: 5,
-      name: "Farewell Policy",
+      name: "Compliance Policy",
       description:
         "Configure policy, source, destination, control, details.",
     },
     {
       id: 6,
-      name: "Farewell Policy",
+      name: "Data Policy",
       description:
         "Configure policy, source, destination, control, details.",
     },
     {
       id: 7,
-      name: "Farewell Policy",
+      name: "Application Policy",
       description:
         "Configure policy, source, destination, control, details.",
     },
     {
       id: 8,
-      name: "Farewell Policy",
+      name: "Firewall Policy",
       description:
         "Configure policy, source, destination, control, details.",
     },
     {
       id: 9,
-      name: "Farewell Policy",
+      name: "Backup Policy",
       description:
         "Configure policy, source, destination, control, details.",
     },
@@ -199,7 +199,7 @@ function ApplyNetworkPolicy() {
             {policies.map((policy) => (
               <div
                 key={policy.id}
-                className={`flex cursor-pointer items-center justify-between rounded-lg border p-4 transition ${
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
                   selectedPolicy === policy.id
                     ? isDark 
                       ? "bg-[#1a2744] border-[#5A7BFF]"
@@ -210,6 +210,21 @@ function ApplyNetworkPolicy() {
                 }`}
                 onClick={() => handlePolicySelect(policy.id)}
               >
+                {/* Radio Button */}
+                <div className="flex-shrink-0">
+                  <input
+                    type="radio"
+                    name="policy"
+                    checked={selectedPolicy === policy.id}
+                    onChange={() => handlePolicySelect(policy.id)}
+                    className={`w-4 h-4 cursor-pointer ${
+                      isDark 
+                        ? 'accent-[#5A7BFF] bg-[#0b1220] border-[#2d3748]'
+                        : 'accent-blue-600'
+                    }`}
+                  />
+                </div>
+                
                 <div className="flex-1">
                   <h3 className={`text-base font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
                     {policy.name}
@@ -244,7 +259,7 @@ function ApplyNetworkPolicy() {
                 </div>
                 <div>
                   <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                    Farewell Policy
+                    {policies.find(p => p.id === selectedPolicy)?.name || "Farewell Policy"}
                   </h2>
                   <p className={`mt-0.5 text-xs ${isDark ? 'text-[#8C93A8]' : 'text-slate-500'}`}>
                     Configure policy, source, destination, control, details.
@@ -347,7 +362,7 @@ function ApplyNetworkPolicy() {
 
           {/* Branch Selection & Endpoints */}
           <div className="flex gap-3">
-            {/* Branch Selection - with highlight like policies */}
+            {/* Branch Selection - with radio buttons */}
             <div
               className={`w-[200px] flex-shrink-0 rounded-xl border p-4 flex flex-col ${
                 isDark 
@@ -367,7 +382,7 @@ function ApplyNetworkPolicy() {
                 {branches.map((b) => (
                   <div
                     key={b.id}
-                    className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2 transition ${
+                    className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 transition ${
                       selectedBranch === b.id
                         ? isDark 
                           ? "bg-[#1a2744] border-[#5A7BFF]"
@@ -378,16 +393,25 @@ function ApplyNetworkPolicy() {
                     }`}
                     onClick={() => handleBranchSelect(b.id)}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Building2 size={14} className={`flex-shrink-0 ${
-                        selectedBranch === b.id 
-                          ? isDark ? 'text-[#5A7BFF]' : 'text-blue-600'
-                          : isDark ? 'text-[#8C93A8]' : 'text-slate-400'
-                      }`} />
-                      <span className={`text-xs ${isDark ? 'text-white' : 'text-slate-700'}`}>
-                        {b.label}
-                      </span>
-                    </div>
+                    <input
+                      type="radio"
+                      name="branch"
+                      checked={selectedBranch === b.id}
+                      onChange={() => handleBranchSelect(b.id)}
+                      className={`w-3.5 h-3.5 cursor-pointer flex-shrink-0 ${
+                        isDark 
+                          ? 'accent-[#5A7BFF] bg-[#0b1220] border-[#2d3748]'
+                          : 'accent-blue-600'
+                      }`}
+                    />
+                    <Building2 size={14} className={`flex-shrink-0 ${
+                      selectedBranch === b.id 
+                        ? isDark ? 'text-[#5A7BFF]' : 'text-blue-600'
+                        : isDark ? 'text-[#8C93A8]' : 'text-slate-400'
+                    }`} />
+                    <span className={`text-xs ${isDark ? 'text-white' : 'text-slate-700'}`}>
+                      {b.label}
+                    </span>
                   </div>
                 ))}
               </div>

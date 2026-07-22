@@ -10,6 +10,7 @@ import UsbProtection from './pages/Usbprotection.jsx'
 import WebsiteProtection from './pages/WebsiteProtection.jsx'
 import DLPSecurityDiagram from './pages/DLPSecurityDiagram.jsx'
 import PrinterControl from './pages/PrinterControl.jsx'
+import ActivePolicy from './pages/NetworkPolicy/ActivePolicy.jsx'
 import NetworkPolicy from './pages/NetworkPolicy/NetworkPolicy.jsx'
 import PublicRoute from './routes/PublicRoute.jsx'
 import ViewDevice from './pages/ViewDevice/ViewDevice.jsx'
@@ -59,7 +60,8 @@ function AppRoutes() {
         <Route path="web"             element={<WebsiteProtection />} />
         <Route path="self-protection" element={<PlaceholderPage title="Self Protection" />} />
         <Route path="PrinterControl"           element={<PrinterControl />} />
-          <Route path="NetworkPolicy"           element={<NetworkPolicy />} />
+          <Route path="ActivePolicy"           element={<ActivePolicy />} />
+           <Route path="NetworkPolicy"           element={<NetworkPolicy />} />
            <Route path="ApplyNetworkPolicy"           element={<ApplyNetworkPolicy></ApplyNetworkPolicy>} />
         <Route path="scan"            element={<PlaceholderPage title="Active Scan & Detection" />} />
         <Route path="remediation"     element={<PlaceholderPage title="File Remediation" />} />

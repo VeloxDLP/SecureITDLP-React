@@ -78,20 +78,28 @@ const CreateNetworkPolicy = () => {
     { name: "Doc", description: "Legacy Word document", icon: File },
     { name: "Pdf", description: "Portable document format", icon: File },
     { name: "Csv", description: "Comma separated values", icon: FileCode },
-    { name: "Excel", description: "Spreadsheet workbook", icon: FileSpreadsheet },
+    { name: "Excel", description: " Worksheet cell data", icon: FileSpreadsheet },
     { name: "Zip", description: "Compressed archive", icon: FileArchive },
+      { name: "7z", description: " A Highly Compressed", icon: FileArchive },
+       { name: "RAR", description: " To Bundle Multiple Files ", icon: FileArchive },
+        { name: "XLS", description: "Microsoft Excel documents", icon: FileSpreadsheet },
+
   ];
 
   const applicationGroups = [
-    { name: "Google", description: "Google Search browser", icon: "🌐" },
-    { name: "Chrome", description: "Chromium-based browser", icon: "🌐" },
-    { name: "Firefox", description: "Mozilla Firefox browser", icon: "🌐" },
+    { name: "Chrome", description: "Google Search browser", icon: "🌐" },
+    { name: "FireFox", description: "Mozilla Firefox browser", icon: "🌐" },
+    { name: "Safari", description: "a web browser developed by Apple", icon: "🌐" },
+      { name: "Iexplore", description: "Microsoft cloud storage", icon: "🌐" },
+    { name: "Brave", description: "Microsoft Edge browser", icon: "🌐" },
+     { name: "Vivaldi", description: "Microsoft cloud storage", icon: "🌐" },
     { name: "Edge", description: "Microsoft Edge browser", icon: "🌐" },
-    { name: "Excel", description: "Microsoft spreadsheet app", icon: "🌐" },
-    { name: "Word", description: "Microsoft Word processor", icon: "🌐" },
-    { name: "Outlook", description: "Microsoft email client", icon: "🌐" },
-    { name: "Google Drive", description: "Cloud file storage", icon: "🌐" },
-    { name: "OneDrive", description: "Microsoft cloud storage", icon: "🌐" }
+    { name: "Opera", description: "Microsoft Word processor", icon: "🌐" },
+    { name: "WinSCP", description: "Cloud file storage", icon: "🌐" },
+    { name: "Coreftp", description: "Microsoft cloud storage", icon: "🌐" },
+     { name: "Cyberduck", description: "Microsoft cloud storage", icon: "🌐" },
+    { name: "FileZilla", description: "Microsoft email client", icon: "🌐" },
+               
   ];
 
   const channelControls = [
@@ -735,7 +743,7 @@ const CreateNetworkPolicy = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 space-y-6 bg-slate-50 dark:bg-[#0a0a1a]">
+    <div className="min-h-screen p-6 space-y-6">
 
       {/* ===================== STEP HEADER WITH PROGRESS BAR ===================== */}
       <div className="w-full bg-white border border-slate-200 text-slate-800 dark:bg-[#020617] dark:border-[#2d2e30] dark:text-white rounded-xl p-6">
