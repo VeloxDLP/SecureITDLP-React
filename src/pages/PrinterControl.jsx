@@ -352,12 +352,16 @@ function AddForm({ branches, onAdd }) {
   const [form, setForm] = useState({ branch: '', device: '', printerType: '', mode: '' })
   const [submitted, setSubmitted] = useState(false)
   const [success, setSuccess] = useState(false)
-
+  const [fetchedDevices, setFetchedDevices] = useState([]);
   const set = k => v =>
     setForm(f => ({ ...f, [k]: v, ...(k === 'branch' ? { device: '' } : {}) }))
 
   // const branchOptions = BRANCHES.map(b => ({ value: String(b.id), label: b.name }))
-  const deviceOptions = form.branch ? (DEVICES_BY_BRANCH[Number(form.branch)] || []) : []
+  // const deviceOptions = form.branch ? (DEVICES_BY_BRANCH[Number(form.branch)] || []) : []
+  const deviceOptions = (fetchedDevices || []).map(device => ({
+    value: device,
+    label: device
+}));
   const modeOptions = [
     { value: 'Allow', label: 'Allow' },
     { value: 'Prevent', label: 'Prevent' },
@@ -415,6 +419,20 @@ function AddForm({ branches, onAdd }) {
   const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5
                     ${isDark ? 'text-slate-500' : 'text-slate-400'}`
 
+
+  const handleBranchChange = async(branch)=>{
+  // alert("User selected branch "+branch)
+       setForm(f => ({
+        ...f,
+        branch,
+        device: ""
+    }));
+
+    const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch);
+    setFetchedDevices(DevicesOfBranches.data);
+    alert("Received devices "+DevicesOfBranches.data);
+}                  
+
   return (
     <GlassCard className="p-6 mb-5">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
@@ -426,8 +444,7 @@ function AddForm({ branches, onAdd }) {
           </label>
           <Dropdown
             value={form.branch}
-            onChange={set('branch')}
-            // onChange={GetDevicesOnBranch(form.branch)}
+            onChange={handleBranchChange}
             options={branchOptions}
             placeholder="Select Branch"
             searchable
@@ -453,7 +470,7 @@ function AddForm({ branches, onAdd }) {
         </div>
 
         {/* Printer Type */}
-        <div>
+        {/* <div>
           <label className={labelCls}>
             Device Type <span className="text-rose-500 normal-case tracking-normal">*</span>
           </label>
@@ -465,7 +482,7 @@ function AddForm({ branches, onAdd }) {
             error={submitted && !form.printerType}
           />
           {submitted && !form.printerType && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
-        </div>
+        </div> */}
 
         {/* Mode */}
         <div>
@@ -504,11 +521,6 @@ function AddForm({ branches, onAdd }) {
     </GlassCard>
   )
 }
-
-// function GetDevicesOnBranch(branch){
-//   alert("selcted Branch is "+branch);
-// }
-
 
 
 /* ─────────────────────────────────────────────────────────────
@@ -716,7 +728,7 @@ export default function PrinterControl() {
   const loadPageData = async () => {
   
       const [ALLBranch] = await Promise.all([
-        dashboardService.getBranch()
+        dashboardService.getBranch(),
         
       ]);
       console.log("All Branches Fetched ", ALLBranch.data);
@@ -728,6 +740,7 @@ export default function PrinterControl() {
     loadPageData();
   }, []);
 
+  
 
 
   const handleDelete = id => setPolicies(prev => prev.filter(p => p.id !== id))
