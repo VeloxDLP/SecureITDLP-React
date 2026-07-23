@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useSidebar } from '../../context/SidebarContext'
@@ -21,9 +21,28 @@ const NAV = [
   { label: 'Printer Control', icon: Shield, path: '/PrinterControl' },
   { label: 'Data Classification', icon: ScanSearch, path: '/scan' },
   { label: 'Drive Control', icon: FolderSearch, path: '/remediation' },
-  { label: ' Active Policy', icon: FolderSearch, path: '/ActivePolicy' },
-  { label: ' Create Network Policy', icon: FolderSearch, path: '/NetworkPolicy' },
-    { label: ' Apply Network Policy', icon: FolderSearch, path: '/ApplyNetworkPolicy' },
+{
+  label: 'Network Policy',
+  icon: FolderSearch,
+  children: [
+     {
+      label: 'Create Network Policy',
+      icon: FolderSearch,
+      path: '/NetworkPolicy',
+    },
+     {
+      label: 'Apply Network Policy',
+      icon: FolderSearch,
+      path: '/ApplyNetworkPolicy',
+    },
+    {
+      label: 'Active Policy',
+      icon: FolderSearch,
+      path: '/ActivePolicy',
+    },
+   
+  ],
+},
     { label: 'View Devices', icon: Monitor, path: '/devices' },
   // { label: 'Policy Roll Back',        icon: RotateCcw,       path: '/rollback' },
 ]
@@ -36,48 +55,77 @@ const INACTIVE = `
 `
 
 function NavItem({ item, collapsed }) {
-  const Icon = item.icon
+  const Icon = item.icon;
+  const [open, setOpen] = useState(false);
+
+  // Parent menu with children
+  if (item.children) {
+    return (
+      <div className="mx-2">
+        <button
+          onClick={() => setOpen(!open)}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-xl
+                     text-[13px] font-medium text-[#888]
+                     hover:text-[#e0e0e0] hover:bg-white/[0.06]"
+        >
+          <div className="flex items-center gap-3">
+            <Icon size={16} />
+            {!collapsed && <span>{item.label}</span>}
+          </div>
+
+          {!collapsed && (
+            <ChevronRight
+              size={14}
+              className={`transition-transform ${
+                open ? "rotate-90" : ""
+              }`}
+            />
+          )}
+        </button>
+
+        {!collapsed && open && (
+          <div className="ml-6 mt-1 flex flex-col gap-1">
+            {item.children.map((child) => {
+              const ChildIcon = child.icon;
+
+              return (
+                <NavLink
+                  key={child.label}
+                  to={child.path}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px]
+                    ${
+                      isActive
+                        ? "bg-[#7094ff] text-white"
+                        : "text-[#888] hover:text-[#e0e0e0] hover:bg-white/[0.06]"
+                    }`
+                  }
+                >
+                  <ChildIcon size={14} />
+                  <span>{child.label}</span>
+                </NavLink>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Normal menu item
   return (
     <NavLink
       to={item.path}
       className={({ isActive }) =>
         `relative group flex items-center gap-3 ml-2 mr-5 px-3 py-2 rounded-xl
-         text-[13px] font-medium transition-all duration-200 cursor-pointer
-         ${isActive ? ACTIVE : INACTIVE}`
+        text-[13px] font-medium transition-all duration-200
+        ${isActive ? ACTIVE : INACTIVE}`
       }
     >
-      {({ isActive }) => (
-        <>
-          {isActive && !collapsed && (
-            <span className="absolute left-0 top-1/2 -translate-y-1/2
-                             w-[3px] h-5 bg-white/40 rounded-r-full" />
-          )}
-          <Icon size={16} className={`flex-shrink-0 transition-transform duration-200
-                                       ${isActive ? 'scale-110' : 'group-hover:scale-105'}`} />
-          <span className={`nav-label ${collapsed ? 'nav-label-hidden' : 'nav-label-visible'}`}>
-            {item.label}
-          </span>
-
-          {/* Collapsed pill tooltip */}
-          {collapsed && (
-            <span className="
-              pointer-events-none absolute left-full ml-3 z-[200]
-              flex items-center gap-1.5 px-2.5 py-1 rounded-lg
-              text-[12px] font-semibold whitespace-nowrap
-              opacity-0 -translate-x-1 scale-95
-              group-hover:opacity-100 group-hover:translate-x-0 group-hover:scale-100
-              transition-all duration-150 ease-out shadow-xl
-              bg-[#2a2a2a] text-[#e0e0e0] border border-white/[0.08]
-            ">
-              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0
-                                ${isActive ? 'bg-[#7094ff]' : 'bg-[#555]'}`} />
-              {item.label}
-            </span>
-          )}
-        </>
-      )}
+      <Icon size={16} />
+      {!collapsed && <span>{item.label}</span>}
     </NavLink>
-  )
+  );
 }
 
 function FooterBtn({ icon: Icon, label, collapsed, onClick, danger }) {
