@@ -34,6 +34,7 @@ export const API_ENDPOINTS = {
 VIEWDEVICE:{
     VIEW_DEVICE:"/DeviceManager/allDevices",
     GET_BRANCH:"/UsbProtection/getBranches",
+    GET_DEVICES_ON_BRANCH:"/UsbProtection/devices",
     GET_MODEACESS:"/UsbProtection/modeAccessCount",
     GET_DEVICEDETAIL:"/UsbProtection/deviceDetails",
     GET_DEVICENAME:"/UsbProtection/devices"
@@ -59,7 +60,7 @@ VIEWDEVICE:{
   },
 
   USB: {
-    POLICIES: "/usb/policies",
+    POLICIES: "/UsbProtection/deviceDetails",
     LOGS: "/usb/logs",
     BLOCK: (deviceId) => `/usb/${deviceId}/block`,
   },
