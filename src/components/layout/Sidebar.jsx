@@ -7,44 +7,84 @@ import {
   LayoutDashboard, Monitor, AppWindow, ShieldCheck, ShieldOff,
   Usb, Globe, Lock, Shield, ScanSearch, FolderSearch, RotateCcw,
   ChevronRight, ChevronLeft, LogOut, Settings,
+  ClipboardMinus,
 } from 'lucide-react'
 
+// Define navigation with role-based access
 const NAV = [
-  { label: 'Dashboards', icon: LayoutDashboard, path: '/dashboard' },
-  // { label: 'View Devices', icon: Monitor, path: '/devices' },
-  { label: 'Application Control', icon: AppWindow, path: '/app-control' },
-  // { label: 'App Whitelisting', icon: ShieldCheck, path: '/whitelisting' },
-  // { label: 'App Blacklisting', icon: ShieldOff, path: '/blacklisting' },
-  { label: 'USB Protection', icon: Usb, path: '/usb' },
-  { label: 'Website Control', icon: Globe, path: '/web' },
-  // { label: 'Self Protection',         icon: Lock,            path: '/self-protection' },
-  { label: 'Printer Control', icon: Shield, path: '/PrinterControl' },
-  { label: 'Data Classification', icon: ScanSearch, path: '/scan' },
-  { label: 'Drive Control', icon: FolderSearch, path: '/remediation' },
-{
-  label: 'Network Policy',
-  icon: FolderSearch,
-  children: [
-     {
-      label: 'Create Network Policy',
-      icon: FolderSearch,
-      path: '/NetworkPolicy',
-    },
-     {
-      label: 'Apply Network Policy',
-      icon: FolderSearch,
-      path: '/ApplyNetworkPolicy',
-    },
-    {
-      label: 'Active Policy',
-      icon: FolderSearch,
-      path: '/ActivePolicy',
-    },
-   
-  ],
-},
-    { label: 'View Devices', icon: Monitor, path: '/devices' },
-  // { label: 'Policy Roll Back',        icon: RotateCcw,       path: '/rollback' },
+  { 
+    label: 'Dashboards', 
+    icon: LayoutDashboard, 
+    path: '/dashboard',
+    roles: ['admin', 'superadmin'] // Both can see
+  },
+  { 
+    label: 'Application Control', 
+    icon: AppWindow, 
+    path: '/app-control',
+    roles: ['superadmin'] // Only superadmin
+  },
+  { 
+    label: 'USB Protection', 
+    icon: Usb, 
+    path: '/usb',
+    roles: ['superadmin'] // Only superadmin
+  },
+  { 
+    label: 'Website Control', 
+    icon: Globe, 
+    path: '/web',
+    roles: ['superadmin'] // Only superadmin
+  },
+  { 
+    label: 'Printer Control', 
+    icon: Shield, 
+    path: '/PrinterControl',
+    roles: ['superadmin'] // Only superadmin
+  },
+  { 
+    label: 'Data Classification', 
+    icon: ScanSearch, 
+    path: '/scan',
+    roles: ['superadmin'] // Only superadmin
+  },
+  { 
+    label: 'Drive Control', 
+    icon: FolderSearch, 
+    path: '/remediation',
+    roles: ['superadmin'] // Only superadmin
+  },
+  {
+    label: 'Network Policy',
+    icon: FolderSearch,
+    roles: ['superadmin'], // Only superadmin
+    children: [
+      {
+        label: 'Create Network Policy',
+        icon: FolderSearch,
+        path: '/NetworkPolicy',
+        roles: ['superadmin']
+      },
+      {
+        label: 'Apply Network Policy',
+        icon: FolderSearch,
+        path: '/ApplyNetworkPolicy',
+        roles: ['superadmin']
+      },
+      {
+        label: 'Active Policy',
+        icon: FolderSearch,
+        path: '/ActivePolicy',
+        roles: ['superadmin']
+      },
+    ],
+  },
+  { 
+    label: 'View Devices', 
+    icon: Monitor, 
+    path: '/devices',
+    roles: ['admin', 'superadmin'] // Both can see
+  },
 ]
 
 const ACTIVE = 'bg-[#7094ff] text-white shadow-lg shadow-[#7094ff]/20'
@@ -54,12 +94,32 @@ const INACTIVE = `
   dark:text-[#888] dark:hover:text-[#e0e0e0] dark:hover:bg-white/[0.06]
 `
 
-function NavItem({ item, collapsed }) {
+// Helper function to check if user has access
+const hasAccess = (userRole, itemRoles) => {
+  if (!itemRoles) return true // If no roles specified, everyone can see
+  return itemRoles.includes(userRole)
+}
+
+function NavItem({ item, collapsed, userRole }) {
   const Icon = item.icon;
   const [open, setOpen] = useState(false);
 
+  // Check if user has access to this item
+  if (!hasAccess(userRole, item.roles)) {
+    return null;
+  }
+
   // Parent menu with children
   if (item.children) {
+    // Filter children based on role
+    const accessibleChildren = item.children.filter(child => 
+      hasAccess(userRole, child.roles)
+    );
+
+    if (accessibleChildren.length === 0) {
+      return null; // Hide parent if no accessible children
+    }
+
     return (
       <div className="mx-2">
         <button
@@ -85,7 +145,7 @@ function NavItem({ item, collapsed }) {
 
         {!collapsed && open && (
           <div className="ml-6 mt-1 flex flex-col gap-1">
-            {item.children.map((child) => {
+            {accessibleChildren.map((child) => {
               const ChildIcon = child.icon;
 
               return (
@@ -169,7 +229,6 @@ export default function Sidebar() {
   const { isDark } = useTheme()
   const navigate = useNavigate()
 
-  // const handleLogout = () => { logout(); navigate('/login') }
   const handleLogout = async () => {
     try {
       await logout();
@@ -177,6 +236,9 @@ export default function Sidebar() {
       navigate("/login", { replace: true });
     }
   };
+
+  // Get user role (assuming user object has a role property)
+  const userRole = user?.role?.toLowerCase() || 'admin';
 
   return (
     <aside
@@ -191,34 +253,16 @@ export default function Sidebar() {
         overflow: collapsed ? 'visible' : 'hidden',
       }}
     >
-      {/* Toggle row */}
-      {/* <div className={`
-        flex flex-shrink-0 h-10 border-b
-        ${isDark ? 'border-white/[0.06]' : 'border-slate-200'}
-        ${collapsed ? 'justify-center items-center' : 'items-center px-3'}
-      `}>
-        {collapsed ? (
-          <button onClick={toggle} title="Expand sidebar"
-            className="w-8 h-8 rounded-lg flex items-center justify-center
-                       text-[#666] hover:text-[#ccc] hover:bg-white/[0.08]
-                       transition-all duration-150">
-            <ChevronRight size={14} />
-          </button>
-        ) : (
-          <button onClick={toggle} title="Collapse sidebar"
-            className="ml-auto w-8 h-8 rounded-lg flex items-center justify-center
-                       text-[#666] hover:text-[#ccc] hover:bg-white/[0.08]
-                       transition-all duration-150">
-            <ChevronLeft size={14} />
-          </button>
-        )}
-      </div> */}
-
       {/* Nav */}
       <nav className="flex-1 py-3 flex flex-col gap-0.5"
         style={{ overflowY: 'auto', overflow: 'visible' }}>
         {NAV.map(item => (
-          <NavItem key={item.label} item={item} collapsed={collapsed} />
+          <NavItem 
+            key={item.label} 
+            item={item} 
+            collapsed={collapsed}
+            userRole={userRole}
+          />
         ))}
       </nav>
 
@@ -249,6 +293,7 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="flex-shrink-0 py-2">
+          <FooterBtn icon={ClipboardMinus} label="Reports" collapsed={collapsed} />
         <FooterBtn icon={Settings} label="Settings" collapsed={collapsed} />
         <FooterBtn icon={LogOut} label="Logout" collapsed={collapsed} onClick={handleLogout} danger />
 
@@ -259,16 +304,16 @@ export default function Sidebar() {
               : 'bg-slate-50 border-slate-200'}`}>
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7094ff] to-cyan-500
                             flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {user.username[0].toUpperCase()}
+              {user.username?.[0]?.toUpperCase() || 'U'}
             </div>
             <div className="min-w-0">
               <p className={`text-xs font-semibold truncate
                              ${isDark ? 'text-[#e0e0e0]' : 'text-slate-800'}`}>
-                {user.username}
+                {user.username || 'User'}
               </p>
               <p className={`text-[10px] uppercase tracking-wider
                              ${isDark ? 'text-[#555]' : 'text-slate-400'}`}>
-                {user.role}
+                {user.role || 'Admin'}
               </p>
             </div>
           </div>

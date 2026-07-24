@@ -58,7 +58,7 @@ const CreateNetworkPolicy = () => {
   const [regularExpression, setRegularExpression] = useState("");
   const [regularExpressions, setRegularExpressions] = useState([]);
   const [keywords, setKeywords] = useState([]);
-  const [selectedSeverityLevels, setSelectedSeverityLevels] = useState([]);
+  const [selectedSeverityLevel, setSelectedSeverityLevel] = useState(""); // Changed to single selection
 
   const steps = [
     { title: "General Info", icon: FileText },
@@ -175,23 +175,18 @@ const CreateNetworkPolicy = () => {
     }
   };
 
+  // Updated to handle single selection
   const toggleSeverityLevel = (severityName) => {
-    setSelectedSeverityLevels(prev => {
-      if (prev.includes(severityName)) {
-        return prev.filter(name => name !== severityName);
+    setSelectedSeverityLevel(prev => {
+      if (prev === severityName) {
+        return ""; // Deselect if same
       } else {
-        return [...prev, severityName];
+        return severityName; // Select new one
       }
     });
   };
 
-  const selectAllSeverityLevels = () => {
-    if (selectedSeverityLevels.length === severityLevels.length) {
-      setSelectedSeverityLevels([]);
-    } else {
-      setSelectedSeverityLevels(severityLevels.map(level => level.name));
-    }
-  };
+  // Removed selectAllSeverityLevels since it doesn't make sense for single selection
 
   const addRegularExpression = () => {
     if (regularExpression.trim()) {
@@ -229,7 +224,7 @@ const CreateNetworkPolicy = () => {
       case 4:
         return selectedChannels.length > 0;
       case 5:
-        return selectedSeverityLevels.length > 0;
+        return selectedSeverityLevel !== ""; // Updated for single selection
       default:
         return false;
     }
@@ -618,7 +613,7 @@ const CreateNetworkPolicy = () => {
             <div className="grid grid-cols-2 gap-4">
               {severityLevels.map((level) => {
                 const Icon = level.icon;
-                const isSelected = selectedSeverityLevels.includes(level.name);
+                const isSelected = selectedSeverityLevel === level.name;
                 const colorClasses = {
                   red: "border-red-300 bg-red-50 hover:border-red-400 dark:border-red-500/50 dark:bg-red-500/10 dark:hover:border-red-500",
                   orange: "border-orange-300 bg-orange-50 hover:border-orange-400 dark:border-orange-500/50 dark:bg-orange-500/10 dark:hover:border-orange-500",
@@ -720,9 +715,9 @@ const CreateNetworkPolicy = () => {
                 <SummaryRow label="" values={selectedChannels} tone="pink" />
               </SummaryCard>
 
-              {/* Severity Levels */}
-              <SummaryCard icon={Shield} title="Severity Levels">
-                <SummaryRow label="" values={selectedSeverityLevels} tone="purple" />
+              {/* Severity Levels - Updated for single selection */}
+              <SummaryCard icon={Shield} title="Severity Level">
+                <SummaryRow label="" values={selectedSeverityLevel ? [selectedSeverityLevel] : []} tone="purple" emptyText="Not selected" />
               </SummaryCard>
             </div>
           </div>
@@ -826,7 +821,7 @@ const CreateNetworkPolicy = () => {
               {activeStep === 2 && "Choose which applications this DIP policy will monitor for data activity"}
               {activeStep === 3 && "Define policy conditions using keywords and regular expressions"}
               {activeStep === 4 && "Choose which channels this DLP policy will monitor for data activity"}
-              {activeStep === 5 && "Choose severity levels for this DLP policy"}
+              {activeStep === 5 && "Choose one severity level for this DLP policy"}
               {activeStep === 6 && "Review all the details before creating the policy"}
             </p>
           </div>
