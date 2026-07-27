@@ -366,55 +366,75 @@ function AddForm({ branches, onAdd }) {
     { value: 'Allow', label: 'Allow' },
     { value: 'Prevent', label: 'Prevent' },
   ]
-  const isValid = form.branch && form.device && form.printerType && form.mode
+  const isValid = form.branch && form.device && form.mode
+
+  // const handleSubmit = async () => {
+  //   setSubmitted(true)
+  //   if (!isValid) return
+
+  //   const branchName = BRANCHES.find(b => String(b.id) === form.branch)?.name
+
+  //   try {
+  //     await printerApi.post('/api/printer', {
+  //       client: 'NA',
+  //       deviceType: form.printerType.toLowerCase(),
+  //       modeOfAccess: form.mode.toLowerCase(),
+  //       targets: [
+  //         {
+  //           hostName: form.device,
+  //           branch: branchName,
+  //           ipAddress: '192.168.0.44',
+  //         },
+  //       ],
+  //     })
+
+  //     onAdd({ ...form, branchName })
+
+  //     await showAlert({
+  //       icon: 'success',
+  //       title: 'Policy Saved',
+  //       text: `Printer policy for ${form.device} has been added successfully.`,
+  //       timer: 2500,
+  //       timerProgressBar: true,
+  //       showConfirmButton: false,
+  //     })
+
+  //     setSubmitted(false)
+  //     setForm({ branch: '', device: '', printerType: '', mode: '' })
+  //   } catch (err) {
+  //     const message =
+  //       err?.response?.data?.message ||
+  //       err?.message ||
+  //       'Something went wrong. Please try again.'
+
+  //     showAlert({
+  //       icon: 'error',
+  //       title: 'Submission Failed',
+  //       text: message,
+  //       confirmButtonText: 'Retry',
+  //     })
+  //   }
+  // }
 
   const handleSubmit = async () => {
-    setSubmitted(true)
-    if (!isValid) return
 
-    const branchName = BRANCHES.find(b => String(b.id) === form.branch)?.name
+    // console.log("HandleSubmit called");
+    setSubmitted(true);
+    if (!isValid) return;
+    const requestData = {
+        branch: form.branch,
+        device: form.device,
+        mode: form.mode
+    };
+    console.log("Selected Values:", requestData);
+    alert("Selected Data"+requestData);
+    const response = await dashboardService.addPrinterPolicy(requestData);
+   
+    // if(){
 
-    try {
-      await printerApi.post('/api/printer', {
-        client: 'NA',
-        deviceType: form.printerType.toLowerCase(),
-        modeOfAccess: form.mode.toLowerCase(),
-        targets: [
-          {
-            hostName: form.device,
-            branch: branchName,
-            ipAddress: '192.168.0.44',
-          },
-        ],
-      })
+    // }
+}
 
-      onAdd({ ...form, branchName })
-
-      await showAlert({
-        icon: 'success',
-        title: 'Policy Saved',
-        text: `Printer policy for ${form.device} has been added successfully.`,
-        timer: 2500,
-        timerProgressBar: true,
-        showConfirmButton: false,
-      })
-
-      setSubmitted(false)
-      setForm({ branch: '', device: '', printerType: '', mode: '' })
-    } catch (err) {
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Something went wrong. Please try again.'
-
-      showAlert({
-        icon: 'error',
-        title: 'Submission Failed',
-        text: message,
-        confirmButtonText: 'Retry',
-      })
-    }
-  }
 
   const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5
                     ${isDark ? 'text-slate-500' : 'text-slate-400'}`
@@ -430,7 +450,7 @@ function AddForm({ branches, onAdd }) {
 
     const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch);
     setFetchedDevices(DevicesOfBranches.data);
-    alert("Received devices "+DevicesOfBranches.data);
+    // alert("Received devices "+DevicesOfBranches.data);
 }                  
 
   return (
@@ -468,21 +488,6 @@ function AddForm({ branches, onAdd }) {
           />
           {submitted && !form.device && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
-
-        {/* Printer Type */}
-        {/* <div>
-          <label className={labelCls}>
-            Device Type <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
-          <Dropdown
-            value={form.printerType}
-            onChange={set('printerType')}
-            options={PRINTER_TYPES}
-            placeholder="Select Type"
-            error={submitted && !form.printerType}
-          />
-          {submitted && !form.printerType && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
-        </div> */}
 
         {/* Mode */}
         <div>
@@ -534,8 +539,8 @@ function PolicyTable({ policies, onDelete }) {
   const filtered = policies.filter(p => {
     const q = search.toLowerCase()
     return (
-      (!q || p.branch.toLowerCase().includes(q) || p.device.toLowerCase().includes(q)) &&
-      (!filterMode || p.mode === filterMode)
+      (!q || p.branch.toLowerCase().includes(q) || p.ipAddress.toLowerCase().includes(q)) &&
+      (!filterMode || p.allowPrevent === filterMode)
     )
   })
 
@@ -612,9 +617,9 @@ function PolicyTable({ policies, onDelete }) {
                 <th className={thCls}>#</th>
                 <th className={thCls}>Branch</th>
                 <th className={thCls}>Device</th>
-                <th className={thCls}>Printer Type</th>
+                {/* <th className={thCls}>Printer Type</th> */}
                 <th className={thCls}>Mode</th>
-                <th className={thCls}>Added On</th>
+                {/* <th className={thCls}>Added On</th> */}
                 <th className={`${thCls} text-right`}>Action</th>
               </tr>
             </thead>
@@ -630,16 +635,16 @@ function PolicyTable({ policies, onDelete }) {
                   <td className={`${tdCls} text-[11px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{i + 1}</td>
                   <td className={tdCls}>{p.branch}</td>
                   <td className={`${tdCls} font-mono text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {p.device}
+                    {p.ipAddress}
                   </td>
-                  <td className={tdCls}>
+                  {/* <td className={tdCls}>
                     <span className="inline-flex items-center gap-1.5">
                       <Printer size={12} className="text-[#7094ff]" />
                       {p.printerType}
                     </span>
-                  </td>
-                  <td className={tdCls}><Badge mode={p.mode} /></td>
-                  <td className={`${tdCls} ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{p.addedOn}</td>
+                  </td> */}
+                  <td className={tdCls}><Badge mode={p.allowPrevent} /></td>
+                  {/* <td className={`${tdCls} ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{p.addedOn}</td> */}
                   <td className={`${tdCls} text-right`}>
                     <button
                       onClick={() => onDelete(p.id)}
@@ -708,7 +713,8 @@ function TabBar({ active, onChange }) {
 export default function PrinterControl() {
   const { isDark } = useTheme()
   const [tab, setTab] = useState('add')
-  const [policies, setPolicies] = useState(DUMMY_POLICIES)
+  // const [policies, setPolicies] = useState(DUMMY_POLICIES)
+  const [policies, setPolicies] = useState([])
   const [branches, setBranches] = useState([])
 
   const handleAdd = ({ branchName, device, printerType, mode }) => {
@@ -727,12 +733,15 @@ export default function PrinterControl() {
 
   const loadPageData = async () => {
   
-      const [ALLBranch] = await Promise.all([
+      const [ALLBranch,PrinterPolicies] = await Promise.all([
         dashboardService.getBranch(),
+        dashboardService.getPrinterPolicies()
         
       ]);
-      console.log("All Branches Fetched ", ALLBranch.data);
+      console.log("All Policies Fetched ", PrinterPolicies.data);
       setBranches(ALLBranch.data);
+      setPolicies(PrinterPolicies.data);
+
 
     };
 
@@ -777,10 +786,10 @@ export default function PrinterControl() {
         {/* Stats chips */}
         <div className="hidden sm:flex items-center gap-2">
           <GlassButton variant="chip_allow" className="px-3 py-1.5 text-[11px] font-semibold cursor-default">
-            {policies.filter(p => p.mode === 'Allow').length} Allowed
+            {policies.filter(p => p.allowPrevent === 'Allow').length} Allowed
           </GlassButton>
           <GlassButton variant="chip_prevent" className="px-3 py-1.5 text-[11px] font-semibold cursor-default">
-            {policies.filter(p => p.mode === 'Prevent').length} Prevented
+            {policies.filter(p => p.allowPrevent === 'Prevent').length} Prevented
           </GlassButton>
         </div>
       </div>

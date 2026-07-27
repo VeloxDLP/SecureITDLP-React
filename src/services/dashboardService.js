@@ -282,24 +282,27 @@ export const dashboardService = {
     return data;
   },
 
-      getdevicename: async () => {
+  getdevicename: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.VIEWDEVICE.GET_DEVICENAME,
     );
-
     return data;
   },
 
+
+  //[Printer API]
+
+  getPrinterPolicies: async () => {
+    const { data } = await axiosInstance.get(API_ENDPOINTS.PRINTER_CONTROL.ALL_PRINTER_POLICIES,);
+    return data;
+  },
+
+  addPrinterPolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(API_ENDPOINTS.PRINTER_CONTROL.ADD_PRINTER_POLICY,requestData);
+    return data;
+  },
   
   //[Post APIS]//
-
-  //   getDevicesOnbranch: async () => {
-  //   const { data } = await axiosInstance.get(
-  //     API_ENDPOINTS.VIEWDEVICE.GET_DEVICENAME,
-  //   );
-
-  //   return data;
-  // },
 
   getDevicesByBranch: async (branch) => {
   const { data } = await axiosInstance.get(

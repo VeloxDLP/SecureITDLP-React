@@ -223,7 +223,7 @@ export default function PrinterIncidentChart({
                 cy="60"
                 r="40"
                 fill="none"
-                stroke={isDark ? "#2f2f2f" : "#e2e8f0"}
+                stroke={isDark ? "#2f2f2f" : "#23232c"}
                 strokeWidth="8"
               />
 

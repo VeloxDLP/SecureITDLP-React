@@ -40,7 +40,10 @@ VIEWDEVICE:{
     GET_DEVICENAME:"/UsbProtection/devices"
 },
 
-
+PRINTER_CONTROL:{
+  ALL_PRINTER_POLICIES:"/PrinterDLP/getAllPrinterPolicy",
+  ADD_PRINTER_POLICY:"/PrinterDLP/addPrinterPolicy"
+},
 
   DEVICES: {
     LIST: "/devices",
