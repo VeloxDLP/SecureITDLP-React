@@ -8,8 +8,8 @@ export default function LatestIncidents({
   isDark,
 }) {
   const headers = [
-    "IP Address",
-    "Username",
+    "IPAddress",
+    "User",
     "Event Type",
     "File Details",
     "Timestamp",
@@ -26,16 +26,16 @@ export default function LatestIncidents({
   return (
     <>
       <div
-        className="flex items-center justify-between px-4 pt-4 pb-3 border-b"
+        className="flex items-center justify-between px-4  pt-3 pb-3 border-b"
         style={{ borderColor: cardBorder }}
       >
-        <p className="text-[12px] font-semibold dark:text-white/80 text-slate-700">
+        <p className="text-[12px] font-semibold dark:text-white/80 text-slate-800">
           Latest Incidents
         </p>
 
         <div
           className="
-            flex items-center gap-2
+            flex items-center gap-4
             px-3 py-1.5 rounded-lg text-[11px] border
             dark:bg-white/[0.04]
             dark:border-white/[0.08]
@@ -66,7 +66,7 @@ export default function LatestIncidents({
       </div>
 
       <div className="overflow-x-auto overflow-y-auto h-[200px]">
-        <table className="w-full text-[10px]">
+        <table className="w-full text-[9px]">
           <thead>
             <tr style={{ borderBottom: `1px solid ${divider}` }}>
               {headers.map((header) => (
