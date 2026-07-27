@@ -27,7 +27,7 @@ const eventTypeColor = (eventType) => {
 
 export default function MailIncidentChart({
   data = [],
-  growth = "+25%",
+   growth = "+25%",
   isDark = false,
 }) {
   const [showModal, setShowModal] = useState(false);
@@ -234,9 +234,9 @@ export default function MailIncidentChart({
             </BarChart>
           </ResponsiveContainer>
 
-          <div className="text-right text-cyan-400 text-xs">
+          {<div className="text-right text-cyan-400 text-xs">
             {growth} vs Last Week
-          </div>
+          </div> }
         </div>
       </div>
 

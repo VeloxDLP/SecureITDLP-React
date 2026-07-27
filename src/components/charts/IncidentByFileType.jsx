@@ -170,17 +170,17 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
   return (
     <>
       {/* Progress Bars */}
-      <div className="flex flex-col gap-4 mt-2">
+      <div className="flex flex-col gap-0 mt-2">
         {data.map((item) => (
           <div
             key={item.type}
-            className="grid grid-cols-[45px_1fr_50px] items-center gap-3"
+            className="grid grid-cols-[45px_0.9fr_50px] items-center gap-1"
           >
             <span className="text-sm text-slate-500 dark:text-white/50">
               {item.type}
             </span>
             <div
-              className="h-2 rounded-full bg-slate-200 dark:bg-[#071538] overflow-hidden cursor-pointer"
+              className="h-1 rounded-full bg-slate-200 dark:bg-[#071538] overflow-hidden cursor-pointer"
               onClick={() => {
                 setSelectedType(item.type);
                 setSearch("");
@@ -308,8 +308,8 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
                 </div>
 
                 {/* Footer / pagination */}
-                <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-[12px] text-slate-500 dark:text-white/40">
+                <div className="flex shrink-0 flex-col gap-1 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-[10px] text-slate-500 dark:text-white/40">
                     Showing {startRecord}-{endRecord} of {filteredRows.length}
                   </span>
 
@@ -317,7 +317,7 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
                     <select
                       value={pageSize}
                       onChange={(e) => setPageSize(Number(e.target.value))}
-                      className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-[12px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70"
+                      className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-[2px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70"
                     >
                       {[5, 10, 20, 50].map((size) => (
                         <option key={size} value={size}>{size} / page</option>
