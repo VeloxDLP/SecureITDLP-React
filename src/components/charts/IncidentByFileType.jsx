@@ -176,7 +176,10 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
             key={item.type}
             className="grid grid-cols-[45px_0.9fr_50px] items-center gap-1"
           >
-            <span className="text-sm text-slate-500 dark:text-white/50">
+            {/* <span className="text-xs text-slate-500 dark:text-white/50">
+              {item.type}
+            </span> */}
+            <span className="text-sm text-slate-500 dark:text-white/50 transform scale-75 inline-block">
               {item.type}
             </span>
             <div
