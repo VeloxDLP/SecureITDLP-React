@@ -6,6 +6,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { dashboardService } from "../../services/dashboardService";
 
 const colors = {
   Email: "#1613d3",
@@ -148,7 +149,17 @@ const IncidentByChannelChart = ({ data, isDark, channelIncidentData = [] }) => {
                     key={index}
                     fill={entry.color}
                     className="cursor-pointer"
-                    onClick={() => openChannel(entry.name)}
+                    onClick={() => {
+                      if (entry.value === 0) {
+                        alert(`No incidents in ${entry.name} channel`);
+                      } else {
+                        // alert(`${entry.name}: ${entry.value} incidents found`);
+                        const channelData = dashboardService.getIncidentByChannelModal(entry.name);
+                        console.log(channelData);
+                        alert(channelData);
+                      }
+                      openChannel(entry.name);
+                    }}
                   />
                 ))}
               </Pie>

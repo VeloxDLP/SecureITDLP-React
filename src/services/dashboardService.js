@@ -313,5 +313,29 @@ export const dashboardService = {
 },
 
 
+ getIncidentByChannelModal: async (channel) => {
+  const { data } = await axiosInstance.post(
+    `${API_ENDPOINTS.DASHBOARD.INCIDENT_BY_CHANNEL_MODAL}/${channel}`
+  );
+
+  return data;
+},
+
+
+ getIncidentByFileTypeModal: async (filetype) => {
+  const { data } = await axiosInstance.post(
+    `${API_ENDPOINTS.DASHBOARD.INCIDENT_BY_FILE_TYPE}/${filetype}`
+  );
+
+  return data;
+},
+
+ getFileUploadModal: async (channel) => {
+  const { data } = await axiosInstance.post(
+    `${API_ENDPOINTS.DASHBOARD.FILE_UPLOAD_MODAL}/${channel}`
+  );
+
+  return data;
+},
 
 };

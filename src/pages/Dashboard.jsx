@@ -712,7 +712,7 @@ export default function Dashboard() {
 
           {/* Organization Incident */}
           <DCard className="col-span-4">
-            <STitle>Organization Incident</STitle>
+            <STitle>Organisation Incident</STitle>
             <OrganisationIncident data={OrganizationIncident} isDark={isDark} axisStyle={axisStyle} gridColor={gridColor} Tip={Tip} />
           </DCard>
 
