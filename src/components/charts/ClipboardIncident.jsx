@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from "recharts";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { dashboardService } from "../../services/dashboardService";
 
 // Column configuration for modal table
 const incidentColumns = [
@@ -182,6 +183,10 @@ export default function ClipboardIncident({
   const endRecord = Math.min(safePage * pageSize, filteredRows.length);
 
   const openModal = (category) => {
+      // alert(`No incidents in  channel`);
+      const dateData = dashboardService.getClipboardModal("2026-07-22");
+                                  console.log(dateData);
+                                  alert(dateData);
     setSelectedCategory(category);
     setSearch("");
     setCurrentPage(1);
@@ -201,7 +206,17 @@ export default function ClipboardIncident({
       return (
         <div 
           className="bg-white dark:bg-[#020617] p-2 rounded shadow border border-slate-200 dark:border-white/10 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#0a0f1e] transition-colors"
-          onClick={() => openModal("Clipboard Incidents")}
+          onClick={() => {      
+            //  if (entry.value === 0) {
+            //                       alert(`No incidents in ${entry.name} channel`);
+            //                     } else {
+            //                       // alert(`${entry.name}: ${entry.value} incidents found`);
+            //                       const dateData = dashboardService.getClipboardModal(entry.name);
+            //                       console.log(dateData);
+            //                       alert(dateData);
+            //                     }
+                                openChannel(entry.name);
+            openModal("Clipboard Incidents")}}
         >
           <p className="text-sm font-medium">{`${payload[0].payload.x}`}</p>
           <p className="text-sm text-emerald-600 dark:text-emerald-400">{`${payload[0].value}% usage`}</p>

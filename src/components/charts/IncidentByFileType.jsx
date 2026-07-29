@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { dashboardService } from "../../services/dashboardService";
 
 // Column configuration
 const incidentColumns = [
@@ -25,6 +26,8 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [modalData, setModalData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -38,7 +41,6 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
       document.body.style.width = "";
     }
 
-    // Cleanup function
     return () => {
       document.body.style.overflow = "";
       document.body.style.position = "";
@@ -46,100 +48,51 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
     };
   }, [showModal]);
 
-  // Hardcoded modal data from your image
-  const modalData = [
-    {
-      ipAddress: "192.168.0.41",
-      username: "VELOX",
-      eventType: "NETWORK UPLOAD",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.0.41",
-      username: "VELOX",
-      eventType: "WEB UPLOAD",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.0.a1",
-      username: "VELOX",
-      eventType: "WEB UPLOAD",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.0.41",
-      username: "VELOX",
-      eventType: "FTP TRANSFER",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.56.1",
-      username: "Kiran_Tester",
-      eventType: "WEB UPLOAD",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.56.1",
-      username: "Kira_Tester",
-      eventType: "FTP TRANSFER",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.0.41",
-      username: "VELOX",
-      eventType: "NETWORK UPLOAD",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.0.41",
-      username: "NETWORK UPLOAD",
-      eventType: "NETWORK UPLOAD",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.0.41",
-      username: "NETWORK UPLOAD",
-      eventType: "NETWORK UPLOAD",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.0.41",
-      username: "VELOX",
-      eventType: "USB TRANSFER",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.1.100",
-      username: "Admin",
-      eventType: "WEB UPLOAD",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.1.101",
-      username: "User1",
-      eventType: "NETWORK UPLOAD",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-    {
-      ipAddress: "192.168.1.102",
-      username: "User2",
-      eventType: "FTP TRANSFER",
-      fileDetails: "NA",
-      timestamp: "NA",
-    },
-  ];
+  const handleFileTypeClick = async (item) => {
+    // Check if the file type has any incidents
+    if (item.pct === 0) {
+      alert(`No incidents in ${item.type} file type`);
+      return;
+    }
+
+    setSelectedType(item.type);
+    setSearch("");
+    setCurrentPage(1);
+    setShowModal(true);
+    setLoading(true);
+
+    try {
+      const response = await dashboardService.getIncidentByFileTypeModal(item.type);
+      console.log("API Response:", response);
+
+      // Check if response has data and is successful
+      if (response && response.success && response.data) {
+        // Transform the data to match your table columns
+        const transformedData = response.data.map(record => ({
+          ipAddress: record.branchname || "NA", // Using branchname as IP Address
+          username: record.username || "NA",
+          eventType: record.eventType || "NA",
+          fileDetails: record.fileSourcePath || "NA",
+          timestamp: record.timestamp || "NA"
+        }));
+
+        console.log("Transformed Data:", transformedData);
+        setModalData(transformedData);
+      } else {
+        // If no data or unsuccessful response
+        setModalData([]);
+        if (response && response.message) {
+          alert(response.message);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching file type data:", error);
+      alert(`Error loading data for ${item.type}`);
+      setModalData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const safeData = Array.isArray(modalData) ? modalData : [];
 
@@ -176,20 +129,12 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
             key={item.type}
             className="grid grid-cols-[45px_0.9fr_50px] items-center gap-1"
           >
-            {/* <span className="text-xs text-slate-500 dark:text-white/50">
-              {item.type}
-            </span> */}
             <span className="text-sm text-slate-500 dark:text-white/50 transform scale-75 inline-block">
               {item.type}
             </span>
             <div
               className="h-1 rounded-full bg-slate-200 dark:bg-[#071538] overflow-hidden cursor-pointer"
-              onClick={() => {
-                setSelectedType(item.type);
-                setSearch("");
-                setCurrentPage(1);
-                setShowModal(true);
-              }}
+              onClick={() => handleFileTypeClick(item)}
             >
               <div
                 className="h-full transition-all duration-500"
@@ -209,16 +154,16 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
         ))}
       </div>
 
-      {/* Modal - Same format as IncidentTableModal */}
+      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
           <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-[#020617]">
-
-            {/* Header: title + search + close */}
+            {/* Header */}
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
               <div className="min-w-0">
                 <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
                   Incident By File Type - {selectedType}
+                  {loading && <span className="ml-2 text-sm text-slate-400">Loading...</span>}
                 </h2>
               </div>
 
@@ -243,6 +188,7 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
                     setShowModal(false);
                     setSearch("");
                     setCurrentPage(1);
+                    setModalData([]);
                   }}
                   className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/[0.06] dark:text-white/60 dark:hover:bg-white/[0.1]"
                 >
@@ -255,59 +201,65 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
             <div className="min-h-0 flex-1 overflow-hidden p-4">
               <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
                 <div className="min-h-0 flex-1 overflow-auto">
-                  <table className="w-full text-[13px]">
-                    <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
-                      <tr className="text-left text-slate-500 dark:text-white/50">
-                        {incidentColumns.map((col) => (
-                          <th
-                            key={col.accessor}
-                            className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]"
-                          >
-                            {col.header}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {paginatedRows.length > 0 ? (
-                        paginatedRows.map((row, index) => (
-                          <tr
-                            key={index}
-                            className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
-                          >
-                            <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
-                              {row.ipAddress || "NA"}
-                            </td>
-                            <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
-                              {row.username || "NA"}
-                            </td>
-                            <td className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(row.eventType)}`}>
-                              {row.eventType || "NA"}
-                            </td>
-                            <td
-                              className="max-w-[360px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/30"
-                              title={row.fileDetails}
+                  {loading ? (
+                    <div className="flex h-full items-center justify-center">
+                      <div className="text-slate-400 dark:text-white/40">Loading incidents...</div>
+                    </div>
+                  ) : (
+                    <table className="w-full text-[13px]">
+                      <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
+                        <tr className="text-left text-slate-500 dark:text-white/50">
+                          {incidentColumns.map((col) => (
+                            <th
+                              key={col.accessor}
+                              className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]"
                             >
-                              {row.fileDetails || "NA"}
-                            </td>
-                            <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-right text-slate-400 dark:border-white/[0.05] dark:text-white/40">
-                              {row.timestamp || "NA"}
+                              {col.header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {paginatedRows.length > 0 ? (
+                          paginatedRows.map((row, index) => (
+                            <tr
+                              key={index}
+                              className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
+                            >
+                              <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
+                                {row.ipAddress || "NA"}
+                              </td>
+                              <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
+                                {row.username || "NA"}
+                              </td>
+                              <td className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(row.eventType)}`}>
+                                {row.eventType || "NA"}
+                              </td>
+                              <td
+                                className="max-w-[360px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/30"
+                                title={row.fileDetails}
+                              >
+                                {row.fileDetails || "NA"}
+                              </td>
+                              <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-right text-slate-400 dark:border-white/[0.05] dark:text-white/40">
+                                {row.timestamp || "NA"}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={incidentColumns.length}
+                              className="px-3 py-10 text-center text-slate-400 dark:text-white/30"
+                            >
+                              No records found for {selectedType}
                             </td>
                           </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={incidentColumns.length}
-                            className="px-3 py-10 text-center text-slate-400 dark:text-white/30"
-                          >
-                            No records found
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
 
                 {/* Footer / pagination */}

@@ -6,6 +6,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { dashboardService } from "../../services/dashboardService";
 
 // Column configuration for modal table
 const incidentColumns = [
@@ -273,7 +274,13 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
             <div
               key={item.name}
               className="flex items-center justify-between cursor-pointer rounded-md px-1 -mx-1 transition hover:bg-slate-100 dark:hover:bg-white/[0.05]"
-              onClick={() => openModal(item.name)}
+              onClick={() => {
+            openModal(item.name);
+                  const channelData = dashboardService.getFileUploadModal(item.name);
+                  console.log(channelData);
+                  alert(channelData);
+       
+              }}
             >
               <div className="flex items-center gap-2">
                 <span

@@ -51,7 +51,7 @@ const NAV = [
   { 
     label: 'Drive Control', 
     icon: FolderSearch, 
-    path: '/remediation',
+    path: '/DriveControl',
     roles: ['superadmin'] // Only superadmin
   },
   {
