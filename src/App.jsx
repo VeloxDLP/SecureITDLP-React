@@ -15,6 +15,9 @@ import NetworkPolicy from './pages/NetworkPolicy/NetworkPolicy.jsx'
 import PublicRoute from './routes/PublicRoute.jsx'
 import ViewDevice from './pages/ViewDevice/ViewDevice.jsx'
 import ApplyNetworkPolicy from './pages/ApplyNetworkPolicy.jsx'
+import DriveControl from './pages/DriveControl/DriveControl.jsx'
+// import DriveControl from './pages/DriveControl.jsx'
+
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -58,6 +61,7 @@ function AppRoutes() {
         <Route path="whitelisting"    element={<PlaceholderPage title="App Whitelisting" />} />
         <Route path="blacklisting"    element={<PlaceholderPage title="App Blacklisting" />} />
         <Route path="web"             element={<WebsiteProtection />} />
+        <Route path="DriveControl"             element={<DriveControl></DriveControl>} />
         <Route path="self-protection" element={<PlaceholderPage title="Self Protection" />} />
         <Route path="PrinterControl"           element={<PrinterControl />} />
           <Route path="ActivePolicy"           element={<ActivePolicy />} />

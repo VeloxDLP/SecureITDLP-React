@@ -30,7 +30,8 @@ export const API_ENDPOINTS = {
     PREVENTED_APPLICATION:"/application-info/last7daysapplicationinfo-counts",
    INCIDENT_BY_CHANNEL_MODAL:"/DashboardModal/IncidentbyChannelModal",
    INCIDENT_BY_FILE_TYPE:"/DashboardModal/ExtensionModalData",
-   FILE_UPLOAD_MODAL:"/DashboardModal/FileUploadModalData"
+   FILE_UPLOAD_MODAL:"/DashboardModal/FileUploadModalData",
+   CLIPBOARD_INCIDENT_MODAL:"/DashboardModal/ClipboardModalData",
   },
 
 VIEWDEVICE:{

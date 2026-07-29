@@ -64,7 +64,7 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
     try {
       const response = await dashboardService.getIncidentByFileTypeModal(item.type);
       console.log("API Response:", response);
-      
+
       // Check if response has data and is successful
       if (response && response.success && response.data) {
         // Transform the data to match your table columns
@@ -75,7 +75,7 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
           fileDetails: record.fileSourcePath || "NA",
           timestamp: record.timestamp || "NA"
         }));
-        
+
         console.log("Transformed Data:", transformedData);
         setModalData(transformedData);
       } else {

@@ -338,4 +338,20 @@ export const dashboardService = {
   return data;
 },
 
+ getClipboardModal: async (date) => {
+  const { data } = await axiosInstance.post(
+    `${API_ENDPOINTS.DASHBOARD.CLIPBOARD_INCIDENT_MODAL}/${date}`
+  );
+
+  return data;
+},
+
+ getMailIncidentModal: async (date) => {
+  const { data } = await axiosInstance.post(
+    `${API_ENDPOINTS.DASHBOARD.EMAIL_INCIDENT_MODAL}/${date}`
+  );
+
+  return data;
+},
+
 };
