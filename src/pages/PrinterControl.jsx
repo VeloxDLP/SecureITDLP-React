@@ -426,10 +426,9 @@ function AddForm({ branches, onAdd }) {
         device: form.device,
         mode: form.mode
     };
-    console.log("Selected Values:", requestData);
-    alert("Selected Data"+requestData);
+    alert("Selected Data"+requestData.branch+" "+requestData.device+" "+requestData.mode);
     const response = await dashboardService.addPrinterPolicy(requestData);
-   
+    console.log(response);
     // if(){
 
     // }
@@ -738,7 +737,7 @@ export default function PrinterControl() {
         dashboardService.getPrinterPolicies()
         
       ]);
-      console.log("All Policies Fetched ", PrinterPolicies.data);
+      // console.log("All Policies Fetched ", PrinterPolicies.data);
       setBranches(ALLBranch.data);
       setPolicies(PrinterPolicies.data);
 

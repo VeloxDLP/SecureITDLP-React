@@ -308,7 +308,6 @@ export const dashboardService = {
   const { data } = await axiosInstance.get(
     `${API_ENDPOINTS.VIEWDEVICE.GET_DEVICES_ON_BRANCH}/${branch}`
   );
-
   return data;
 },
 
