@@ -426,9 +426,9 @@ function AddForm({ branches, onAdd }) {
         device: form.device,
         mode: form.mode
     };
-    alert("Selected Data"+requestData.branch+" "+requestData.device+" "+requestData.mode);
+    // alert("Selected Data"+requestData.branch+" "+requestData.device+" "+requestData.mode);
     const response = await dashboardService.addPrinterPolicy(requestData);
-    console.log(response);
+    console.log("The policy Status IS",response.data);
     // if(){
 
     // }
