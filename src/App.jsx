@@ -16,6 +16,7 @@ import PublicRoute from './routes/PublicRoute.jsx'
 import ViewDevice from './pages/ViewDevice/ViewDevice.jsx'
 import ApplyNetworkPolicy from './pages/ApplyNetworkPolicy.jsx'
 import DriveControl from './pages/DriveControl/DriveControl.jsx'
+import DataClassification from './pages/DataClassification/DataClassification.jsx'
 // import DriveControl from './pages/DriveControl.jsx'
 
 
@@ -67,7 +68,7 @@ function AppRoutes() {
           <Route path="ActivePolicy"           element={<ActivePolicy />} />
            <Route path="NetworkPolicy"           element={<NetworkPolicy />} />
            <Route path="ApplyNetworkPolicy"           element={<ApplyNetworkPolicy></ApplyNetworkPolicy>} />
-        <Route path="scan"            element={<PlaceholderPage title="Active Scan & Detection" />} />
+        <Route path="DataClassification*"             element={<DataClassification></DataClassification>} />
         <Route path="remediation"     element={<PlaceholderPage title="File Remediation" />} />
         <Route path="rollback"        element={<PlaceholderPage title="Policy Roll Back" />} />
         <Route path="*"               element={<Navigate to="/dashboard" replace />} />

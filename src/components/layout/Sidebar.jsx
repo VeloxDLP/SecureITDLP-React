@@ -45,7 +45,7 @@ const NAV = [
   { 
     label: 'Data Classification', 
     icon: ScanSearch, 
-    path: '/scan',
+    path: '/DataClassification',
     roles: ['superadmin'] // Only superadmin
   },
   { 
