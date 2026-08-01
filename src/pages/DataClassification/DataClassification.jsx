@@ -326,7 +326,7 @@ export default function DataClassification() {
           </div>
 
           {/* Three Cards in a Row */}
-          <div className="px-6 pb-6">
+          <div className="px-6 pb-3">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               {/* Sensitivity Levels - Bar Chart */}
               <div className="bg-[#020617] border border-[#1A2136] rounded-2xl overflow-hidden">

@@ -429,6 +429,7 @@ function AddForm({ branches, onAdd }) {
             Branch Name <span className="text-rose-500 normal-case tracking-normal">*</span>
           </label>
           <Dropdown
+          
             value={form.branch}
             onChange={handleBranchChange}
             options={branchOptions}
@@ -436,7 +437,7 @@ function AddForm({ branches, onAdd }) {
             searchable
             error={submitted && !form.branch}
           />
-          {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
+          {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1  ">Required</p>}
         </div>
 
         {/* Device */}
