@@ -368,57 +368,8 @@ function AddForm({ branches, onAdd }) {
   ]
   const isValid = form.branch && form.device && form.mode
 
-  // const handleSubmit = async () => {
-  //   setSubmitted(true)
-  //   if (!isValid) return
-
-  //   const branchName = BRANCHES.find(b => String(b.id) === form.branch)?.name
-
-  //   try {
-  //     await printerApi.post('/api/printer', {
-  //       client: 'NA',
-  //       deviceType: form.printerType.toLowerCase(),
-  //       modeOfAccess: form.mode.toLowerCase(),
-  //       targets: [
-  //         {
-  //           hostName: form.device,
-  //           branch: branchName,
-  //           ipAddress: '192.168.0.44',
-  //         },
-  //       ],
-  //     })
-
-  //     onAdd({ ...form, branchName })
-
-  //     await showAlert({
-  //       icon: 'success',
-  //       title: 'Policy Saved',
-  //       text: `Printer policy for ${form.device} has been added successfully.`,
-  //       timer: 2500,
-  //       timerProgressBar: true,
-  //       showConfirmButton: false,
-  //     })
-
-  //     setSubmitted(false)
-  //     setForm({ branch: '', device: '', printerType: '', mode: '' })
-  //   } catch (err) {
-  //     const message =
-  //       err?.response?.data?.message ||
-  //       err?.message ||
-  //       'Something went wrong. Please try again.'
-
-  //     showAlert({
-  //       icon: 'error',
-  //       title: 'Submission Failed',
-  //       text: message,
-  //       confirmButtonText: 'Retry',
-  //     })
-  //   }
-  // }
-
   const handleSubmit = async () => {
 
-    // console.log("HandleSubmit called");
     setSubmitted(true);
     if (!isValid) return;
     const requestData = {
@@ -429,11 +380,27 @@ function AddForm({ branches, onAdd }) {
     // alert("Selected Data"+requestData.branch+" "+requestData.device+" "+requestData.mode);
     const response = await dashboardService.addPrinterPolicy(requestData);
     console.log("The policy Status IS",response.data);
-    // if(){
 
-    // }
+    if(response.data === "SUCCESS"){
+        await showAlert({
+              icon:              'success',
+              title:             'Policy Saved',
+              text:              'Printer policy successful',
+              timer:             2500,
+              timerProgressBar:  true,
+              showConfirmButton: true,
+            });
+            setSubmitted(false);  
+            setForm({ branch: '', device: '', mode: '' });
+    }else{
+      showAlert({
+              icon:              'error',
+              title:             'Policy Failed',
+              text:              "Error Sending policy",
+              confirmButtonText: 'Cancel',
+            })
+    }
 }
-
 
   const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5
                     ${isDark ? 'text-slate-500' : 'text-slate-400'}`
