@@ -21,7 +21,7 @@ const NAV = [
   { 
     label: 'Application Control', 
     icon: AppWindow, 
-    path: '/app-control',
+    path: '/ApplicationControl',
     roles: ['superadmin'] // Only superadmin
   },
   { 
