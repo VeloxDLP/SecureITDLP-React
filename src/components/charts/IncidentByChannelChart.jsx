@@ -156,7 +156,7 @@ const IncidentByChannelChart = ({ data, isDark, channelIncidentData = [] }) => {
                         // alert(`${entry.name}: ${entry.value} incidents found`);
                         const channelData = dashboardService.getIncidentByChannelModal(entry.name);
                         console.log(channelData);
-                        alert(channelData);
+                        alert(channelData.data);
                       }
                       openChannel(entry.name);
                     }}
