@@ -30,7 +30,7 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
   const [showModal, setShowModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [search, setSearch] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const pageSize = 10; // Fixed page size, dropdown removed
   const [currentPage, setCurrentPage] = useState(1);
 
   // Lock body scroll when modal is open
@@ -166,7 +166,7 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, pageSize]);
+  }, [search]); // Removed pageSize dependency
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
@@ -404,25 +404,14 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
                   </table>
                 </div>
 
-                {/* Footer / pagination */}
+                {/* Footer / pagination - Dropdown REMOVED */}
                 <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-[12px] text-slate-500 dark:text-white/40">
                     Showing {startRecord}-{endRecord} of {filteredRows.length}
                   </span>
 
                   <div className="flex items-center gap-2">
-                    <select
-                      value={pageSize}
-                      onChange={(e) => {
-                        setPageSize(Number(e.target.value));
-                        setCurrentPage(1);
-                      }}
-                      className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-[12px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70"
-                    >
-                      {[5, 10, 20, 50].map((size) => (
-                        <option key={size} value={size}>{size} / page</option>
-                      ))}
-                    </select>
+                    {/* The <select> dropdown for pageSize was removed from here */}
 
                     <button
                       type="button"

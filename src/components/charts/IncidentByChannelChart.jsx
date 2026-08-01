@@ -50,7 +50,7 @@ const IncidentByChannelChart = ({ data, isDark, channelIncidentData = [] }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState("");
   const [search, setSearch] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const pageSize = 10; // Removed selectable state, fixed to 10
   const [currentPage, setCurrentPage] = useState(1);
 
   // Lock body scroll when modal is open
@@ -115,7 +115,7 @@ const IncidentByChannelChart = ({ data, isDark, channelIncidentData = [] }) => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, pageSize]);
+  }, [search]); // Removed pageSize dependency
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
@@ -153,7 +153,6 @@ const IncidentByChannelChart = ({ data, isDark, channelIncidentData = [] }) => {
                       if (entry.value === 0) {
                         alert(`No incidents in ${entry.name} channel`);
                       } else {
-                        // alert(`${entry.name}: ${entry.value} incidents found`);
                         const channelData = dashboardService.getIncidentByChannelModal(entry.name);
                         console.log(channelData);
                         alert(channelData);
@@ -322,15 +321,7 @@ const IncidentByChannelChart = ({ data, isDark, channelIncidentData = [] }) => {
                   </span>
 
                   <div className="flex items-center gap-2">
-                    <select
-                      value={pageSize}
-                      onChange={(e) => setPageSize(Number(e.target.value))}
-                      className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-[12px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70"
-                    >
-                      {[5, 10, 20, 50].map((size) => (
-                        <option key={size} value={size}>{size} / page</option>
-                      ))}
-                    </select>
+                    {/* Page size <select> has been removed here */}
 
                     <button
                       type="button"

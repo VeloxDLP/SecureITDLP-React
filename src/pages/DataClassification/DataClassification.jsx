@@ -409,7 +409,7 @@ export default function DataClassification() {
                     </div>
                   </div>
                   {/* Scrollable Legend */}
-                  <div className="flex-1 ml-8 h-[170px] overflow-y-auto custom-scrollbar pr-2">
+                  <div className="flex-1 ml-8 h-[170px] ">
                     <div className="space-y-3">
                       {fileTypeData.map((item) => (
                         <div key={item.name} className="flex items-center justify-between">
@@ -524,7 +524,7 @@ export default function DataClassification() {
 
               {/* Scrollable Table Container */}
               <div className="overflow-x-auto">
-                <div className="max-h-[420px] overflow-y-auto custom-scrollbar">
+                <div className="max-h-[180px] overflow-y-auto custom-scrollbar">
                   <table className="w-full border-collapse">
                     <thead className={`sticky top-0 z-10 ${theme.cardBg} border-b ${theme.tableBorder}`}>
                       <tr>
@@ -549,6 +549,8 @@ export default function DataClassification() {
                         <th className={`px-4 py-2 text-left text-[10px] uppercase tracking-wider font-semibold ${theme.textMuted}`}>
                           DETECTED ON
                         </th>
+
+                        
                       </tr>
                     </thead>
                     <tbody>
@@ -592,7 +594,8 @@ export default function DataClassification() {
                         </tr>
                       ))}
                       {classificationFiles.length === 0 && (
-                        <tr>
+                        <tr>    
+                          
                           <td colSpan={7} className={`py-8 text-center text-sm ${theme.textMuted}`}>
                             No classification files found.
                           </td>
