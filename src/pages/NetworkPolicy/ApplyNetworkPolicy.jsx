@@ -9,7 +9,7 @@ import {
   Building2,
   Monitor,
 } from "lucide-react";
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 
 function ApplyNetworkPolicy() {
   const { isDark } = useTheme();
