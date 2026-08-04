@@ -18,6 +18,10 @@ import ApplyNetworkPolicy from './pages/ApplyNetworkPolicy.jsx'
 import DriveControl from './pages/DriveControl/DriveControl.jsx'
 import DataClassification from './pages/DataClassification/DataClassification.jsx'
 import ApplicationControl from './pages/ApplicationControl/ApplicationControl.jsx'
+import ViewApplication from './pages/ApplicationControl/ViewApplication.jsx'
+import Reports from './pages/Report/Reports.jsx'
+
+// import ViewApplication from "./pages/ViewApplication/ViewApplication.jsx";
 // import DriveControl from './pages/DriveControl.jsx'
 
 
@@ -38,12 +42,12 @@ function AppRoutes() {
     <Routes>
       {/* <Route path="/login" element={<Login />} /> */}
       <Route
-    path="/login"
-    element={
-        
-         <PublicRoute><Login></Login></PublicRoute>
-    }
-/>
+        path="/login"
+        element={
+
+          <PublicRoute><Login></Login></PublicRoute>
+        }
+      />
       <Route
         path="/"
         element={
@@ -55,25 +59,28 @@ function AppRoutes() {
         }
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard"       element={<Dashboard />} />
-        <Route path="usb"             element={<UsbProtection />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="usb" element={<UsbProtection />} />
         {/* Placeholder routes — replace with real pages as built */}
-        <Route path="devices"         element={<ViewDevice></ViewDevice>} />
-        <Route path="app-control"     element={<PlaceholderPage title="Application Control" />} />
-        <Route path="whitelisting"    element={<PlaceholderPage title="App Whitelisting" />} />
-        <Route path="blacklisting"    element={<PlaceholderPage title="App Blacklisting" />} />
-        <Route path="web"             element={<WebsiteProtection />} />
-        <Route path="DriveControl"             element={<DriveControl></DriveControl>} />
+        <Route path="devices" element={<ViewDevice></ViewDevice>} />
+        <Route path="app-control" element={<PlaceholderPage title="Application Control" />} />
+        <Route path="whitelisting" element={<PlaceholderPage title="App Whitelisting" />} />
+        <Route path="blacklisting" element={<PlaceholderPage title="App Blacklisting" />} />
+        <Route path="web" element={<WebsiteProtection />} />
+        <Route path="DriveControl" element={<DriveControl></DriveControl>} />
         <Route path="self-protection" element={<PlaceholderPage title="Self Protection" />} />
-        <Route path="PrinterControl"           element={<PrinterControl />} />
-          <Route path="ActivePolicy"           element={<ActivePolicy />} />
-           <Route path="NetworkPolicy"           element={<NetworkPolicy />} />
-           <Route path="ApplyNetworkPolicy"           element={<ApplyNetworkPolicy></ApplyNetworkPolicy>} />
-        <Route path="DataClassification"             element={<DataClassification></DataClassification>} />
-         <Route path="ApplicationControl"             element={<ApplicationControl></ApplicationControl>} />
-        <Route path="remediation"     element={<PlaceholderPage title="File Remediation" />} />
-        <Route path="rollback"        element={<PlaceholderPage title="Policy Roll Back" />} />
-        <Route path="*"               element={<Navigate to="/dashboard" replace />} />
+        <Route path="PrinterControl" element={<PrinterControl />} />
+        <Route path="ActivePolicy" element={<ActivePolicy />} />
+        <Route path="NetworkPolicy" element={<NetworkPolicy />} />
+        <Route path="ApplyNetworkPolicy" element={<ApplyNetworkPolicy></ApplyNetworkPolicy>} />
+        <Route path="DataClassification" element={<DataClassification></DataClassification>} />
+        <Route path="ApplicationControl" element={<ApplicationControl></ApplicationControl>} />
+        <Route path="ViewApplication" element={<ViewApplication></ViewApplication>} />
+         <Route path="Reports"         element={<Reports></Reports>}/>
+        <Route path="remediation" element={<PlaceholderPage title="File Remediation" />} />
+
+        <Route path="rollback" element={<PlaceholderPage title="Policy Roll Back" />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
@@ -87,9 +94,9 @@ function PlaceholderPage({ title }) {
       <div className="w-12 h-12 rounded-2xl bg-[#7094ff]/10 border border-[#7094ff]/20
                       flex items-center justify-center">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-             stroke="#7094ff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="4"/>
-          <path d="M9 9h6M9 12h6M9 15h4"/>
+          stroke="#7094ff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="4" />
+          <path d="M9 9h6M9 12h6M9 15h4" />
         </svg>
       </div>
       <p className="text-[13px] font-medium text-slate-400">{title}</p>

@@ -8,6 +8,7 @@ import {
   Usb, Globe, Lock, Shield, ScanSearch, FolderSearch, RotateCcw,
   ChevronRight, ChevronLeft, LogOut, Settings,
   ClipboardMinus,
+  Eye,
 } from 'lucide-react'
 
 // Define navigation with role-based access
@@ -18,12 +19,25 @@ const NAV = [
     path: '/dashboard',
     roles: ['admin', 'superadmin'] // Both can see
   },
-  { 
-    label: 'Application Control', 
-    icon: AppWindow, 
-    path: '/ApplicationControl',
-    roles: ['superadmin'] // Only superadmin
-  },
+{
+  label: 'Application Control',
+  icon: AppWindow,
+  roles: ['superadmin'],
+  children: [
+    {
+      label: 'Manage Control',
+      icon: AppWindow,
+      path: '/ApplicationControl',
+      roles: ['superadmin'],
+    },
+    {
+      label: 'View Application',
+      icon: Eye,
+      path: '/ViewApplication',
+      roles: ['superadmin'],
+    },
+  ],
+},
   { 
     label: 'USB Protection', 
     icon: Usb, 
