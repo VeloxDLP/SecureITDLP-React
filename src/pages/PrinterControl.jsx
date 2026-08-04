@@ -114,7 +114,7 @@ function Dropdown({
           {selected ? selected.label : placeholder}
         </span>
         <ChevronDown
-          size={14}
+          size={10}
           className={`flex-shrink-0 transition-transform duration-200
                       ${open ? 'rotate-180' : ''}
                       ${isDark ? 'text-slate-500' : 'text-slate-400'}`}

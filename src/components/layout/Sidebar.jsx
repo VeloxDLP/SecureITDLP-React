@@ -99,6 +99,13 @@ const NAV = [
     path: '/devices',
     roles: ['admin', 'superadmin'] // Both can see
   },
+
+    { 
+    label: 'Setting', 
+    icon: Monitor, 
+    path: '/Setting',
+    roles: ['admin', 'superadmin'] // Both can see
+  },
 ]
 
 const ACTIVE = 'bg-[#7094ff] text-white shadow-lg shadow-[#7094ff]/20'
