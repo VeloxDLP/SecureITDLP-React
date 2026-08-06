@@ -351,7 +351,7 @@ export default function ReportCenter() {
         </div>
 
         {/* 4. Date Range */}
-        <div className="bg-#020617] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
+        <div className="bg-[#020617] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
           <h2 className="text-white font-semibold mb-4 flex-shrink-0">4. Date Range</h2>
           <div className="grid grid-cols-2 gap-2 mb-2 flex-shrink-0">
             {dateRangeOptions.map((option) => {
