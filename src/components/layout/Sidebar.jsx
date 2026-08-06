@@ -19,25 +19,25 @@ const NAV = [
     path: '/dashboard',
     roles: ['admin', 'superadmin'] // Both can see
   },
-{
-  label: 'Application Control',
-  icon: AppWindow,
-  roles: ['superadmin'],
-  children: [
-    {
-      label: 'Manage Control',
-      icon: AppWindow,
-      path: '/ApplicationControl',
-      roles: ['superadmin'],
-    },
-    {
-      label: 'View Application',
-      icon: Eye,
-      path: '/ViewApplication',
-      roles: ['superadmin'],
-    },
-  ],
-},
+  {
+    label: 'Application Control',
+    icon: AppWindow,
+    roles: ['superadmin'],
+    children: [
+      {
+        label: 'Manage Control',
+        icon: AppWindow,
+        path: '/ApplicationControl',
+        roles: ['superadmin'],
+      },
+      {
+        label: 'View Application',
+        icon: Eye,
+        path: '/ViewApplication',
+        roles: ['superadmin'],
+      },
+    ],
+  },
   { 
     label: 'USB Protection', 
     icon: Usb, 
@@ -99,11 +99,17 @@ const NAV = [
     path: '/devices',
     roles: ['admin', 'superadmin'] // Both can see
   },
-
-    { 
+  { 
     label: 'Setting', 
     icon: Monitor, 
     path: '/Setting',
+    roles: ['admin', 'superadmin'] // Both can see
+  },
+
+    { 
+    label: 'Report', 
+    icon: Monitor, 
+    path: '/Reports',
     roles: ['admin', 'superadmin'] // Both can see
   },
 ]
@@ -142,12 +148,12 @@ function NavItem({ item, collapsed, userRole }) {
     }
 
     return (
-      <div className="mx-2">
+      <div className="mx-2 relative">
         <button
           onClick={() => setOpen(!open)}
           className="w-full flex items-center justify-between px-3 py-2 rounded-xl
                      text-[13px] font-medium text-[#888]
-                     hover:text-[#e0e0e0] hover:bg-white/[0.06]"
+                     hover:text-[#e0e0e0] hover:bg-white/[0.06] relative group"
         >
           <div className="flex items-center gap-3">
             <Icon size={16} />
@@ -163,6 +169,20 @@ function NavItem({ item, collapsed, userRole }) {
             />
           )}
         </button>
+
+        {/* Tooltip when collapsed */}
+        {collapsed && (
+          <span className="pointer-events-none absolute left-full ml-3 z-[200]
+                           flex items-center gap-1.5 px-2.5 py-1 rounded-lg
+                           text-[12px] font-semibold whitespace-nowrap
+                           opacity-0 -translate-x-1 scale-95
+                           group-hover:opacity-100 group-hover:translate-x-0 group-hover:scale-100
+                           transition-all duration-150 ease-out shadow-xl
+                           bg-[#2a2a2a] text-[#e0e0e0] border border-white/[0.08]">
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#555]" />
+            {item.label}
+          </span>
+        )}
 
         {!collapsed && open && (
           <div className="ml-6 mt-1 flex flex-col gap-1">
@@ -205,6 +225,20 @@ function NavItem({ item, collapsed, userRole }) {
     >
       <Icon size={16} />
       {!collapsed && <span>{item.label}</span>}
+
+      {/* Tooltip when collapsed */}
+      {collapsed && (
+        <span className="pointer-events-none absolute left-full ml-3 z-[200]
+                         flex items-center gap-1.5 px-2.5 py-1 rounded-lg
+                         text-[12px] font-semibold whitespace-nowrap
+                         opacity-0 -translate-x-1 scale-95
+                         group-hover:opacity-100 group-hover:translate-x-0 group-hover:scale-100
+                         transition-all duration-150 ease-out shadow-xl
+                         bg-[#2a2a2a] text-[#e0e0e0] border border-white/[0.08]">
+          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#555]" />
+          {item.label}
+        </span>
+      )}
     </NavLink>
   );
 }

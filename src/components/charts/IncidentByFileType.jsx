@@ -21,17 +21,21 @@ const eventTypeColor = (eventType) => {
 };
 
 export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
-  const [showModal, setShowModal] = useState(false);
+  // Modal transition states
+  const [isOpen, setIsOpen] = useState(false);          // controls visibility (enter/exit)
+  const [isMounted, setIsMounted] = useState(false);    // whether modal is in DOM
+  const [isClosing, setIsClosing] = useState(false);    // flag for exit animation
+
   const [selectedType, setSelectedType] = useState("");
   const [search, setSearch] = useState("");
-  const pageSize = 10; // Fixed page size, dropdown removed
+  const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const [modalData, setModalData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Lock body scroll when modal is open
+  // Lock body scroll when modal is visible
   useEffect(() => {
-    if (showModal) {
+    if (isOpen) {
       document.body.style.overflow = "hidden";
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
@@ -40,50 +44,38 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
       document.body.style.position = "";
       document.body.style.width = "";
     }
-
     return () => {
       document.body.style.overflow = "";
       document.body.style.position = "";
       document.body.style.width = "";
     };
-  }, [showModal]);
+  }, [isOpen]);
 
-  const handleFileTypeClick = async (item) => {
-    // Check if the file type has any incidents
-    if (item.pct === 0) {
-      alert(`No incidents in ${item.type} file type`);
-      return;
-    }
-
+  // Open modal with data fetch
+  const openModal = async (item) => {
     setSelectedType(item.type);
     setSearch("");
     setCurrentPage(1);
-    setShowModal(true);
     setLoading(true);
+    setIsMounted(true); // mount the DOM
 
     try {
       const response = await dashboardService.getIncidentByFileTypeModal(item.type);
       console.log("API Response:", response);
 
-      // Check if response has data and is successful
       if (response && response.success && response.data) {
-        // Transform the data to match your table columns
-        const transformedData = response.data.map(record => ({
-          ipAddress: record.branchname || "NA", // Using branchname as IP Address
+        const transformedData = response.data.map((record) => ({
+          ipAddress: record.branchname || "NA",
           username: record.username || "NA",
           eventType: record.eventType || "NA",
           fileDetails: record.fileSourcePath || "NA",
-          timestamp: record.timestamp || "NA"
+          timestamp: record.timestamp || "NA",
         }));
-
         console.log("Transformed Data:", transformedData);
         setModalData(transformedData);
       } else {
-        // If no data or unsuccessful response
         setModalData([]);
-        if (response && response.message) {
-          alert(response.message);
-        }
+        if (response && response.message) alert(response.message);
       }
     } catch (error) {
       console.error("Error fetching file type data:", error);
@@ -91,15 +83,41 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
       setModalData([]);
     } finally {
       setLoading(false);
+      // Trigger enter animation after mount (next frame)
+      requestAnimationFrame(() => setIsOpen(true));
     }
   };
 
+  // Close modal
+  const closeModal = () => {
+    if (!isOpen) return;
+    setIsClosing(true);
+    setIsOpen(false); // triggers exit animation
+  };
+
+  // After exit animation completes, unmount the modal
+  const handleTransitionEnd = () => {
+    if (isClosing) {
+      setIsMounted(false);
+      setIsClosing(false);
+      setModalData([]);
+    }
+  };
+
+  const handleFileTypeClick = (item) => {
+    if (item.pct === 0) {
+      alert(`No incidents in ${item.type} file type`);
+      return;
+    }
+    openModal(item);
+  };
+
+  // Safe data and pagination
   const safeData = Array.isArray(modalData) ? modalData : [];
 
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return safeData;
-
     return safeData.filter((row) =>
       incidentColumns.some((col) =>
         String(row[col.accessor] ?? "").toLowerCase().includes(term)
@@ -109,7 +127,7 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]); // Removed pageSize dependency
+  }, [search]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
@@ -154,10 +172,19 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
         ))}
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-[#020617]">
+      {/* Modal with smooth transitions */}
+      {isMounted && (
+        <div
+          className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
+            isOpen ? "opacity-100" : "opacity-0"
+          } ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+          onTransitionEnd={handleTransitionEnd}
+        >
+          <div
+            className={`flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ease-in-out dark:border-white/[0.08] dark:bg-[#020617] ${
+              isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+            }`}
+          >
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
               <div className="min-w-0">
@@ -184,12 +211,7 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setSearch("");
-                    setCurrentPage(1);
-                    setModalData([]);
-                  }}
+                  onClick={closeModal}
                   className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/[0.06] dark:text-white/60 dark:hover:bg-white/[0.1]"
                 >
                   <X size={17} />
@@ -233,7 +255,11 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
                               <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
                                 {row.username || "NA"}
                               </td>
-                              <td className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(row.eventType)}`}>
+                              <td
+                                className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(
+                                  row.eventType
+                                )}`}
+                              >
                                 {row.eventType || "NA"}
                               </td>
                               <td
@@ -262,15 +288,13 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
                   )}
                 </div>
 
-                {/* Footer / pagination - Dropdown REMOVED */}
+                {/* Footer / pagination */}
                 <div className="flex shrink-0 flex-col gap-1 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-[10px] text-slate-500 dark:text-white/40">
                     Showing {startRecord}-{endRecord} of {filteredRows.length}
                   </span>
 
                   <div className="flex items-center gap-2">
-                    {/* <select> block for page size has been removed here */}
-
                     <button
                       type="button"
                       disabled={safePage === 1}
