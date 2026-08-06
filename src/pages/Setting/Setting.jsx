@@ -14,6 +14,7 @@ import {
   Trash2,
   Check,
 } from "lucide-react";
+import { dashboardService } from "../../services/dashboardService";
 
 // ─── GlassButton ────────────────────────────────────────────────
 const GlassButton = ({ children, onClick, variant, className = "" }) => {
@@ -184,9 +185,7 @@ function Setting() {
     userType: "",
     password: "",
     confirmPassword: "",
-    customerName: "",
-    branchName: "",
-    oem: "",
+
   });
 
   const [scopes, setScopes] = useState({
@@ -237,8 +236,25 @@ function Setting() {
     const { userName, password, confirmPassword } = formData;
     if (!userName || !password || !confirmPassword) {
       setShowErrorModal(true);
+    }else if(password!=confirmPassword){
+      // setShowErrorModal(true);
+      alert("Passowrd is not matching");
     } else {
-      console.log("Creating user...", formData);
+
+       const requestData = {
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              userName: formData.userName,
+              email: formData.email,
+              contactNumber: formData.contactNumber,
+              password: formData.password,
+              userType: formData.userType
+          };
+          const response = dashboardService.CreateApplicationUser(requestData);
+
+          alert("Selected Data"+JSON.stringify(requestData));
+          console.log("The policy Status IS",JSON.stringify(requestData));
+
     }
   };
 
@@ -623,175 +639,7 @@ function Setting() {
       )}
 
       {/* ─── Scope Manager Modal ────────────────────────────── */}
-      {showScopeModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
-          onClick={() => setShowScopeModal(false)}
-        >
-          <div
-            className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-700 bg-[#020617] p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setShowScopeModal(false)}
-              className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:text-white transition"
-            >
-              <X size={20} />
-            </button>
-
-            <h2 className="text-xl font-semibold text-white">
-              Application Scope Manager
-            </h2>
-            <p className="mt-1 text-sm text-slate-400">
-              Assign modules and submodules access permissions.
-            </p>
-
-            <div className="relative mt-4">
-              <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-              <input
-                type="text"
-                placeholder="Search modules or permissions..."
-                className={inputWithIconClass}
-              />
-            </div>
-
-            <div className="mt-4 flex items-center justify-between border-b border-slate-700 pb-3">
-              <label className="flex items-center gap-2 text-sm text-white">
-                <input
-                  type="checkbox"
-                  checked={
-                    selectedCount ===
-                    Object.values(scopes).reduce(
-                      (acc, mod) => acc + Object.keys(mod.children).length,
-                      0
-                    )
-                  }
-                  onChange={toggleSelectAll}
-                  className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
-                />
-                Select All Permissions
-              </label>
-              <span className="text-sm text-slate-400">
-                {selectedCount} Selected
-              </span>
-            </div>
-
-            <div className="mt-4 space-y-4">
-              <div>
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm font-medium text-white">
-                    <input
-                      type="checkbox"
-                      checked={scopes.arpm.checked}
-                      onChange={() => toggleModule("arpm")}
-                      className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
-                    />
-                    ARPM
-                  </label>
-                  <span className="text-xs text-slate-400">
-                    {Object.values(scopes.arpm.children).filter(Boolean).length}/
-                    {Object.keys(scopes.arpm.children).length}
-                  </span>
-                </div>
-                <div className="ml-6 mt-1 space-y-1">
-                  {Object.keys(scopes.arpm.children).map((key) => (
-                    <label key={key} className="flex items-center gap-2 text-sm text-white">
-                      <input
-                        type="checkbox"
-                        checked={scopes.arpm.children[key]}
-                        onChange={() => toggleChild("arpm", key)}
-                        className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
-                      />
-                      {key === "createPatchTask" && "Create Patch Task"}
-                      {key === "createPatchProfile" && "Create Patch Profile"}
-                      {key === "assignTask" && "Assign Task"}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm font-medium text-white">
-                    <input
-                      type="checkbox"
-                      checked={scopes.atmInventory.checked}
-                      onChange={() => toggleModule("atmInventory")}
-                      className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
-                    />
-                    ATM Inventory
-                  </label>
-                  <span className="text-xs text-slate-400">
-                    {Object.values(scopes.atmInventory.children).filter(Boolean).length}/
-                    {Object.keys(scopes.atmInventory.children).length}
-                  </span>
-                </div>
-                <div className="ml-6 mt-1 space-y-1">
-                  {Object.keys(scopes.atmInventory.children).map((key) => (
-                    <label key={key} className="flex items-center gap-2 text-sm text-white">
-                      <input
-                        type="checkbox"
-                        checked={scopes.atmInventory.children[key]}
-                        onChange={() => toggleChild("atmInventory", key)}
-                        className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
-                      />
-                      {key === "assignATMStatus" && "Assign ATM Status"}
-                      {key === "runCommand" && "Run Command"}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 border-t border-slate-700 pt-4">
-              <p className="text-sm text-slate-400">
-                Assigning enterprise-level access permissions for application user.
-              </p>
-              <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setScopes({
-                      arpm: {
-                        checked: false,
-                        children: {
-                          createPatchTask: false,
-                          createPatchProfile: false,
-                          assignTask: false,
-                        },
-                      },
-                      atmInventory: {
-                        checked: false,
-                        children: {
-                          assignATMStatus: false,
-                          runCommand: false,
-                        },
-                      },
-                    });
-                  }}
-                  className="rounded-lg border border-slate-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-                >
-                  Reset
-                </button>
-                <button
-                  onClick={() => setShowScopeModal(false)}
-                  className="rounded-lg border border-slate-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    console.log("Scopes applied:", scopes);
-                    setShowScopeModal(false);
-                  }}
-                  className="rounded-lg border border-blue-500 bg-blue-600/20 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-600/30"
-                >
-                  Apply Permissions
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    
 
       {/* ─── Error Modal ────────────────────────────────────── */}
       {showErrorModal && (

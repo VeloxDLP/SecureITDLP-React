@@ -304,6 +304,14 @@ export const dashboardService = {
   
   //[Post APIS]//
 
+    CreateApplicationUser: async (UserData) => {
+  const { data } = await axiosInstance.post(
+    API_ENDPOINTS.AUTH.SIGNUP,UserData
+  );
+  return data;
+},
+
+
   getDevicesByBranch: async (branch) => {
   const { data } = await axiosInstance.get(
     `${API_ENDPOINTS.VIEWDEVICE.GET_DEVICES_ON_BRANCH}/${branch}`

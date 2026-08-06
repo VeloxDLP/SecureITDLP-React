@@ -7,7 +7,7 @@
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: "/auth/login", // ← your actual endpoint: POST /user/login
-    LOGOUT: "/user/logout", // update if your backend has a logout route
+    SIGNUP: "/auth/SignUp", // update if your backend has a logout route
     REFRESH: "/user/refresh", // update if your backend has a refresh route
     ME: "/user/me", // update if your backend has a /me route
   },
