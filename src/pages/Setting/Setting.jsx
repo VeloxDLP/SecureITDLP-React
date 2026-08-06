@@ -232,7 +232,7 @@ function Setting() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCreateUser = () => {
+  const handleCreateUser = async () => {
     const { userName, password, confirmPassword } = formData;
     if (!userName || !password || !confirmPassword) {
       setShowErrorModal(true);
@@ -242,15 +242,16 @@ function Setting() {
     } else {
 
        const requestData = {
-              firstName: formData.firstName,
-              lastName: formData.lastName,
-              userName: formData.userName,
+              name: formData.firstName,
+              last_name: formData.lastName,
+              username: formData.userName,
               email: formData.email,
-              contactNumber: formData.contactNumber,
+              contact_no: formData.contactNumber,
               password: formData.password,
-              userType: formData.userType
+              account_status:"ACTIVE",
+              role: formData.userType
           };
-          const response = dashboardService.CreateApplicationUser(requestData);
+          const response = await dashboardService.CreateApplicationUser(requestData);
 
           alert("Selected Data"+JSON.stringify(requestData));
           console.log("The policy Status IS",JSON.stringify(requestData));
@@ -326,9 +327,9 @@ function Setting() {
 
   // ── Dropdown options ──
   const userTypeOptions = [
-    { value: "admin", label: "Admin" },
-    { value: "manager", label: "Manager" },
-    { value: "user", label: "User" },
+    { value: "ADMIN", label: "ADMIN" },
+    { value: "SUPERADMIN", label: "SUPERADMIN" },
+    { value: "USER", label: "USER" },
   ];
   const branchOptions = [
     { value: "branch1", label: "Branch 1" },
