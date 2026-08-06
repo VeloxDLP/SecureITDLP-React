@@ -203,7 +203,7 @@ export default function ReportCenter() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#020617] p-6">
+    <div className="min-h-screen  p-6">
       {/* Report Center button */}
  <button
   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold"
@@ -219,7 +219,7 @@ export default function ReportCenter() {
 
       <div className="grid grid-cols-4 gap-5 w-full">
         {/* 1. Module */}
-        <div className="bg-[#0f1424] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
+        <div className="bg-[#020617] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
           <h2 className="text-white font-semibold mb-4 flex-shrink-0">1. Module</h2>
           <div className="relative mb-4 flex-shrink-0">
             {/* <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" /> */}
@@ -269,7 +269,7 @@ export default function ReportCenter() {
         </div>
 
         {/* 2. Report */}
-        <div className="bg-[#0f1424] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
+        <div className="bg-[#020617] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
           <h2 className="text-white font-semibold mb-1 flex-shrink-0">2. Report</h2>
           <p className="text-indigo-400 text-sm mb-4 flex-shrink-0">
             {selectedModule} – Reports
@@ -310,7 +310,7 @@ export default function ReportCenter() {
         </div>
 
         {/* 3. ATM Selection */}
-        <div className="bg-[#0f1424] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
+        <div className="bg-[#020617] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
           <h2 className="text-white font-semibold mb-4 flex-shrink-0">3. ATM Selection</h2>
           <div className="flex-1 space-y-4">
             <div>
@@ -351,7 +351,7 @@ export default function ReportCenter() {
         </div>
 
         {/* 4. Date Range */}
-        <div className="bg-[#0f1424] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
+        <div className="bg-#020617] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
           <h2 className="text-white font-semibold mb-4 flex-shrink-0">4. Date Range</h2>
           <div className="grid grid-cols-2 gap-2 mb-2 flex-shrink-0">
             {dateRangeOptions.map((option) => {
@@ -439,7 +439,7 @@ export default function ReportCenter() {
 
       {/* Report section – appears after clicking View Report */}
       {showReport && (
-        <div ref={reportRef} className="mt-8 bg-[#0f1424] border border-indigo-950 rounded-xl p-6">
+        <div ref={reportRef} className="mt-8 bg-[#020617] border border-indigo-950 rounded-xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <ClipboardList className="h-5 w-5 text-indigo-400" />
             <h3 className="text-white font-semibold text-lg">Report Results</h3>
