@@ -15,6 +15,7 @@ import {
   Check,
 } from "lucide-react";
 import { dashboardService } from "../../services/dashboardService";
+import { alert as showAlert } from "../../components/ui/AlertModal";
 
 // ─── GlassButton ────────────────────────────────────────────────
 const GlassButton = ({ children, onClick, variant, className = "" }) => {
@@ -77,6 +78,7 @@ function Dropdown({
   placeholder = "Select…",
   disabled = false,
   error = false,
+  multiple = false,
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
@@ -96,10 +98,34 @@ function Dropdown({
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const handleSelect = (val) => {
+  // const handleSelect = (val) => {
+  //   onChange(val);
+  //   setOpen(false);
+  // };
+
+    const handleSelect = (val) => {
+  if (multiple) {
+    const currentValues = value
+      ? value.split(",").filter(Boolean)
+      : [];
+
+    if (currentValues.includes(val)) {
+      // Remove value
+      const updatedValues = currentValues.filter(
+        (item) => item !== val
+      );
+
+      onChange(updatedValues.join(","));
+    } else {
+      // Add value
+      onChange([...currentValues, val].join(","));
+    }
+  } else {
+    // Normal single select
     onChange(val);
     setOpen(false);
-  };
+  }
+};
 
   const triggerBorder = error
     ? "border-rose-500/60"
@@ -123,8 +149,22 @@ function Dropdown({
           text-slate-200 bg-[#111827]
         `}
       >
-        <span className={selected ? "text-slate-200" : "text-slate-500"}>
+        {/* <span className={selected ? "text-slate-200" : "text-slate-500"}>
           {selected ? selected.label : placeholder}
+        </span> */}
+        <span className="text-slate-200">
+          {multiple
+            ? value
+              ? normalised
+                .filter((o) =>
+                  value.split(",").includes(o.value)
+                )
+                .map((o) => o.label)
+                .join(", ")
+              : placeholder
+            : selected
+              ? selected.label
+              : placeholder}
         </span>
         <ChevronDown
           size={14}
@@ -143,7 +183,12 @@ function Dropdown({
         >
           <div className="max-h-52 overflow-y-auto py-1">
             {normalised.map((o) => {
-              const isSelected = o.value === value;
+              const isSelected = multiple
+                ? value
+                  ?.split(",")
+                  .filter(Boolean)
+                  .includes(o.value)
+                : o.value === value;
               return (
                 <button
                   key={o.value}
@@ -185,6 +230,7 @@ function Setting() {
     userType: "",
     password: "",
     confirmPassword: "",
+    scopedata:"",
 
   });
 
@@ -239,6 +285,12 @@ function Setting() {
     }else if(password!=confirmPassword){
       // setShowErrorModal(true);
       alert("Passowrd is not matching");
+      showAlert({
+        icon: err,
+        title: 'Incorrect Password',
+        text: "Passowrd is not matching",
+        confirmButtonText: 'Cancel',
+      })
     } else {
 
        const requestData = {
@@ -249,12 +301,31 @@ function Setting() {
               contact_no: formData.contactNumber,
               password: formData.password,
               account_status:"ACTIVE",
-              role: formData.userType
+              role: formData.userType,
+              scope: formData.scopedata
           };
-          const response = await dashboardService.CreateApplicationUser(requestData);
 
-          alert("Selected Data"+JSON.stringify(requestData));
-          console.log("The policy Status IS",JSON.stringify(requestData));
+          const response = await dashboardService.CreateApplicationUser(requestData);
+          if(response.message =="User saved"){
+            await showAlert({
+                          icon:              'success',
+                          title:             'User Saved',
+                          text:              'User Creation successful',
+                          timer:             2500,
+                          timerProgressBar:  true,
+                          showConfirmButton: true,
+                        });
+          }else {
+            showAlert({
+              icon: 'error',
+              title: 'Unsername Unavailable',
+              text: "User already exist",
+              confirmButtonText: 'Cancel',
+            })
+                        // setSubmitted(false); 
+          }
+          // alert("Selected Data"+JSON.stringify(requestData));
+          // console.log("The policy Status IS",JSON.stringify(requestData));
 
     }
   };
@@ -331,6 +402,18 @@ function Setting() {
     { value: "SUPERADMIN", label: "SUPERADMIN" },
     { value: "USER", label: "USER" },
   ];
+
+    const ScopeValue = [
+      { value: "/app-control", label: "Application Control" },
+      { value: "/DriveControl", label: "Drive Control" },
+      { value: "/DataClassification", label: "Data Classification" },
+      { value: "/NetworkPolicy", label: "Network Control" },
+      { value: "/PrinterControl", label: "Printer Control" },
+      { value: "/usb", label: "USB Control" },
+      { value: "/devices", label: "View Device" },
+      { value: "/web", label: "Website Control" },
+    ]
+
   const branchOptions = [
     { value: "branch1", label: "Branch 1" },
     { value: "branch2", label: "Branch 2" },
@@ -501,14 +584,25 @@ function Setting() {
           {/* Row 4: Manage Scopes */}
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div>
-              <label className={labelClass}>Manage Scopes</label>
-              <button
-                onClick={() => setShowScopeModal(true)}
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-[#111827] px-4 text-[13px] font-medium text-white transition hover:border-[#7094ff]/40 hover:bg-[#1a2a4a]"
-              >
-                <Shield size={18} />
-                Manage Application Scopes
-              </button>
+              <label className={labelClass}>Scope</label>
+              {/* <Dropdown
+                value={formData.scopedata}
+                onChange={(val) => setFormData((prev) => ({ ...prev, scopedata: val }))}
+                options={ScopeValue}
+                placeholder="Select User scope"
+              /> */}
+              <Dropdown
+                value={formData.scopedata}
+                onChange={(val) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    scopedata: val,
+                  }))
+                }
+                options={ScopeValue}
+                placeholder="Select User scope"
+                multiple={true}
+              />
             </div>
           </div>
 
