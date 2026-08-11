@@ -281,17 +281,46 @@ function Setting() {
   const handleCreateUser = async () => {
     const { userName, password, confirmPassword } = formData;
     if (!userName || !password || !confirmPassword) {
-      setShowErrorModal(true);
-    }else if(password!=confirmPassword){
-      // setShowErrorModal(true);
-      alert("Passowrd is not matching");
-      showAlert({
-        icon: err,
-        title: 'Incorrect Password',
-        text: "Passowrd is not matching",
-        confirmButtonText: 'Cancel',
-      })
-    } else {
+    setShowErrorModal(true);
+    return;
+  }
+
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(formData.email)) {
+    showAlert({
+      icon: 'error',
+      title: 'Invalid Email',
+      text: 'Please enter a valid email address',
+      confirmButtonText: 'Cancel',
+    });
+    return;
+  }
+
+  // Phone validation - exactly 10 digits
+  const phoneRegex = /^[6-9]\d{9}$/;
+
+  if (!phoneRegex.test(formData.contactNumber)) {
+    showAlert({
+      icon: 'error',
+      title: 'Invalid Contact Number',
+      text: 'Please enter a valid 10-digit mobile number',
+      confirmButtonText: 'Cancel',
+    });
+    return;
+  }
+
+  // Password validation
+  if (password !== confirmPassword) {
+    showAlert({
+      icon: 'error',
+      title: 'Incorrect Password',
+      text: 'Password is not matching',
+      confirmButtonText: 'Cancel',
+    });
+    return;
+  }
 
        const requestData = {
               name: formData.firstName,
@@ -305,29 +334,49 @@ function Setting() {
               scope: formData.scopedata
           };
 
-          const response = await dashboardService.CreateApplicationUser(requestData);
-          if(response.message =="User saved"){
-            await showAlert({
-                          icon:              'success',
-                          title:             'User Saved',
-                          text:              'User Creation successful',
-                          timer:             2500,
-                          timerProgressBar:  true,
-                          showConfirmButton: true,
-                        });
-          }else {
-            showAlert({
-              icon: 'error',
-              title: 'Unsername Unavailable',
-              text: "User already exist",
-              confirmButtonText: 'Cancel',
-            })
-                        // setSubmitted(false); 
-          }
+          
+      try {
+        // await dashboardService.CreateApplicationUser(userData);
+        const response = await dashboardService.CreateApplicationUser(requestData);
+
+        await showAlert({
+          icon: 'success',
+          title: 'User Saved',
+          text: 'User Creation successful',
+          timer: 2500,
+          timerProgressBar: true,
+          showConfirmButton: true,
+        });
+
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          userName: "",
+          contactNumber: "",
+          userType: "",
+          password: "",
+          confirmPassword: "",
+          scopedata: "",
+        });
+
+
+      } catch (err) {
+
+        console.log("API ERROR:", err);
+
+        showAlert({
+          icon: 'error',
+          title: 'Username Unavailable',
+          text: err.response?.data?.message || err.message || 'User already exists',
+          confirmButtonText: 'Cancel',
+        });
+      }
+          // i
           // alert("Selected Data"+JSON.stringify(requestData));
           // console.log("The policy Status IS",JSON.stringify(requestData));
 
-    }
+    
   };
 
   // ── Scope logic ──
