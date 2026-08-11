@@ -98,11 +98,6 @@ function Dropdown({
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  // const handleSelect = (val) => {
-  //   onChange(val);
-  //   setOpen(false);
-  // };
-
     const handleSelect = (val) => {
   if (multiple) {
     const currentValues = value
@@ -220,6 +215,7 @@ function Setting() {
   const [view, setView] = useState("create");
   const [showScopeModal, setShowScopeModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -281,7 +277,12 @@ function Setting() {
   const handleCreateUser = async () => {
     const { userName, password, confirmPassword } = formData;
     if (!userName || !password || !confirmPassword) {
-    setShowErrorModal(true);
+    showAlert({
+      icon: 'error',
+      title: 'Invalid fields',
+      text: 'All fields are required',
+      confirmButtonText: 'Cancel',
+    });
     return;
   }
 
@@ -372,9 +373,7 @@ function Setting() {
           confirmButtonText: 'Cancel',
         });
       }
-          // i
-          // alert("Selected Data"+JSON.stringify(requestData));
-          // console.log("The policy Status IS",JSON.stringify(requestData));
+         
 
     
   };
@@ -441,8 +440,8 @@ function Setting() {
 
   // ── Tabs ──
   const tabs = [
-    { id: "create", label: "Create App User", icon: <UserRound size={16} /> },
-    { id: "list", label: "View App User", icon: <Users size={16} /> },
+    { id: "create", label: "Create User", icon: <UserRound size={16} /> },
+    { id: "list", label: "View User", icon: <Users size={16} /> },
   ];
 
   // ── Dropdown options ──
@@ -461,13 +460,10 @@ function Setting() {
       { value: "/usb", label: "USB Control" },
       { value: "/devices", label: "View Device" },
       { value: "/web", label: "Website Control" },
+      { value: "/Reports", label: "Reports" },
+      { value: "/Setting", label: "Setting" },
     ]
 
-  const branchOptions = [
-    { value: "branch1", label: "Branch 1" },
-    { value: "branch2", label: "Branch 2" },
-    { value: "branch3", label: "Branch 3" },
-  ];
 
   // ── Common input styles ──
   const inputClass = `
@@ -479,6 +475,61 @@ function Setting() {
   `;
   const inputWithIconClass = `${inputClass} pl-10`;
   const labelClass = "block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5";
+
+  const getPasswordStrength = (password) => {
+  if (!password) {
+    return {
+      label: "",
+      width: "w-0",
+      color: "bg-slate-700",
+      textColor: "text-slate-500",
+    };
+  }
+
+  let score = 0;
+
+  // Length
+  if (password.length >= 8) score++;
+
+  // Contains lowercase
+  if (/[a-z]/.test(password)) score++;
+
+  // Contains uppercase
+  if (/[A-Z]/.test(password)) score++;
+
+  // Contains number
+  if (/[0-9]/.test(password)) score++;
+
+  // Contains special character
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  if (score <= 2) {
+    return {
+      label: "Weak",
+      width: "w-1/3",
+      color: "bg-red-500",
+      textColor: "text-red-400",
+    };
+  }
+
+  if (score <= 4) {
+    return {
+      label: "Medium",
+      width: "w-2/3",
+      color: "bg-yellow-500",
+      textColor: "text-yellow-400",
+    };
+  }
+
+  return {
+    label: "Strong",
+    width: "w-full",
+    color: "bg-green-500",
+    textColor: "text-green-400",
+  };
+};
+
+const passwordStrength = getPasswordStrength(formData.password);
 
   return (
     <div className="min-h-screen p-6">
@@ -605,11 +656,18 @@ function Setting() {
                 />
               </div>
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-[11px] text-slate-500">Password strength:</span>
+                <span className="text-[11px] text-slate-500">
+                  Password strength:
+                </span>
                 <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                  <div className="w-1/3 h-full bg-red-500 rounded-full" />
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${passwordStrength.width} ${passwordStrength.color}`}/>
                 </div>
-                <span className="text-[11px] text-red-400">Weak</span>
+
+                <span
+                  className={`text-[11px] ${passwordStrength.textColor}`}>
+                  {passwordStrength.label}
+                </span>
               </div>
             </div>
             <div>
@@ -689,7 +747,7 @@ function Setting() {
           </div>
         </div>
       ) : (
-        // ─── USER LIST PAGE – TABLE EXACTLY LIKE PRINTER POLICIES ──
+        // ─── USER LIST PAGE – TABLE ──
         <div className="rounded-2xl border border-slate-700 bg-[#020617] p-6">
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -782,37 +840,6 @@ function Setting() {
         </div>
       )}
 
-      {/* ─── Scope Manager Modal ────────────────────────────── */}
-    
-
-      {/* ─── Error Modal ────────────────────────────────────── */}
-      {showErrorModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
-          onClick={() => setShowErrorModal(false)}
-        >
-          <div
-            className="relative w-full max-w-md rounded-2xl border border-red-500/30 bg-[#020617] p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex flex-col items-center text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 border border-red-500/30">
-                <span className="text-3xl font-bold text-red-500">!</span>
-              </div>
-              <h2 className="text-2xl font-bold text-white">Fail !</h2>
-              <p className="mt-2 text-sm text-slate-300">
-                Username, password and confirm password are required
-              </p>
-              <button
-                onClick={() => setShowErrorModal(false)}
-                className="mt-6 w-full rounded-lg border border-blue-500 bg-blue-600/20 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-blue-600/30"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

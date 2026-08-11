@@ -11,12 +11,6 @@ import { dashboardService } from '../services/dashboardService'
 /* ─────────────────────────────────────────────────────────────
    DATA
 ───────────────────────────────────────────────────────────── */
-const BRANCHES = [
-  { id: 1, name: 'BEL' },
-  { id: 2, name: 'MUHS' },
-  { id: 3, name: 'UNMANAGED' },
-  { id: 4, name: 'ISRO' },
-]
 
 const DEVICES_BY_BRANCH = {
   1: ['DESKTOP-VM8O1CP', 'localhost.localdomain', 'velox-ubuntu'],
