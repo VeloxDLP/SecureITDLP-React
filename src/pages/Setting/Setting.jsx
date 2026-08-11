@@ -215,6 +215,7 @@ function Setting() {
   const [view, setView] = useState("create");
   const [showScopeModal, setShowScopeModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -459,8 +460,8 @@ function Setting() {
       { value: "/usb", label: "USB Control" },
       { value: "/devices", label: "View Device" },
       { value: "/web", label: "Website Control" },
-      { value: "/Reports", label: "Website Control" },
-      { value: "/Setting", label: "Website Control" },
+      { value: "/Reports", label: "Reports" },
+      { value: "/Setting", label: "Setting" },
     ]
 
 
@@ -746,7 +747,7 @@ const passwordStrength = getPasswordStrength(formData.password);
           </div>
         </div>
       ) : (
-        // ─── USER LIST PAGE – TABLE EXACTLY LIKE PRINTER POLICIES ──
+        // ─── USER LIST PAGE – TABLE ──
         <div className="rounded-2xl border border-slate-700 bg-[#020617] p-6">
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-4">
