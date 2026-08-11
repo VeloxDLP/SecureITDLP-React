@@ -88,7 +88,7 @@ export default function ReportCenter() {
         dashboardService.getBranch(),
       ]);
       console.log("All Policies Fetched ", ALLBranch.data);
-      alert(ALLBranch.data);
+      // alert(ALLBranch.data);
       // setBranches(ALLBranch.data);
     };
 

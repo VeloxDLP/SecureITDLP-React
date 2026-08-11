@@ -12,107 +12,103 @@ import {
 } from 'lucide-react'
 
 // Define navigation with role-based access
+
 const NAV = [
-  { 
-    label: 'Dashboards', 
-    icon: LayoutDashboard, 
+  {
+    label: 'Dashboards',
+    icon: LayoutDashboard,
     path: '/dashboard',
-    roles: ['admin', 'superadmin'] // Both can see
+    roles: ['admin', 'superadmin']
+    // no scope = everyone with role can see it
   },
+
   {
     label: 'Application Control',
     icon: AppWindow,
-    roles: ['superadmin'],
+    scope: '/app-control',
     children: [
       {
         label: 'Manage Control',
         icon: AppWindow,
         path: '/ApplicationControl',
-        roles: ['superadmin'],
       },
       {
         label: 'View Application',
         icon: Eye,
         path: '/ViewApplication',
-        roles: ['superadmin'],
       },
     ],
   },
-  { 
-    label: 'USB Protection', 
-    icon: Usb, 
+
+  {
+    label: 'USB Protection',
+    icon: Usb,
     path: '/usb',
-    roles: ['superadmin'] // Only superadmin
+    scope: '/usb',
   },
-  { 
-    label: 'Website Control', 
-    icon: Globe, 
+
+  {
+    label: 'Website Control',
+    icon: Globe,
     path: '/web',
-    roles: ['superadmin'] // Only superadmin
+    scope: '/web',
   },
-  { 
-    label: 'Printer Control', 
-    icon: Shield, 
+
+  {
+    label: 'Printer Control',
+    icon: Shield,
     path: '/PrinterControl',
-    roles: ['superadmin'] // Only superadmin
+    scope: '/printercontrol',
   },
-  { 
-    label: 'Data Classification', 
-    icon: ScanSearch, 
+
+  {
+    label: 'Data Classification',
+    icon: ScanSearch,
     path: '/DataClassification',
-    roles: ['superadmin'] // Only superadmin
+    scope: '/dataclassification',
   },
-  { 
-    label: 'Drive Control', 
-    icon: FolderSearch, 
+
+  {
+    label: 'Drive Control',
+    icon: FolderSearch,
     path: '/DriveControl',
-    roles: ['superadmin'] // Only superadmin
+    scope: '/drivecontrol',
   },
+
   {
     label: 'Network Policy',
     icon: FolderSearch,
-    roles: ['superadmin'], // Only superadmin
+    scope: '/networkpolicy',
     children: [
       {
         label: 'Create Network Policy',
         icon: FolderSearch,
         path: '/NetworkPolicy',
-        roles: ['superadmin']
       },
       {
         label: 'Apply Network Policy',
         icon: FolderSearch,
         path: '/ApplyNetworkPolicy',
-        roles: ['superadmin']
       },
       {
         label: 'Active Policy',
         icon: FolderSearch,
         path: '/ActivePolicy',
-        roles: ['superadmin']
       },
     ],
   },
-  { 
-    label: 'View Devices', 
-    icon: Monitor, 
+
+  {
+    label: 'View Devices',
+    icon: Monitor,
     path: '/devices',
-    roles: ['admin', 'superadmin'] // Both can see
-  },
-  { 
-    label: 'Setting', 
-    icon: Monitor, 
-    path: '/Setting',
-    roles: ['admin', 'superadmin'] // Both can see
+    roles: ['admin', 'superadmin'],
+    scope: '/devices',
   },
 
-    { 
-    label: 'Report', 
-    icon: Monitor, 
-    path: '/Reports',
-    roles: ['admin', 'superadmin'] // Both can see
-  },
-]
+];
+
+
 
 const ACTIVE = 'bg-[#7094ff] text-white shadow-lg shadow-[#7094ff]/20'
 const INACTIVE = `
@@ -127,20 +123,32 @@ const hasAccess = (userRole, itemRoles) => {
   return itemRoles.includes(userRole)
 }
 
-function NavItem({ item, collapsed, userRole }) {
+const hasScopeAccess = (userScope, requiredScope) => {
+  if (!requiredScope) return true;
+
+  return userScope.includes(requiredScope.toLowerCase());
+};
+
+// function NavItem({ item, collapsed, userRole }) {
+function NavItem({ item, collapsed, userRole, userScope }) {
   const Icon = item.icon;
   const [open, setOpen] = useState(false);
 
   // Check if user has access to this item
   if (!hasAccess(userRole, item.roles)) {
-    return null;
-  }
+  return null;
+}
+
+if (!hasScopeAccess(userScope, item.scope)) {
+  return null;
+}
 
   // Parent menu with children
   if (item.children) {
     // Filter children based on role
-    const accessibleChildren = item.children.filter(child => 
-      hasAccess(userRole, child.roles)
+    const accessibleChildren = item.children.filter(child =>
+      hasAccess(userRole, child.roles) &&
+      hasScopeAccess(userScope, child.scope || item.scope)
     );
 
     if (accessibleChildren.length === 0) {
@@ -294,7 +302,13 @@ export default function Sidebar() {
 
   // Get user role (assuming user object has a role property)
   const userRole = user?.role?.toLowerCase() || 'admin';
+  // alert("User scope value"+user.scope);
+  const userScope = user?.scope
+    ?.split(',')
+    .map(scope => scope.trim().toLowerCase())
+    .filter(Boolean) || [];
 
+  console.log("User Scope:", userScope);
   return (
     <aside
       className={`
@@ -312,11 +326,12 @@ export default function Sidebar() {
       <nav className="flex-1 py-3 flex flex-col gap-0.5"
         style={{ overflowY: 'auto', overflow: 'visible' }}>
         {NAV.map(item => (
-          <NavItem 
-            key={item.label} 
-            item={item} 
+          <NavItem
+            key={item.label}
+            item={item}
             collapsed={collapsed}
             userRole={userRole}
+            userScope={userScope}
           />
         ))}
       </nav>
@@ -348,9 +363,31 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="flex-shrink-0 py-2">
-          <FooterBtn icon={ClipboardMinus} label="Reports" collapsed={collapsed} />
-        <FooterBtn icon={Settings} label="Settings" collapsed={collapsed} />
-        <FooterBtn icon={LogOut} label="Logout" collapsed={collapsed} onClick={handleLogout} danger />
+        {userScope.includes('/reports') && (
+          <FooterBtn
+            icon={ClipboardMinus}
+            label="Reports"
+            collapsed={collapsed}
+            onClick={() => navigate("/reports")}
+          />
+        )}
+
+        {userScope.includes('/setting') && (
+          <FooterBtn
+            icon={Settings}
+            label="Settings"
+            collapsed={collapsed}
+            onClick={() => navigate("/Setting")}
+          />
+        )}
+
+        <FooterBtn
+          icon={LogOut}
+          label="Logout"
+          collapsed={collapsed}
+          onClick={handleLogout}
+          danger
+        />
 
         {!collapsed && user && (
           <div className={`mx-2 mt-2 px-3 py-2 rounded-xl flex items-center gap-2.5 border

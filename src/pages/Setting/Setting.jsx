@@ -461,6 +461,8 @@ function Setting() {
       { value: "/usb", label: "USB Control" },
       { value: "/devices", label: "View Device" },
       { value: "/web", label: "Website Control" },
+      { value: "/Reports", label: "Website Control" },
+      { value: "/Setting", label: "Website Control" },
     ]
 
   const branchOptions = [
