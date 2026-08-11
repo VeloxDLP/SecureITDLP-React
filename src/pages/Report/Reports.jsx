@@ -18,24 +18,25 @@ import {
   RefreshCw,
 } from "lucide-react";
 
+// Extended module data with descriptions
 const modulesData = [
-  { name: "Application Control", count: 2, icon: Monitor },
-  { name: "USB Protection", count: 5, icon: Shield },
-  { name: "Website Control", count: 5, icon: Globe },
-  { name: "Printer Control", count: 5, icon: Printer },
-  { name: "Data Classification", count: 5, icon: FolderOpen },
-  { name: "Drive Control", count: 5, icon: HardDrive },
-  { name: "Network Policy", count: 3, icon: Network },
+  { name: "Application Control", count: 2, icon: Monitor, description: "Manage application execution policies" },
+  { name: "USB Protection", count: 5, icon: Shield, description: "Control USB device access" },
+  { name: "Website Control", count: 5, icon: Globe, description: "Manage website access policies" },
+  { name: "Printer Control", count: 5, icon: Printer, description: "Manage printer access policies across endpoints" },
+  { name: "Data Classification", count: 5, icon: FolderOpen, description: "Classify and protect sensitive data" },
+  { name: "Drive Control", count: 5, icon: HardDrive, description: "Manage drive and storage access" },
+  { name: "Network Policy", count: 3, icon: Network, description: "Define network access rules" },
 ];
 
 const reportsData = {
-  "Application Control": ["Manage Control", "View Control"],
-  "USB Protection": ["USB Log", "Device Audit"],
-  "Website Control": ["Web History", "Blocked Sites"],
-  "Printer Control": ["Print Jobs", "Printer Audit"],
-  "Data Classification": ["Classified Files", "Policy Violations"],
-  "Drive Control": ["Drive Access", "External Drives"],
-  "Network Policy": ["Network Logs", "Policy Changes"],
+  "Application Control": ["View Whitelisted","View Blacklisted","View Blocked"],
+  "USB Protection": ["Connection Status","Data Transfer"],
+  "Website Control": ["Prevented Websites"],
+  "Printer Control": ["Printer Logs"],
+  "Drive Control": ["Drive Report"],
+  "Network Policy": ["Peripheral Transfer","Webupload","Network Transfer","FTP Transfer","Clipboard Event"],
+    "Data Classification": ["Classified Files", "Policy Violations"],
 };
 
 const branches = ["Mumbai", "Pune", "Delhi", "Bangalore", "Chennai"];
@@ -76,6 +77,27 @@ export default function ReportCenter() {
 
   const reports = reportsData[selectedModule] || [];
 
+  // Find the current module object
+  const currentModule = modulesData.find(m => m.name === selectedModule);
+
+  // Dummy rows for the report table – used to compute allowed/prevented counts
+  const dummyRows = [
+    { id: 1, module: selectedModule, report: selectedReport, branch: branch, device: device, user: user, dateRange: dateRange, status: "Success" },
+    { id: 2, module: selectedModule, report: selectedReport, branch: branch, device: "DESKTOP-9A1B2C3", user: "Admin", dateRange: dateRange, status: "Blocked" },
+    { id: 3, module: selectedModule, report: selectedReport, branch: branch, device: "DESKTOP-5X8Y2Z1", user: "Guest", dateRange: dateRange, status: "Success" },
+    { id: 4, module: selectedModule, report: selectedReport, branch: branch, device: "DESKTOP-4W7Q9T2", user: "Operator", dateRange: dateRange, status: "Blocked" },
+    { id: 5, module: selectedModule, report: selectedReport, branch: branch, device: "DESKTOP-4W7Q9T2", user: "Operator", dateRange: dateRange, status: "Blocked" },
+    { id: 6, module: selectedModule, report: selectedReport, branch: branch, device: "DESKTOP-4W7Q9T2", user: "Operator", dateRange: dateRange, status: "Blocked" },
+    { id: 7, module: selectedModule, report: selectedReport, branch: branch, device: "DESKTOP-4W7Q9T2", user: "Operator", dateRange: dateRange, status: "Blocked" },
+    { id: 8, module: selectedModule, report: selectedReport, branch: branch, device: "DESKTOP-4W7Q9T2", user: "Operator", dateRange: dateRange, status: "Blocked" },
+    { id: 9, module: selectedModule, report: selectedReport, branch: branch, device: "DESKTOP-4W7Q9T2", user: "Operator", dateRange: dateRange, status: "Blocked" },
+    { id: 10, module: selectedModule, report: selectedReport, branch: branch, device: "DESKTOP-4W7Q9T2", user: "Operator", dateRange: dateRange, status: "Blocked" },
+  ];
+
+  // Compute allowed and prevented counts
+  const allowedCount = dummyRows.filter(row => row.status === "Success").length;
+  const preventedCount = dummyRows.filter(row => row.status === "Blocked").length;
+
   const handleViewReport = () => {
     setShowReport(true);
     setTimeout(() => {
@@ -94,136 +116,32 @@ export default function ReportCenter() {
     setUser(defaultUser);
     setDateRange(defaultDateRange);
     setShowReport(false);
-    // Optionally scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Dummy rows for the report table
-  const dummyRows = [
-    {
-      id: 1,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: device,
-      user: user,
-      dateRange: dateRange,
-      status: "Success",
-    },
-    {
-      id: 2,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-9A1B2C3",
-      user: "Admin",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 3,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-5X8Y2Z1",
-      user: "Guest",
-      dateRange: dateRange,
-      status: "Success",
-    },
-    {
-      id: 4,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 5,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 6,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 7,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 8,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 9,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 10,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-  ];
-
   return (
-    <div className="min-h-screen  p-6">
+    <div className="min-h-screen p-6">
       {/* Report Center button */}
- <button
-  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold"
-  style={{
-    background: "rgba(112, 148, 255, 0.82)",
-    backdropFilter: "blur(20px)",
-    boxShadow: "rgba(112, 148, 255, 0.35) 0px 6px 24px, rgba(255, 255, 255, 0.2) 0px 1px 0px inset",
-  }}
->
-  <SquarePen className="h-4 w-4" />
-  Report Center
-</button>
 
+      {/* Module Summary Card – BACKGROUND UPDATED TO #020623 */}
+      
+<div className="w-full mb-6 rounded-xl border border-gray-200 dark:border-[#2B3345] bg-white dark:bg-[#020617] px-6 py-4">
+  <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+    Report
+  </h2>
+
+  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+    Configure policy, source, destination, control, details.
+  </p>
+</div>
+
+      {/* Filter Cards Grid */}
       <div className="grid grid-cols-4 gap-5 w-full">
         {/* 1. Module */}
         <div className="bg-[#020617] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
           <h2 className="text-white font-semibold mb-4 flex-shrink-0">1. Module</h2>
           <div className="relative mb-4 flex-shrink-0">
-            {/* <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" /> */}
-     
+            {/* Search input – hidden but can be re‑enabled */}
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1">
             {filteredModules.map((module) => {
@@ -309,9 +227,8 @@ export default function ReportCenter() {
           </div>
         </div>
 
-        {/* 3. ATM Selection */}
         <div className="bg-[#020617] border border-indigo-950 rounded-xl p-4 flex flex-col h-full">
-          <h2 className="text-white font-semibold mb-4 flex-shrink-0">3. ATM Selection</h2>
+          <h2 className="text-white font-semibold mb-4 flex-shrink-0">3. Device Selection</h2>
           <div className="flex-1 space-y-4">
             <div>
               <label className="block text-xs text-gray-400 mb-1.5">Branch</label>
@@ -343,10 +260,7 @@ export default function ReportCenter() {
                 </select>
               </div>
             </div>
-            <div>
-            
-         
-            </div>
+            <div>{/* User dropdown removed */}</div>
           </div>
         </div>
 
@@ -383,7 +297,7 @@ export default function ReportCenter() {
             Custom
           </button>
 
-          {/* Selection Summary */}
+          {/* Selection Summary (inside card) */}
           <div className="flex-1 min-h-0 bg-[#020617] border border-gray-800 rounded-lg p-3 mb-3 overflow-y-auto">
             <div className="flex items-center gap-2 mb-3">
               <ClipboardList className="h-4 w-4 text-indigo-400 flex-shrink-0" />
@@ -417,7 +331,7 @@ export default function ReportCenter() {
             </dl>
           </div>
 
-          {/* Buttons: Reset and View Report */}
+          {/* Buttons */}
           <div className="flex gap-2 flex-shrink-0">
             <button
               onClick={handleReset}
