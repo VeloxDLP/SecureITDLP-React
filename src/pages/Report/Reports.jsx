@@ -16,7 +16,10 @@ import {
   ClipboardList,
   SquarePen,
   RefreshCw,
+  ChevronDown,
 } from "lucide-react";
+import { dashboardService } from "../../services/dashboardService";
+import { useTheme } from "../../context/ThemeContext";
 
 // Extended module data with descriptions
 const modulesData = [
@@ -54,7 +57,7 @@ const dateRangeOptions = [
 // Default values
 const defaultModule = "Application Control";
 const defaultReport = "Manage Control";
-const defaultBranch = "Mumbai";
+// const defaultBranch = "Mumbai";
 const defaultDevice = "DESKTOP-7F2K3L1";
 const defaultUser = "All Users";
 const defaultDateRange = "Last Month";
@@ -63,14 +66,14 @@ export default function ReportCenter() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedModule, setSelectedModule] = useState(defaultModule);
   const [selectedReport, setSelectedReport] = useState(defaultReport);
-  const [branch, setBranch] = useState(defaultBranch);
+  const [branch, setBranch] = useState();
   const [device, setDevice] = useState(defaultDevice);
   const [user, setUser] = useState(defaultUser);
   const [dateRange, setDateRange] = useState(defaultDateRange);
   const [showReport, setShowReport] = useState(false);
 
   const reportRef = useRef(null);
-
+  const [getbranches, setapibranches]= useState([]);
   const filteredModules = modulesData.filter((m) =>
     m.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -79,6 +82,37 @@ export default function ReportCenter() {
 
   // Find the current module object
   const currentModule = modulesData.find(m => m.name === selectedModule);
+
+  const loadPageData = async () => {
+  
+      const [ALLBranch] = await Promise.all([
+        dashboardService.getBranch(),
+      ]);
+      // console.log("All Policies Fetched ", ALLBranch.data);
+      setapibranches(ALLBranch.data);
+      alert(getbranches.toString);
+      console.log("All received branches",getbranches);
+      // setBranches(ALLBranch.data);
+    };
+
+  useEffect(() => {
+    loadPageData();
+  }, []);
+
+   const handleBranchChange = async(branch)=>{
+    // alert("User selected branch "+branch)
+         setForm(f => ({
+          ...f,
+          branch,
+          device: ""
+      }));
+  
+      const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch);
+      // setFetchedDevices(DevicesOfBranches.data);
+      // alert("Received devices "+DevicesOfBranches.data);
+  } 
+
+
 
   // Dummy rows for the report table – used to compute allowed/prevented counts
   const dummyRows = [
@@ -107,6 +141,159 @@ export default function ReportCenter() {
     }, 100);
   };
 
+  function Dropdown({
+  value,
+  onChange,
+  options,
+  placeholder = 'Select…',
+  disabled = false,
+  searchable = false,
+  error = false,
+}) {
+  const { isDark } = useTheme()
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const containerRef = useRef(null)
+
+  const normalised = options.map(o =>
+    typeof o === 'string' ? { value: o, label: o } : o
+  )
+
+  const filtered = searchable && query
+    ? normalised.filter(o => o.label.toLowerCase().includes(query.toLowerCase()))
+    : normalised
+
+  const selected = normalised.find(o => o.value === value)
+
+  useEffect(() => {
+    const handler = e => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    if (open) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const handleSelect = val => {
+    onChange(val)
+    setOpen(false)
+    setQuery('')
+  }
+
+  const glassSurface = isDark
+    ? { background: '#2a2a2a', backdropFilter: 'none', WebkitBackdropFilter: 'none' }
+    : { background: 'rgba(255,255,255,0.80)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }
+
+  const triggerBorder = error
+    ? 'border-rose-500/60'
+    : open
+      ? 'border-[#7094ff]/60'
+      : isDark ? 'border-white/[0.10]' : 'border-slate-300/70'
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(!open)}
+        className={`
+          w-full flex items-center justify-between gap-2
+          px-3 py-2.5 rounded-xl text-[13px] text-left
+          border transition-all duration-200 outline-none
+          disabled:opacity-40 disabled:cursor-not-allowed
+          ${triggerBorder}
+          ${open ? 'ring-2 ring-[#7094ff]/20' : ''}
+          ${isDark ? 'text-slate-200' : 'text-slate-800'}
+        `}
+        style={glassSurface}
+      >
+        <span className={selected ? '' : isDark ? 'text-slate-500' : 'text-slate-400'}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <ChevronDown
+          size={10}
+          className={`flex-shrink-0 transition-transform duration-200
+                      ${open ? 'rotate-180' : ''}
+                      ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+        />
+      </button>
+
+      {open && (
+        <div
+          className={`
+            absolute top-full left-0 right-0 mt-1.5 z-[200]
+            rounded-xl border overflow-hidden
+            shadow-[0_16px_48px_rgba(0,0,0,0.35)]
+            animate-slide-up
+            ${isDark ? 'border-white/[0.10]' : 'border-slate-200/80'}
+          `}
+          style={{
+            background: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.98)',
+            backdropFilter: 'blur(32px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+          }}
+        >
+          {searchable && (
+            <div className={`px-3 py-2 border-b ${isDark ? 'border-white/[0.07]' : 'border-slate-100'}`}>
+              <div className="relative flex items-center">
+                <Search size={12} className={`absolute left-2.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder="Search…"
+                  className={`w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none border transition-all duration-150
+                              ${isDark
+                      ? 'bg-[#2a2a2a] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`}
+                />
+                {query && (
+                  <button onClick={() => setQuery('')} className="absolute right-2 text-slate-400 hover:text-slate-200">
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="max-h-52 overflow-y-auto py-1">
+            {filtered.length === 0 ? (
+              <p className={`px-4 py-3 text-[12px] text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                No results
+              </p>
+            ) : (
+              filtered.map(o => {
+                const isSelected = o.value === value
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => handleSelect(o.value)}
+                    className={`
+                      w-full text-left px-4 py-2.5 text-[13px]
+                      flex items-center justify-between gap-2
+                      transition-colors duration-100
+                      ${isSelected
+                        ? 'text-[#7094ff] bg-[#7094ff]/10'
+                        : isDark
+                          ? 'text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]'
+                          : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'}
+                    `}
+                  >
+                    {o.label}
+                    {isSelected && <Check size={13} className="text-[#7094ff] flex-shrink-0" />}
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
   const handleReset = () => {
     setSearchTerm("");
     setSelectedModule(defaultModule);
@@ -232,17 +419,15 @@ export default function ReportCenter() {
           <div className="flex-1 space-y-4">
             <div>
               <label className="block text-xs text-gray-400 mb-1.5">Branch</label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                <select
+              <div>
+                
+                <Dropdown
                   value={branch}
-                  onChange={(e) => setBranch(e.target.value)}
-                  className="w-full appearance-none pl-9 pr-8 py-2 rounded-lg bg-[#020617] border border-gray-800 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600"
-                >
-                  {branches.map((b) => (
-                    <option key={b} value={b}>{b}</option>
-                  ))}
-                </select>
+                  onChange={setBranch}
+                  options={getbranches}
+                  placeholder="Select Branch"
+                  searchable
+                />
               </div>
             </div>
             <div>
