@@ -416,6 +416,8 @@ export default function DeviceDashboard() {
   }
 
   return (
+
+    
     <div style={styles.page}>
       <div style={styles.panel}>
         {/* Header Section - Always visible */}

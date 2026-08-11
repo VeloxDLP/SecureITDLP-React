@@ -538,8 +538,9 @@ export default function ViewApplication() {
             </p>
           </div>
         </div>
-
       </div>
+
+      
 
       {/* ─── Filter Card ─── (visible only when not submitted) */}
       {!submitted && (
