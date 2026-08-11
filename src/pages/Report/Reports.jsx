@@ -147,6 +147,8 @@ export default function ReportCenter() {
             {filteredModules.map((module) => {
               const Icon = module.icon;
               const isSelected = module.name === selectedModule;
+
+              
               return (
                 <button
                   key={module.name}
