@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Search,
   ChevronRight,
@@ -17,6 +17,7 @@ import {
   SquarePen,
   RefreshCw,
 } from "lucide-react";
+import { dashboardService } from "../../services/dashboardService";
 
 // Extended module data with descriptions
 const modulesData = [
@@ -51,6 +52,7 @@ const dateRangeOptions = [
   "Last 6 Months",
 ];
 
+
 // Default values
 const defaultModule = "Application Control";
 const defaultReport = "Manage Control";
@@ -79,6 +81,20 @@ export default function ReportCenter() {
 
   // Find the current module object
   const currentModule = modulesData.find(m => m.name === selectedModule);
+
+  const loadPageData = async () => {
+  
+      const [ALLBranch] = await Promise.all([
+        dashboardService.getBranch(),
+      ]);
+      console.log("All Policies Fetched ", ALLBranch.data);
+      alert(ALLBranch.data);
+      // setBranches(ALLBranch.data);
+    };
+
+  useEffect(() => {
+    loadPageData();
+  }, []);
 
   // Dummy rows for the report table – used to compute allowed/prevented counts
   const dummyRows = [
