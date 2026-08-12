@@ -91,7 +91,7 @@ export default function ReportCenter() {
       ]);
       // console.log("All Policies Fetched ", ALLBranch.data);
       setapibranches(ALLBranch.data);
-      alert(getbranches.toString);
+      // alert(getbranches.toString);
       console.log("All received branches",getbranches);
       // setBranches(ALLBranch.data);
     };
@@ -298,7 +298,7 @@ export default function ReportCenter() {
     setSearchTerm("");
     setSelectedModule(defaultModule);
     setSelectedReport(defaultReport);
-    setBranch(defaultBranch);
+    setBranch("mumbai");
     setDevice(defaultDevice);
     setUser(defaultUser);
     setDateRange(defaultDateRange);
