@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   Search,
   ChevronRight,
@@ -53,7 +53,6 @@ const dateRangeOptions = [
   "Last 3 Months",
   "Last 6 Months",
 ];
-
 
 // Default values
 const defaultModule = "Application Control";
@@ -112,6 +111,7 @@ export default function ReportCenter() {
       // setFetchedDevices(DevicesOfBranches.data);
       // alert("Received devices "+DevicesOfBranches.data);
   } 
+
 
 
   // Dummy rows for the report table – used to compute allowed/prevented counts
@@ -334,8 +334,6 @@ export default function ReportCenter() {
             {filteredModules.map((module) => {
               const Icon = module.icon;
               const isSelected = module.name === selectedModule;
-
-              
               return (
                 <button
                   key={module.name}
