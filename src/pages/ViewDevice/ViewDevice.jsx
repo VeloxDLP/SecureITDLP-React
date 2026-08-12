@@ -94,18 +94,18 @@ export default function DeviceDashboard() {
     },
   ];
 
+  // --- FIXED STYLES: height now dynamic ---
   const styles = {
     page: {
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       color: isDark ? "#cbd5e1" : "#1e293b",
-      padding: "0",
-      margin: "0",
+      padding: "20px",
+      margin: 0,
       height: "100vh",
+      boxSizing: "border-box",
       display: "flex",
       alignItems: "flex-start",
       justifyContent: "center",
-      padding: "20px",
-      boxSizing: "border-box",
     },
     panel: {
       background: isDark ? "#020617" : "#ffffff",
@@ -115,7 +115,10 @@ export default function DeviceDashboard() {
       padding: "16px 20px",
       width: "100%",
       maxWidth: "1400px",
-      height: "calc(100vh - 40px)", // Fixed height with padding
+      // --- HEIGHT FIX ---
+      maxHeight: "calc(100vh - 40px)", // limit to viewport minus padding
+      height: "auto",                  // shrink to content, but not exceed maxHeight
+      minHeight: "300px",              // keep a sensible minimum
       display: "flex",
       flexDirection: "column",
     },
@@ -126,7 +129,7 @@ export default function DeviceDashboard() {
       marginBottom: "16px",
       flexWrap: "wrap",
       gap: "8px",
-      flexShrink: 0, // Prevent header from shrinking
+      flexShrink: 0,
     },
     panelTitle: {
       fontSize: "18px",
@@ -173,7 +176,7 @@ export default function DeviceDashboard() {
       display: "flex",
       flexDirection: "column",
       flex: 1,
-      minHeight: 0, // Critical for flex child scrolling
+      minHeight: 0,
       gap: "6px",
     },
     headerRowCard: {
@@ -183,7 +186,7 @@ export default function DeviceDashboard() {
       borderRadius: "10px",
       padding: "10px 16px",
       gap: "12px",
-      flexShrink: 0, // Keep header fixed
+      flexShrink: 0,
     },
     headerCell: {
       fontSize: "13px",
@@ -193,12 +196,13 @@ export default function DeviceDashboard() {
     },
     scrollableRows: {
       flex: 1,
-      overflowY: "auto", // Enable vertical scrolling
+      overflowY: "auto",
       display: "flex",
       flexDirection: "column",
       gap: "6px",
-      paddingRight: "4px", // Space for scrollbar
-      // Custom scrollbar styling
+      paddingRight: "4px",
+      minHeight: "100px", // ensure there's always scroll space
+      // scrollbar styling (optional)
       scrollbarWidth: "thin",
       scrollbarColor: isDark ? "#1a2a4a transparent" : "#e2e8f0 transparent",
     },
@@ -416,8 +420,6 @@ export default function DeviceDashboard() {
   }
 
   return (
-
-    
     <div style={styles.page}>
       <div style={styles.panel}>
         {/* Header Section - Always visible */}
