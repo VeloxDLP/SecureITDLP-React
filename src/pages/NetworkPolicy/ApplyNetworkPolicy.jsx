@@ -210,20 +210,7 @@ function ApplyNetworkPolicy() {
                 }`}
                 onClick={() => handlePolicySelect(policy.id)}
               >
-                {/* Radio Button */}
-                {/* <div className="flex-shrink-0">
-                  <input
-                    type="radio"
-                    name="policy"
-                    checked={selectedPolicy === policy.id}
-                    onChange={() => handlePolicySelect(policy.id)}
-                    className={`w-4 h-4 cursor-pointer ${
-                      isDark 
-                        ? 'accent-[#5A7BFF] bg-[#0b1220] border-[#2d3748]'
-                        : 'accent-blue-600'
-                    }`}
-                  />
-                </div> */}
+    
                 
                 <div className="flex-1">
                   <h3 className={`text-base font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
