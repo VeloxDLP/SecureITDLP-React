@@ -524,7 +524,7 @@ function Setting() {
   const passwordStrength = getPasswordStrength(formData.password);
 
   return (
-    <div className={`min-h-screen p-6 ${isDark ? "bg-[#0a0f1e]" : "bg-slate-50"}`}>
+    <div className={`min-h-screen p-6`}>
       {/* Top Buttons */}
       <div
         className={`mb-6 rounded-2xl border p-4 ${
@@ -745,9 +745,8 @@ function Setting() {
 
           {/* Action Buttons */}
           <div
-            className={`mt-6 flex flex-wrap items-center justify-end gap-3 border-t pt-6 ${
-              isDark ? "border-slate-700" : "border-slate-200"
-            }`}
+            className={`mt-6 flex flex-wrap items-center justify-end gap-3 ${
+              isDark ? "border-slate-700" : "border-slate-200"}`}
           >
             <GlassButton
               onClick={() => {

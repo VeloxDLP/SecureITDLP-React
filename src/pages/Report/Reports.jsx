@@ -72,6 +72,7 @@ export default function ReportCenter() {
   const [user, setUser] = useState(defaultUser);
   const [dateRange, setDateRange] = useState(defaultDateRange);
   const [showReport, setShowReport] = useState(false);
+    const [fetchedDevices, setFetchedDevices] = useState([]);
 
   const reportRef = useRef(null);
   const [getbranches, setapibranches] = useState([]);
@@ -95,13 +96,19 @@ export default function ReportCenter() {
     loadPageData();
   }, []);
 
+   const deviceOptions = (fetchedDevices || []).map(device => ({
+    value: device,
+    label: device
+}));
+
   const handleBranchChange = async (branch) => {
-    setForm(f => ({
-      ...f,
-      branch,
-      device: ""
-    }));
+    // setForm(f => ({
+    //   ...f,
+    //   branch,
+    //   device: ""
+    // }));
     const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch);
+    setFetchedDevices(DevicesOfBranches.data);
   };
 
   // Dummy rows for the report table
@@ -297,7 +304,7 @@ export default function ReportCenter() {
   };
 
   return (
-    <div className={`min-h-screen p-6 ${isDark ? 'bg-[#0a0f1e]' : 'bg-slate-50'}`}>
+    <div className={`min-h-screen p-6`}>
       {/* Report Center header card – theme aware */}
       <div className={`w-full mb-6 rounded-xl border px-6 py-4 ${
         isDark 
@@ -419,7 +426,8 @@ export default function ReportCenter() {
               <label className={`block text-xs mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Branch</label>
               <Dropdown
                 value={branch}
-                onChange={setBranch}
+                // onChange={setBranch}
+                onChange={handleBranchChange}
                 options={getbranches}
                 placeholder="Select Branch"
                 searchable
@@ -427,7 +435,7 @@ export default function ReportCenter() {
             </div>
             <div>
               <label className={`block text-xs mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Device</label>
-              <div className="relative">
+              {/* <div className="relative">
                 <Monitor className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                 <select
                   value={device}
@@ -442,7 +450,17 @@ export default function ReportCenter() {
                     <option key={d} value={d}>{d}</option>
                   ))}
                 </select>
-              </div>
+              </div> */}
+              <Dropdown
+            value={device}
+            onChange={(e) => setDevice(e.target.value)}
+            options={deviceOptions}
+            placeholder={'Select branch first'}
+            // disabled={!form.branch}
+            // error={submitted && !form.device}
+          />
+
+
             </div>
           </div>
         </div>
