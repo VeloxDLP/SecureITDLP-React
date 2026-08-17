@@ -17,7 +17,7 @@ import {
   SquarePen,
   RefreshCw,
   ChevronDown,
-  X, // added missing import
+  X,
 } from "lucide-react";
 import { dashboardService } from "../../services/dashboardService";
 import { useTheme } from "../../context/ThemeContext";
@@ -40,7 +40,7 @@ const reportsData = {
   "Printer Control": ["Printer Logs"],
   "Drive Control": ["Drive Report"],
   "Network Policy": ["Peripheral Transfer","Webupload","Network Transfer","FTP Transfer","Clipboard Event"],
-    "Data Classification": ["Classified Files", "Policy Violations"],
+  "Data Classification": ["Classified Files", "Policy Violations"],
 };
 
 const branches = ["Mumbai", "Pune", "Delhi", "Bangalore", "Chennai"];
@@ -63,7 +63,7 @@ const defaultUser = "All Users";
 const defaultDateRange = "Last Month";
 
 export default function ReportCenter() {
-  const { isDark } = useTheme(); // <-- use theme
+  const { isDark } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedModule, setSelectedModule] = useState(defaultModule);
   const [selectedReport, setSelectedReport] = useState(defaultReport);
@@ -72,16 +72,20 @@ export default function ReportCenter() {
   const [user, setUser] = useState(defaultUser);
   const [dateRange, setDateRange] = useState(defaultDateRange);
   const [showReport, setShowReport] = useState(false);
-    const [fetchedDevices, setFetchedDevices] = useState([]);
+  const [fetchedDevices, setFetchedDevices] = useState([]);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const reportRef = useRef(null);
   const [getbranches, setapibranches] = useState([]);
+
   const filteredModules = modulesData.filter((m) =>
     m.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const reports = reportsData[selectedModule] || [];
-
   const currentModule = modulesData.find(m => m.name === selectedModule);
 
   const loadPageData = async () => {
@@ -96,19 +100,15 @@ export default function ReportCenter() {
     loadPageData();
   }, []);
 
-   const deviceOptions = (fetchedDevices || []).map(device => ({
+  const deviceOptions = (fetchedDevices || []).map(device => ({
     value: device,
     label: device
-}));
+  }));
 
   const handleBranchChange = async (branch) => {
-    // setForm(f => ({
-    //   ...f,
-    //   branch,
-    //   device: ""
-    // }));
     const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch);
     setFetchedDevices(DevicesOfBranches.data);
+    setDevice(""); // reset device when branch changes
   };
 
   // Dummy rows for the report table
@@ -125,10 +125,17 @@ export default function ReportCenter() {
     { id: 10, module: selectedModule, report: selectedReport, branch: branch, device: "DESKTOP-4W7Q9T2", user: "Operator", dateRange: dateRange, status: "Blocked" },
   ];
 
+  // Pagination calculations
+  const totalPages = Math.ceil(dummyRows.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRows = dummyRows.slice(startIndex, endIndex);
+
   const allowedCount = dummyRows.filter(row => row.status === "Success").length;
   const preventedCount = dummyRows.filter(row => row.status === "Blocked").length;
 
   const handleViewReport = () => {
+    setCurrentPage(1); // reset pagination when generating new report
     setShowReport(true);
     setTimeout(() => {
       if (reportRef.current) {
@@ -300,6 +307,7 @@ export default function ReportCenter() {
     setUser(defaultUser);
     setDateRange(defaultDateRange);
     setShowReport(false);
+    setCurrentPage(1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -426,7 +434,6 @@ export default function ReportCenter() {
               <label className={`block text-xs mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Branch</label>
               <Dropdown
                 value={branch}
-                // onChange={setBranch}
                 onChange={handleBranchChange}
                 options={getbranches}
                 placeholder="Select Branch"
@@ -435,32 +442,12 @@ export default function ReportCenter() {
             </div>
             <div>
               <label className={`block text-xs mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Device</label>
-              {/* <div className="relative">
-                <Monitor className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                <select
-                  value={device}
-                  onChange={(e) => setDevice(e.target.value)}
-                  className={`w-full appearance-none pl-9 pr-8 py-2 rounded-lg border text-sm focus:outline-none focus:ring-1 focus:ring-indigo-600 focus:border-indigo-600 ${
-                    isDark
-                      ? 'bg-[#020617] border-gray-800 text-gray-200'
-                      : 'bg-white border-slate-300 text-gray-800'
-                  }`}
-                >
-                  {devices.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
-              </div> */}
               <Dropdown
-            value={device}
-            onChange={(e) => setDevice(e.target.value)}
-            options={deviceOptions}
-            placeholder={'Select branch first'}
-            // disabled={!form.branch}
-            // error={submitted && !form.device}
-          />
-
-
+                value={device}
+                onChange={(e) => setDevice(e.target.value)}
+                options={deviceOptions}
+                placeholder={'Select branch first'}
+              />
             </div>
           </div>
         </div>
@@ -566,7 +553,7 @@ export default function ReportCenter() {
         </div>
       </div>
 
-      {/* Report section */}
+      {/* Report section with pagination */}
       {showReport && (
         <div ref={reportRef} className={`mt-8 border rounded-xl p-6 ${
           isDark ? 'bg-[#020617] border-indigo-950' : 'bg-white border-slate-200'
@@ -590,7 +577,7 @@ export default function ReportCenter() {
                 </tr>
               </thead>
               <tbody>
-                {dummyRows.map((row) => (
+                {paginatedRows.map((row) => (
                   <tr key={row.id} className={`border-b ${isDark ? 'border-gray-800/50 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50'}`}>
                     <td className={`px-4 py-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{row.id}</td>
                     <td className={`px-4 py-3 ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>{row.module}</td>
@@ -619,8 +606,48 @@ export default function ReportCenter() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          <div className={`flex items-center justify-between mt-4 pt-3 border-t ${isDark ? 'border-gray-800' : 'border-slate-200'}`}>
+            <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+              Showing {startIndex + 1}–{Math.min(endIndex, dummyRows.length)} of {dummyRows.length} records
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded-md text-sm transition ${
+                  currentPage === 1
+                    ? 'opacity-50 cursor-not-allowed'
+                    : isDark
+                      ? 'bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60'
+                      : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                }`}
+              >
+                Previous
+              </button>
+              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 rounded-md text-sm transition ${
+                  currentPage === totalPages
+                    ? 'opacity-50 cursor-not-allowed'
+                    : isDark
+                      ? 'bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60'
+                      : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+
+          {/* Footer summary (kept as original) */}
           <div className={`mt-4 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-            Showing {dummyRows.length} records for {selectedModule} – {selectedReport} • {branch} • {device} • {user} • {dateRange}
+            Showing {paginatedRows.length} records for {selectedModule} – {selectedReport} • {branch} • {device} • {user} • {dateRange}
           </div>
         </div>
       )}

@@ -58,6 +58,7 @@ const CreateNetworkPolicy = () => {
   const [regularExpression, setRegularExpression] = useState("");
   const [regularExpressions, setRegularExpressions] = useState([]);
   const [keywords, setKeywords] = useState([]);
+  const [mode, setMode] = useState("Content Based");
   const [selectedSeverityLevel, setSelectedSeverityLevel] = useState(""); // Changed to single selection
 
   const steps = [
@@ -430,130 +431,177 @@ const CreateNetworkPolicy = () => {
         );
 
       case 3:
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              {/* Keyword Section */}
-              <div>
-                <label className="text-sm text-slate-600 dark:text-gray-300 mb-2 block">Keyword</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                    placeholder="eg: hello, get lost"
-                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${
-                      keyword 
-                        ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' 
-                        : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
-                    }`}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        addKeyword();
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={addKeyword}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md hover:bg-[#4a6bff] transition"
-                  >
-                    <Plus size={18} className="text-white" />
-                  </button>
+case 3:
+  const isBlockMode = mode === "Block Based";
+  return (
+    <div className="space-y-6">
+      {/* Mode Toggle – larger buttons */}
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-slate-700 dark:text-gray-300">
+          Mode
+        </span>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMode("Content Based")}
+            className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${
+              mode === "Content Based"
+                ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
+                : "bg-[#0f172a] text-gray-300 border-[#334155] hover:bg-[#1e293b]"
+            }`}
+          >
+            Content Based
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("Block Based")}
+            className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${
+              mode === "Block Based"
+                ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
+                : "bg-[#0f172a] text-gray-300 border-[#334155] hover:bg-[#1e293b]"
+            }`}
+          >
+            Block Based
+          </button>
+        </div>
+      </div>
+
+      {/* Keyword + Regex grid – conditionally disabled */}
+      <div className={`grid grid-cols-2 gap-6 ${isBlockMode ? "opacity-60 pointer-events-none" : ""}`}>
+        {/* Keyword Section */}
+        <div>
+          <label className="text-sm text-slate-600 dark:text-gray-300 mb-2 block">Keyword</label>
+          <div className="relative">
+            <input
+              type="text"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="eg: hello, get lost"
+              disabled={isBlockMode}
+              className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${
+                keyword 
+                  ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' 
+                  : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
+              } ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !isBlockMode) {
+                  addKeyword();
+                }
+              }}
+            />
+            <button
+              onClick={addKeyword}
+              disabled={isBlockMode}
+              className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md transition ${
+                isBlockMode ? "opacity-50 cursor-not-allowed" : "hover:bg-[#4a6bff]"
+              }`}
+            >
+              <Plus size={18} className="text-white" />
+            </button>
+          </div>
+
+          {keywords.length > 0 && !isBlockMode && (
+            <div className="flex items-center gap-2 mt-3">
+              <div className="h-0.5 flex-1 bg-gradient-to-r from-[#5A7BFF] to-transparent"></div>
+              <span className="text-xs text-[#5A7BFF] whitespace-nowrap">
+                {keywords.length} keyword(s) added
+              </span>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <div className="flex flex-wrap gap-2">
+              {keywords.map((item, index) => (
+                <div
+                  key={index}
+                  className={`flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition ${
+                    isBlockMode ? "opacity-50" : ""
+                  }`}
+                >
+                  <span>{item}</span>
+                  {!isBlockMode && (
+                    <button
+                      onClick={() => removeKeyword(index)}
+                      className="text-slate-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition ml-1"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
-
-                {keywords.length > 0 && (
-                  <div className="flex items-center gap-2 mt-3">
-                    <div className="h-0.5 flex-1 bg-gradient-to-r from-[#5A7BFF] to-transparent"></div>
-                    <span className="text-xs text-[#5A7BFF] whitespace-nowrap">
-                      {keywords.length} keyword(s) added
-                    </span>
-                  </div>
-                )}
-
-                <div className="mt-4">
-                  <div className="flex flex-wrap gap-2">
-                    {keywords.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition"
-                      >
-                        <span>{item}</span>
-                        <button
-                          onClick={() => removeKeyword(index)}
-                          className="text-slate-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition ml-1"
-                        >
-                          <X size={14
-                            
-                          } />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Regular Expression Section */}
-              <div>
-                <label className="text-sm text-slate-600 dark:text-gray-300 mb-2 block">
-                  Regular Expression
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={regularExpression}
-                    onChange={(e) => setRegularExpression(e.target.value)}
-                    placeholder="eg: ^[a-z]+$"
-                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${
-                      regularExpression 
-                        ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' 
-                        : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
-                    }`}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        addRegularExpression();
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={addRegularExpression}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md hover:bg-[#4a6bff] transition"
-                  >
-                    <Plus size={18} className="text-white" />
-                  </button>
-                </div>
-
-                {regularExpressions.length > 0 && (
-                  <div className="flex items-center gap-2 mt-3">
-                    <div className="h-0.5 flex-1 bg-gradient-to-r from-[#5A7BFF] to-transparent"></div>
-                    <span className="text-xs text-[#5A7BFF] whitespace-nowrap">
-                      {regularExpressions.length} regex(s) added
-                    </span>
-                  </div>
-                )}
-
-                <div className="mt-4">
-                  <div className="flex flex-wrap gap-2">
-                    {regularExpressions.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition"
-                      >
-                        <span className="font-mono">{item}</span>
-                        <button
-                          onClick={() => removeRegularExpression(index)}
-                          className="text-slate-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition ml-1"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
-        );
+        </div>
 
+        {/* Regular Expression Section */}
+        <div>
+          <label className="text-sm text-slate-600 dark:text-gray-300 mb-2 block">
+            Regular Expression
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={regularExpression}
+              onChange={(e) => setRegularExpression(e.target.value)}
+              placeholder="eg: ^[a-z]+$"
+              disabled={isBlockMode}
+              className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${
+                regularExpression 
+                  ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' 
+                  : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
+              } ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
+              onKeyPress={(e) => {
+                if (e.key === "Enter" && !isBlockMode) {
+                  addRegularExpression();
+                }
+              }}
+            />
+            <button
+              onClick={addRegularExpression}
+              disabled={isBlockMode}
+              className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md transition ${
+                isBlockMode ? "opacity-50 cursor-not-allowed" : "hover:bg-[#4a6bff]"
+              }`}
+            >
+              <Plus size={18} className="text-white" />
+            </button>
+          </div>
+
+          {regularExpressions.length > 0 && !isBlockMode && (
+            <div className="flex items-center gap-2 mt-3">
+              <div className="h-0.5 flex-1 bg-gradient-to-r from-[#5A7BFF] to-transparent"></div>
+              <span className="text-xs text-[#5A7BFF] whitespace-nowrap">
+                {regularExpressions.length} regex(s) added
+              </span>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <div className="flex flex-wrap gap-2">
+              {regularExpressions.map((item, index) => (
+                <div
+                  key={index}
+                  className={`flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition ${
+                    isBlockMode ? "opacity-50" : ""
+                  }`}
+                >
+                  <span className="font-mono">{item}</span>
+                  {!isBlockMode && (
+                    <button
+                      onClick={() => removeRegularExpression(index)}
+                      className="text-slate-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition ml-1"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
       case 4:
         return (
           <div className="space-y-6">
@@ -706,6 +754,7 @@ const CreateNetworkPolicy = () => {
 
               {/* Policy Condition */}
               <SummaryCard icon={FileCode} title="Policy Condition">
+                  <SummaryRow label="Mode" values={keywords} tone="orange" emptyText="None" />
                 <SummaryRow label="Keywords" values={keywords} tone="orange" emptyText="None" />
                 <SummaryRow label="Regular Expressions" values={regularExpressions} tone="orange" emptyText="None" />
               </SummaryCard>
