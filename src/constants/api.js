@@ -48,6 +48,10 @@ PRINTER_CONTROL:{
   ADD_PRINTER_POLICY:"/PrinterDLP/addPrinterPolicy"
 },
 
+REPORTS:{
+  GET_REPORTS:"/reports/getReports",
+},
+
   DEVICES: {
     LIST: "/devices",
     BY_ID: (id) => `/devices/${id}`,
@@ -87,11 +91,11 @@ PRINTER_CONTROL:{
     LIST: "/scan",
   },
 
-  REPORTS: {
-    THREATS: "/reports/threats",
-    DEVICES: "/reports/devices",
-    EXPORT: (type) => `/reports/export/${type}`,
-  },
+  // REPORTS: {
+  //   THREATS: "/reports/threats",
+  //   DEVICES: "/reports/devices",
+  //   EXPORT: (type) => `/reports/export/${type}`,
+  // },
 };
 
 export const HTTP_STATUS = {

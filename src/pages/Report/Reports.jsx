@@ -25,27 +25,27 @@ import { useTheme } from "../../context/ThemeContext";
 // Extended module data with descriptions
 const modulesData = [
   { name: "Application Control", count: 2, icon: Monitor, description: "Manage application execution policies" },
-  { name: "USB Protection", count: 5, icon: Shield, description: "Control USB device access" },
-  { name: "Website Control", count: 5, icon: Globe, description: "Manage website access policies" },
-  { name: "Printer Control", count: 5, icon: Printer, description: "Manage printer access policies across endpoints" },
+  { name: "USB Protection", count: 2, icon: Shield, description: "Control USB device access" },
+  { name: "Website Control", count: 1, icon: Globe, description: "Manage website access policies" },
+  { name: "Printer Control", count: 2, icon: Printer, description: "Manage printer access policies across endpoints" },
   { name: "Data Classification", count: 5, icon: FolderOpen, description: "Classify and protect sensitive data" },
-  { name: "Drive Control", count: 5, icon: HardDrive, description: "Manage drive and storage access" },
-  { name: "Network Policy", count: 3, icon: Network, description: "Define network access rules" },
+  { name: "Drive Control", count: 2, icon: HardDrive, description: "Manage drive and storage access" },
+  { name: "Network Policy", count: 5, icon: Network, description: "Define network access rules" },
 ];
 
 const reportsData = {
   "Application Control": ["View Whitelisted","View Blacklisted","View Blocked"],
-  "USB Protection": ["Connection Status","Data Transfer"],
+  "USB Protection": ["USB Connection Status","USB Data Transfer"],
   "Website Control": ["Prevented Websites"],
   "Printer Control": ["Printer Logs"],
   "Drive Control": ["Drive Report"],
-  "Network Policy": ["Peripheral Transfer","Webupload","Network Transfer","FTP Transfer","Clipboard Event"],
+  "Network Policy": ["Peripheral Transfer","Web Upload","Network Transfer","FTP Transfer","Clipboard Event"],
   "Data Classification": ["Classified Files", "Policy Violations"],
 };
 
-const branches = ["Mumbai", "Pune", "Delhi", "Bangalore", "Chennai"];
-const devices = ["DESKTOP-7F2K3L1", "DESKTOP-9A1B2C3", "DESKTOP-5X8Y2Z1", "DESKTOP-4W7Q9T2"];
-const users = ["All Users", "Admin", "Guest", "Operator"];
+// const branches = ["Mumbai", "Pune", "Delhi", "Bangalore", "Chennai"];
+// const devices = ["DESKTOP-7F2K3L1", "DESKTOP-9A1B2C3", "DESKTOP-5X8Y2Z1", "DESKTOP-4W7Q9T2"];
+// const users = ["All Users", "Admin", "Guest", "Operator"];
 
 const dateRangeOptions = [
   "Today",
@@ -55,22 +55,15 @@ const dateRangeOptions = [
   "Last 6 Months",
 ];
 
-// Default values
-const defaultModule = "Application Control";
-const defaultReport = "Manage Control";
-const defaultDevice = "DESKTOP-7F2K3L1";
-const defaultUser = "All Users";
-const defaultDateRange = "Last Month";
-
 export default function ReportCenter() {
   const { isDark } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedModule, setSelectedModule] = useState(defaultModule);
-  const [selectedReport, setSelectedReport] = useState(defaultReport);
+  const [selectedModule, setSelectedModule] = useState();
+  const [selectedReport, setSelectedReport] = useState();
   const [branch, setBranch] = useState();
-  const [device, setDevice] = useState(defaultDevice);
-  const [user, setUser] = useState(defaultUser);
-  const [dateRange, setDateRange] = useState(defaultDateRange);
+  const [device, setDevice] = useState();
+  const [user, setUser] = useState();
+  const [dateRange, setDateRange] = useState();
   const [showReport, setShowReport] = useState(false);
   const [fetchedDevices, setFetchedDevices] = useState([]);
 
@@ -106,9 +99,13 @@ export default function ReportCenter() {
   }));
 
   const handleBranchChange = async (branch) => {
-    const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch);
+     setBranch(branch);
+     setDevice("");
+     const DevicesOfBranches =
+     await dashboardService.getDevicesByBranch(branch);
+
     setFetchedDevices(DevicesOfBranches.data);
-    setDevice(""); // reset device when branch changes
+
   };
 
   // Dummy rows for the report table
@@ -135,7 +132,18 @@ export default function ReportCenter() {
   const preventedCount = dummyRows.filter(row => row.status === "Blocked").length;
 
   const handleViewReport = () => {
-    setCurrentPage(1); // reset pagination when generating new report
+    
+    const requestData = {
+      module: selectedModule,
+      report: selectedReport,
+      branch:branch,
+      devices: device,
+      duration:dateRange
+    };
+    // alert("User section is :"+branch+" "+ device+" "+selectedModule+" "+selectedReport+" "+dateRange);
+      const ReportFetchedData = dashboardService.GetReports(requestData);
+
+    setCurrentPage(1); 
     setShowReport(true);
     setTimeout(() => {
       if (reportRef.current) {
@@ -300,12 +308,12 @@ export default function ReportCenter() {
 
   const handleReset = () => {
     setSearchTerm("");
-    setSelectedModule(defaultModule);
-    setSelectedReport(defaultReport);
-    setBranch("mumbai");
-    setDevice(defaultDevice);
-    setUser(defaultUser);
-    setDateRange(defaultDateRange);
+    setSelectedModule();
+    setSelectedReport();
+    setBranch("");
+    setDevice("");
+    setUser("");
+    setDateRange("");
     setShowReport(false);
     setCurrentPage(1);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -331,7 +339,7 @@ export default function ReportCenter() {
       <div className="grid grid-cols-4 gap-5 w-full">
         {/* 1. Module */}
         <div className={`${isDark ? 'bg-[#020617] border-indigo-950' : 'bg-white border-slate-200'} border rounded-xl p-4 flex flex-col h-full`}>
-          <h2 className={`font-semibold mb-4 flex-shrink-0 ${isDark ? 'text-white' : 'text-gray-800'}`}>1. Module</h2>
+          <h2 className={`font-semibold mb-4 flex-shrink-0 ${isDark ? 'text-white' : 'text-gray-800'}`}>Module</h2>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1">
             {filteredModules.map((module) => {
               const Icon = module.icon;
@@ -383,7 +391,7 @@ export default function ReportCenter() {
 
         {/* 2. Report */}
         <div className={`${isDark ? 'bg-[#020617] border-indigo-950' : 'bg-white border-slate-200'} border rounded-xl p-4 flex flex-col h-full`}>
-          <h2 className={`font-semibold mb-1 flex-shrink-0 ${isDark ? 'text-white' : 'text-gray-800'}`}>2. Report</h2>
+          <h2 className={`font-semibold mb-1 flex-shrink-0 ${isDark ? 'text-white' : 'text-gray-800'}`}>Report</h2>
           <p className={`text-sm mb-4 flex-shrink-0 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>
             {selectedModule} – Reports
           </p>
@@ -428,7 +436,7 @@ export default function ReportCenter() {
 
         {/* 3. Device Selection */}
         <div className={`${isDark ? 'bg-[#020617] border-indigo-950' : 'bg-white border-slate-200'} border rounded-xl p-4 flex flex-col h-full`}>
-          <h2 className={`font-semibold mb-4 flex-shrink-0 ${isDark ? 'text-white' : 'text-gray-800'}`}>3. Device Selection</h2>
+          <h2 className={`font-semibold mb-4 flex-shrink-0 ${isDark ? 'text-white' : 'text-gray-800'}`}>Device Selection</h2>
           <div className="flex-1 space-y-4">
             <div>
               <label className={`block text-xs mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Branch</label>
@@ -444,9 +452,10 @@ export default function ReportCenter() {
               <label className={`block text-xs mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Device</label>
               <Dropdown
                 value={device}
-                onChange={(e) => setDevice(e.target.value)}
+                onChange={setDevice}
                 options={deviceOptions}
-                placeholder={'Select branch first'}
+                placeholder={branch ? 'Select Device' : 'Select branch first'}
+                disabled={!branch}
               />
             </div>
           </div>
@@ -454,7 +463,7 @@ export default function ReportCenter() {
 
         {/* 4. Date Range */}
         <div className={`${isDark ? 'bg-[#020617] border-indigo-950' : 'bg-white border-slate-200'} border rounded-xl p-4 flex flex-col h-full`}>
-          <h2 className={`font-semibold mb-4 flex-shrink-0 ${isDark ? 'text-white' : 'text-gray-800'}`}>4. Date Range</h2>
+          <h2 className={`font-semibold mb-4 flex-shrink-0 ${isDark ? 'text-white' : 'text-gray-800'}`}>Date Range</h2>
           <div className="grid grid-cols-2 gap-2 mb-2 flex-shrink-0">
             {dateRangeOptions.map((option) => {
               const isSelected = option === dateRange;
@@ -518,10 +527,10 @@ export default function ReportCenter() {
                 <dt className={isDark ? 'text-gray-500' : 'text-gray-500'}>Device</dt>
                 <dd className={`truncate ml-4 ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>{device}</dd>
               </div>
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <dt className={isDark ? 'text-gray-500' : 'text-gray-500'}>User</dt>
                 <dd className={`truncate ml-4 ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>{user}</dd>
-              </div>
+              </div> */}
               <div className="flex justify-between">
                 <dt className={isDark ? 'text-gray-500' : 'text-gray-500'}>Date Range</dt>
                 <dd className={`truncate ml-4 ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>{dateRange}</dd>
@@ -608,10 +617,10 @@ export default function ReportCenter() {
           </div>
 
           {/* Pagination Controls */}
-          <div className={`flex items-center justify-between mt-4 pt-3 border-t ${isDark ? 'border-gray-800' : 'border-slate-200'}`}>
-            <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-              Showing {startIndex + 1}–{Math.min(endIndex, dummyRows.length)} of {dummyRows.length} records
-            </div>
+          <div className={`flex items-center justify-between mt-4 ${isDark ? 'border-gray-800' : 'border-slate-200'}`}>
+            <div className={`mt-4 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            Showing {paginatedRows.length} records for {selectedModule} – {selectedReport} • {branch} • {device} • {dateRange}
+          </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -646,9 +655,7 @@ export default function ReportCenter() {
           </div>
 
           {/* Footer summary (kept as original) */}
-          <div className={`mt-4 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-            Showing {paginatedRows.length} records for {selectedModule} – {selectedReport} • {branch} • {device} • {user} • {dateRange}
-          </div>
+          
         </div>
       )}
     </div>
