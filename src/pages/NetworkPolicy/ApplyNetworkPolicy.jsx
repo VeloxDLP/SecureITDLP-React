@@ -193,7 +193,8 @@ function ApplyNetworkPolicy() {
 
           <p className={`mt-1 text-sm ${isDark ? 'text-[#8C93A8]' : 'text-slate-500'}`}>
             Configure policy, source, destination, control, details.
-          </p>
+          </p>][
+          ]
 
           <div className="mt-5 max-h-[450px] overflow-y-auto space-y-3 pr-2">
             {policies.map((policy) => (

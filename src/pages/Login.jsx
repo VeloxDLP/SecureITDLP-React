@@ -269,6 +269,76 @@ const Login = () => {
           }
         }
 
+        /* Sign In Button */
+.sign-btn {
+  position: relative;
+  overflow: hidden;
+
+  background: linear-gradient(
+    90deg,
+    #2878c7,
+    #3d91d8,
+    #2878c7
+  );
+
+  background-size: 200% 100%;
+
+  box-shadow:
+    0 6px 18px rgba(40, 120, 199, 0.28);
+
+  transition: transform 0.2s ease,
+              box-shadow 0.2s ease;
+}
+
+/* Continuous moving shine */
+.sign-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+
+  width: 45%;
+  height: 100%;
+
+  background: linear-gradient(
+    110deg,
+    transparent,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.45),
+    rgba(255, 255, 255, 0.12),
+    transparent
+  );
+
+  transform: skewX(-20deg);
+
+  animation: signInShine 4.5s linear infinite;
+
+  pointer-events: none;
+}
+
+/* Continuous animation */
+@keyframes signInShine {
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 150%;
+  }
+}
+
+/* Subtle hover */
+.sign-btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 24px rgba(40, 120, 199, 0.42);
+}
+
+/* Click */
+.sign-btn:active {
+  transform: scale(0.98);
+}
+
 .login-right-panel {
   flex: 1.4;          /* makes right side bigger */
   display: flex;
