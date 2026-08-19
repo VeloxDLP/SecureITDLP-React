@@ -48,7 +48,7 @@ export default function Layout() {
         </div>
 
         {/* ================= FOOTER ================= */}
-        <footer className="w-full px-5 pb-3">
+        <footer className="w-full px-50 pb-15">
           <div
             className={`
               relative
