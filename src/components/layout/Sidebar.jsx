@@ -106,6 +106,14 @@ const NAV = [
     scope: '/devices',
   },
 
+  //   {
+  //   label: 'DriveDetail',
+  //   icon: Monitor,
+  //   path: '/DeviceDetails',
+  //   roles: ['admin', 'superadmin'],
+  //   scope: '/devices',
+  // },
+
 ];
 
 

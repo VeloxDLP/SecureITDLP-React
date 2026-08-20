@@ -22,6 +22,7 @@ import ViewApplication from './pages/ApplicationControl/ViewApplication.jsx'
 import Reports from './pages/Report/Reports.jsx'
 import Setting from './pages/Setting/Setting.jsx'
 import ApplyNetworkPolicy from './pages/NetworkPolicy/ApplyNetworkPolicy.jsx'
+import DriveDetail from './pages/ViewDevice/DeviceDetail.jsx'
 
 // import ViewApplication from "./pages/ViewApplication/ViewApplication.jsx";
 // import DriveControl from './pages/DriveControl.jsx'
@@ -78,6 +79,7 @@ function AppRoutes() {
         <Route path="DataClassification" element={<DataClassification></DataClassification>} />
         <Route path="ApplicationControl" element={<ApplicationControl></ApplicationControl>} />
         <Route path="ViewApplication" element={<ViewApplication></ViewApplication>} />
+       <Route path="DeviceDetails" element={<DriveDetail></DriveDetail>}/>
          <Route path="Reports"         element={<Reports></Reports>}/>
             <Route path="Setting" element={<Setting></Setting>} />
         <Route path="remediation" element={<PlaceholderPage title="File Remediation" />} />

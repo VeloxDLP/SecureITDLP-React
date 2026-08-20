@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { Settings, Eye, Search, Plus, Minus, Info } from "lucide-react";
+import {
+  Settings,
+  Eye,
+  Search,
+  Plus,
+  Minus,
+  Info,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { dashboardService } from "../../services/dashboardService";
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from "../../context/ThemeContext";
 
 export default function DeviceDashboard() {
   const { isDark } = useTheme();
+  const navigate = useNavigate();
+
   const [viewDeviceData, setViewDeviceData] = useState([]);
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(null);
@@ -18,10 +28,12 @@ export default function DeviceDashboard() {
   const fetchDeviceData = async () => {
     try {
       setLoading(true);
+
       const response = await dashboardService.getViewDevice();
+
       console.log("Viewdevice", response.data);
-      
-      const mappedData = response.data.map(item => ({
+
+      const mappedData = response.data.map((item) => ({
         branch: item.branchName,
         host: item.ipAddress,
         ip: item.deviceIp,
@@ -29,13 +41,14 @@ export default function DeviceDashboard() {
         agentStatus: item.agentStatus,
         lastComm: formatDate(item.agentCommunication),
         zone: item.zoneName,
-        serverIp: item.fixedUser
+        serverIp: item.fixedUser,
       }));
-      
+
       setViewDeviceData(mappedData);
       setError(null);
     } catch (err) {
       console.error("Error fetching device data:", err);
+
       setError("Failed to load device data. Please try again.");
       setViewDeviceData(getFallbackData());
     } finally {
@@ -45,16 +58,18 @@ export default function DeviceDashboard() {
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
+
     try {
       const date = new Date(dateString);
-      return date.toLocaleString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
+
+      return date.toLocaleString("en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
       });
     } catch {
       return dateString;
@@ -94,10 +109,14 @@ export default function DeviceDashboard() {
     },
   ];
 
-  // --- FIXED STYLES: height now dynamic ---
+  /* =========================================================
+     STYLES
+  ========================================================= */
+
   const styles = {
     page: {
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      fontFamily:
+        "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       color: isDark ? "#cbd5e1" : "#1e293b",
       padding: "20px",
       margin: 0,
@@ -107,21 +126,24 @@ export default function DeviceDashboard() {
       alignItems: "flex-start",
       justifyContent: "center",
     },
+
     panel: {
       background: isDark ? "#020617" : "#ffffff",
-      border: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
+      border: isDark
+        ? "1px solid #1a2a4a"
+        : "1px solid #e2e8f0",
       borderRadius: "12px",
       overflow: "hidden",
       padding: "16px 20px",
       width: "100%",
       maxWidth: "1400px",
-      // --- HEIGHT FIX ---
-      maxHeight: "calc(100vh - 40px)", // limit to viewport minus padding
-      height: "auto",                  // shrink to content, but not exceed maxHeight
-      minHeight: "300px",              // keep a sensible minimum
+      maxHeight: "calc(100vh - 40px)",
+      height: "auto",
+      minHeight: "300px",
       display: "flex",
       flexDirection: "column",
     },
+
     panelHeader: {
       display: "flex",
       alignItems: "center",
@@ -131,21 +153,26 @@ export default function DeviceDashboard() {
       gap: "8px",
       flexShrink: 0,
     },
+
     panelTitle: {
       fontSize: "18px",
       fontWeight: 600,
       color: isDark ? "#cdd5e6" : "#1e293b",
       margin: 0,
     },
+
     headerRight: {
       display: "flex",
       alignItems: "center",
       gap: "6px",
       flexWrap: "wrap",
     },
+
     pillBtn: {
       background: isDark ? "#020617" : "#f8fafc",
-      border: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
+      border: isDark
+        ? "1px solid #1a2a4a"
+        : "1px solid #e2e8f0",
       color: isDark ? "#b7c0d8" : "#475569",
       fontSize: "11px",
       fontWeight: 500,
@@ -155,15 +182,19 @@ export default function DeviceDashboard() {
       transition: "all 0.15s ease",
       whiteSpace: "nowrap",
     },
+
     searchWrap: {
       display: "flex",
       alignItems: "center",
       gap: "4px",
       background: isDark ? "#020617" : "#f8fafc",
-      border: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
+      border: isDark
+        ? "1px solid #1a2a4a"
+        : "1px solid #e2e8f0",
       borderRadius: "6px",
       padding: "4px 10px",
     },
+
     searchInput: {
       background: "transparent",
       border: "none",
@@ -172,6 +203,7 @@ export default function DeviceDashboard() {
       fontSize: "12px",
       width: "120px",
     },
+
     tableWrap: {
       display: "flex",
       flexDirection: "column",
@@ -179,6 +211,7 @@ export default function DeviceDashboard() {
       minHeight: 0,
       gap: "6px",
     },
+
     headerRowCard: {
       display: "flex",
       alignItems: "center",
@@ -188,12 +221,14 @@ export default function DeviceDashboard() {
       gap: "12px",
       flexShrink: 0,
     },
+
     headerCell: {
       fontSize: "13px",
       fontWeight: 600,
       color: isDark ? "#aab3cc" : "#475569",
       flex: 1,
     },
+
     scrollableRows: {
       flex: 1,
       overflowY: "auto",
@@ -201,18 +236,23 @@ export default function DeviceDashboard() {
       flexDirection: "column",
       gap: "6px",
       paddingRight: "4px",
-      minHeight: "100px", // ensure there's always scroll space
-      // scrollbar styling (optional)
+      minHeight: "100px",
       scrollbarWidth: "thin",
-      scrollbarColor: isDark ? "#1a2a4a transparent" : "#e2e8f0 transparent",
+      scrollbarColor: isDark
+        ? "#1a2a4a transparent"
+        : "#e2e8f0 transparent",
     },
+
     rowGroup: {
       background: isDark ? "#020617" : "#ffffff",
       borderRadius: "10px",
       overflow: "hidden",
-      border: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
+      border: isDark
+        ? "1px solid #1a2a4a"
+        : "1px solid #e2e8f0",
       flexShrink: 0,
     },
+
     rowCard: {
       display: "flex",
       alignItems: "center",
@@ -221,6 +261,7 @@ export default function DeviceDashboard() {
       cursor: "pointer",
       transition: "background 0.15s ease",
     },
+
     plusBtnUp: {
       width: "18px",
       height: "18px",
@@ -234,6 +275,7 @@ export default function DeviceDashboard() {
       marginRight: "6px",
       flexShrink: 0,
     },
+
     plusBtnDown: {
       width: "18px",
       height: "18px",
@@ -247,11 +289,13 @@ export default function DeviceDashboard() {
       marginRight: "6px",
       flexShrink: 0,
     },
+
     cell: {
       fontSize: "13px",
       color: isDark ? "#e2e8f0" : "#1e293b",
       flex: 1,
     },
+
     hostLink: {
       color: isDark ? "#5b8def" : "#4f6cf7",
       fontWeight: 500,
@@ -259,11 +303,15 @@ export default function DeviceDashboard() {
       cursor: "pointer",
       fontSize: "13px",
     },
+
     detailsPanel: {
       background: isDark ? "#020617" : "#f8fafc",
-      borderTop: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
+      borderTop: isDark
+        ? "1px solid #1a2a4a"
+        : "1px solid #e2e8f0",
       padding: "14px 16px 16px 50px",
     },
+
     detailsHeading: {
       display: "flex",
       alignItems: "center",
@@ -273,16 +321,21 @@ export default function DeviceDashboard() {
       color: isDark ? "#7bdc8f" : "#16a34a",
       marginBottom: "10px",
     },
+
     detailsDivider: {
-      borderBottom: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
+      borderBottom: isDark
+        ? "1px solid #1a2a4a"
+        : "1px solid #e2e8f0",
       marginBottom: "12px",
     },
+
     detailsGrid: {
       display: "flex",
       gap: "80px",
       flexWrap: "wrap",
       alignItems: "center",
     },
+
     detailLabel: {
       fontSize: "10px",
       fontWeight: 600,
@@ -291,23 +344,29 @@ export default function DeviceDashboard() {
       marginBottom: "4px",
       textTransform: "uppercase",
     },
+
     detailValue: {
       fontSize: "13px",
       fontWeight: 500,
       color: isDark ? "#e2e8f0" : "#1e293b",
     },
+
     detailItem: {
       display: "flex",
       flexDirection: "column",
     },
+
     detailItemRow: {
       display: "flex",
       alignItems: "center",
       gap: "60px",
     },
+
     eyeButton: {
       background: "transparent",
-      border: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
+      border: isDark
+        ? "1px solid #1a2a4a"
+        : "1px solid #e2e8f0",
       borderRadius: "6px",
       padding: "3px 8px",
       cursor: "pointer",
@@ -319,54 +378,69 @@ export default function DeviceDashboard() {
       transition: "all 0.2s ease",
       marginTop: "4px",
     },
+
     statusPill: {
       display: "inline-flex",
       alignItems: "center",
       gap: "4px",
-      background: isDark ? "rgba(34,197,94,0.12)" : "rgba(34,197,94,0.1)",
+      background: isDark
+        ? "rgba(34,197,94,0.12)"
+        : "rgba(34,197,94,0.1)",
       color: isDark ? "#4ade80" : "#16a34a",
-      border: isDark ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(34,197,94,0.2)",
+      border: isDark
+        ? "1px solid rgba(34,197,94,0.3)"
+        : "1px solid rgba(34,197,94,0.2)",
       borderRadius: "20px",
       padding: "2px 10px",
       fontSize: "12px",
       fontWeight: 600,
     },
+
     statusPillDown: {
       display: "inline-flex",
       alignItems: "center",
       gap: "4px",
-      background: isDark ? "rgba(239,68,68,0.12)" : "rgba(239,68,68,0.1)",
+      background: isDark
+        ? "rgba(239,68,68,0.12)"
+        : "rgba(239,68,68,0.1)",
       color: isDark ? "#f87171" : "#dc2626",
-      border: isDark ? "1px solid rgba(239,68,68,0.3)" : "1px solid rgba(239,68,68,0.2)",
+      border: isDark
+        ? "1px solid rgba(239,68,68,0.3)"
+        : "1px solid rgba(239,68,68,0.2)",
       borderRadius: "20px",
       padding: "2px 10px",
       fontSize: "12px",
       fontWeight: 600,
     },
+
     statusDot: {
       width: "5px",
       height: "5px",
       borderRadius: "50%",
       background: isDark ? "#4ade80" : "#16a34a",
     },
+
     statusDotDown: {
       width: "5px",
       height: "5px",
       borderRadius: "50%",
       background: isDark ? "#f87171" : "#dc2626",
     },
+
     loading: {
       textAlign: "center",
       padding: "30px",
       color: isDark ? "#8b95ad" : "#64748b",
       fontSize: "14px",
     },
+
     error: {
       textAlign: "center",
       padding: "30px",
       color: isDark ? "#f87171" : "#dc2626",
       fontSize: "14px",
     },
+
     noData: {
       padding: "30px",
       textAlign: "center",
@@ -375,20 +449,33 @@ export default function DeviceDashboard() {
     },
   };
 
+  /* =========================================================
+     SEARCH FILTER
+  ========================================================= */
+
   const filtered = viewDeviceData.filter((d) =>
     [d.branch, d.host, d.ip, d.user].some((v) =>
       v?.toLowerCase().includes(search.toLowerCase())
     )
   );
 
+  /* =========================================================
+     EXPAND / COLLAPSE
+  ========================================================= */
+
   const toggleExpand = (i) => {
     setExpanded(expanded === i ? null : i);
   };
+
+  /* =========================================================
+     STATUS
+  ========================================================= */
 
   const getStatusStyle = (status) => {
     if (status?.toLowerCase() === "up") {
       return styles.statusPill;
     }
+
     return styles.statusPillDown;
   };
 
@@ -396,6 +483,7 @@ export default function DeviceDashboard() {
     if (status?.toLowerCase() === "up") {
       return styles.statusDot;
     }
+
     return styles.statusDotDown;
   };
 
@@ -403,35 +491,67 @@ export default function DeviceDashboard() {
     if (status?.toLowerCase() === "up") {
       return styles.plusBtnUp;
     }
+
     return styles.plusBtnDown;
   };
 
+  /* =========================================================
+     VIEW BUTTON
+  ========================================================= */
+
   const handleEyeClick = (device) => {
-    console.log("Eye button clicked for device:", device);
-    alert(`Viewing details for device: ${device.host}`);
+    console.log("Opening Drive Detail for device:", device);
+
+navigate("/DeviceDetails", {
+  state: {
+    device: device,
+  },
+});
   };
+
+  /* =========================================================
+     LOADING
+  ========================================================= */
 
   if (loading) {
     return <div style={styles.loading}>Loading devices...</div>;
   }
 
+  /* =========================================================
+     ERROR
+  ========================================================= */
+
   if (error && viewDeviceData.length === 0) {
     return <div style={styles.error}>{error}</div>;
   }
 
+  /* =========================================================
+     UI
+  ========================================================= */
+
   return (
     <div style={styles.page}>
       <div style={styles.panel}>
-        {/* Header Section - Always visible */}
+
+        {/* ===================================================
+            HEADER
+        =================================================== */}
+
         <div style={styles.panelHeader}>
           <h2 style={styles.panelTitle}>View Devices</h2>
+
           <div style={styles.headerRight}>
             <button style={styles.pillBtn}>Excel</button>
             <button style={styles.pillBtn}>Copy</button>
             <button style={styles.pillBtn}>CSV</button>
             <button style={styles.pillBtn}>PDF</button>
+
             <div style={styles.searchWrap}>
-              <Search size={12} color={isDark ? "#7c87a3" : "#94a3b8"} />
+              <Search
+                size={12}
+                color={isDark ? "#7c87a3" : "#94a3b8"}
+              />
+
               <input
                 style={styles.searchInput}
                 placeholder="Search identities"
@@ -442,18 +562,57 @@ export default function DeviceDashboard() {
           </div>
         </div>
 
-        {/* Table Section - Flexible height */}
+        {/* ===================================================
+            TABLE
+        =================================================== */}
+
         <div style={styles.tableWrap}>
-          {/* Header Row - Fixed */}
+
+          {/* TABLE HEADER */}
+
           <div style={styles.headerRowCard}>
-            <div style={{ ...styles.headerCell, flex: 0.5 }}>Branch Name</div>
-            <div style={{ ...styles.headerCell, flex: 0.8 }}>Host Name</div>
-            <div style={{ ...styles.headerCell, flex: 0.7 }}>Device IP</div>
-            <div style={{ ...styles.headerCell, flex: 0.8 }}>User Name</div>
+            <div
+              style={{
+                ...styles.headerCell,
+                flex: 0.5,
+              }}
+            >
+              Branch Name
+            </div>
+
+            <div
+              style={{
+                ...styles.headerCell,
+                flex: 0.8,
+              }}
+            >
+              Host Name
+            </div>
+
+            <div
+              style={{
+                ...styles.headerCell,
+                flex: 0.7,
+              }}
+            >
+              Device IP
+            </div>
+
+            <div
+              style={{
+                ...styles.headerCell,
+                flex: 0.8,
+              }}
+            >
+              User Name
+            </div>
           </div>
 
-          {/* Scrollable Rows Container */}
-          <div 
+          {/* =================================================
+              SCROLLABLE ROWS
+          ================================================= */}
+
+          <div
             style={styles.scrollableRows}
             className="custom-scrollbar"
           >
@@ -463,88 +622,221 @@ export default function DeviceDashboard() {
               </div>
             ) : (
               filtered.map((d, i) => (
-                <div key={i} style={styles.rowGroup}>
-                  <div 
+                <div
+                  key={i}
+                  style={styles.rowGroup}
+                >
+
+                  {/* =================================================
+                      MAIN ROW
+                  ================================================= */}
+
+                  <div
                     style={{
                       ...styles.rowCard,
+
                       ...(expanded === i && {
-                        background: isDark ? "rgba(79,108,247,0.05)" : "rgba(79,108,247,0.03)",
+                        background: isDark
+                          ? "rgba(79,108,247,0.05)"
+                          : "rgba(79,108,247,0.03)",
                       }),
-                    }} 
+                    }}
                     onClick={() => toggleExpand(i)}
                   >
-                    <button 
-                      style={getPlusButtonStyle(d.agentStatus)} 
+
+                    {/* PLUS / MINUS */}
+
+                    <button
+                      style={getPlusButtonStyle(d.agentStatus)}
                       title="Toggle details"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpand(i);
+                      }}
                     >
                       {expanded === i ? (
-                        <Minus size={12} color="#ffffff" strokeWidth={4} />
+                        <Minus
+                          size={12}
+                          color="#ffffff"
+                          strokeWidth={4}
+                        />
                       ) : (
-                        <Plus size={12} color="#ffffff" strokeWidth={4} />
+                        <Plus
+                          size={12}
+                          color="#ffffff"
+                          strokeWidth={4}
+                        />
                       )}
                     </button>
-                    <div style={{ ...styles.cell, flex: 0.5 }}>{d.branch || "N/A"}</div>
-                    <div style={{ flex: 0.8 }}>
-                      <span style={styles.hostLink}>{d.host || "N/A"}</span>
+
+                    {/* BRANCH */}
+
+                    <div
+                      style={{
+                        ...styles.cell,
+                        flex: 0.5,
+                      }}
+                    >
+                      {d.branch || "N/A"}
                     </div>
-                    <div style={{ ...styles.cell, flex: 0.7 }}>{d.ip || "N/A"}</div>
-                    <div style={{ ...styles.cell, flex: 0.8 }}>{d.user || "N/A"}</div>
+
+                    {/* HOST */}
+
+                    <div style={{ flex: 0.8 }}>
+                      <span style={styles.hostLink}>
+                        {d.host || "N/A"}
+                      </span>
+                    </div>
+
+                    {/* DEVICE IP */}
+
+                    <div
+                      style={{
+                        ...styles.cell,
+                        flex: 0.7,
+                      }}
+                    >
+                      {d.ip || "N/A"}
+                    </div>
+
+                    {/* USER */}
+
+                    <div
+                      style={{
+                        ...styles.cell,
+                        flex: 0.8,
+                      }}
+                    >
+                      {d.user || "N/A"}
+                    </div>
                   </div>
+
+                  {/* =================================================
+                      DETAILS
+                  ================================================= */}
 
                   {expanded === i && (
                     <div style={styles.detailsPanel}>
+
                       <div style={styles.detailsHeading}>
                         <Info size={13} />
                         Device Details
                       </div>
+
                       <div style={styles.detailsDivider} />
+
                       <div style={styles.detailsGrid}>
+
+                        {/* AGENT STATUS */}
+
                         <div style={styles.detailItem}>
-                          <div style={styles.detailLabel}>Agent Status</div>
-                          <span style={getStatusStyle(d.agentStatus)}>
-                            <span style={getStatusDot(d.agentStatus)} />
+                          <div style={styles.detailLabel}>
+                            Agent Status
+                          </div>
+
+                          <span
+                            style={getStatusStyle(
+                              d.agentStatus
+                            )}
+                          >
+                            <span
+                              style={getStatusDot(
+                                d.agentStatus
+                              )}
+                            />
+
                             {d.agentStatus || "N/A"}
                           </span>
                         </div>
+
+                        {/* LAST COMMUNICATION */}
+
                         <div style={styles.detailItem}>
                           <div style={styles.detailLabel}>
                             Last Agent Communication
                           </div>
-                          <div style={styles.detailValue}>{d.lastComm || "N/A"}</div>
+
+                          <div style={styles.detailValue}>
+                            {d.lastComm || "N/A"}
+                          </div>
                         </div>
+
+                        {/* ZONE */}
+
                         <div style={styles.detailItem}>
-                          <div style={styles.detailLabel}>Zone</div>
-                          <div style={styles.detailValue}>{d.zone || "N/A"}</div>
+                          <div style={styles.detailLabel}>
+                            Zone
+                          </div>
+
+                          <div style={styles.detailValue}>
+                            {d.zone || "N/A"}
+                          </div>
                         </div>
+
+                        {/* SERVER IP */}
+
                         <div style={styles.detailItem}>
-                          <div style={styles.detailLabel}>Server IP</div>
+                          <div style={styles.detailLabel}>
+                            Server IP
+                          </div>
+
                           <div style={styles.detailItemRow}>
-                            <div style={styles.detailValue}>{d.serverIp || "N/A"}</div>
-                            <button 
+
+                            <div style={styles.detailValue}>
+                              {d.serverIp || "N/A"}
+                            </div>
+
+                            {/* =================================================
+                                VIEW BUTTON
+                            ================================================= */}
+
+                            <button
+                              type="button"
                               style={styles.eyeButton}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleEyeClick(d);
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.background = isDark ? "#0f1f3a" : "#eff6ff";
-                                e.currentTarget.style.borderColor = "#4f6cf7";
-                                e.currentTarget.style.color = isDark ? "#ffffff" : "#1e293b";
+                                e.currentTarget.style.background =
+                                  isDark
+                                    ? "#0f1f3a"
+                                    : "#eff6ff";
+
+                                e.currentTarget.style.borderColor =
+                                  "#4f6cf7";
+
+                                e.currentTarget.style.color =
+                                  isDark
+                                    ? "#ffffff"
+                                    : "#1e293b";
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.background = "transparent";
-                                e.currentTarget.style.borderColor = isDark ? "#1a2a4a" : "#e2e8f0";
-                                e.currentTarget.style.color = isDark ? "#8b95ad" : "#64748b";
+                                e.currentTarget.style.background =
+                                  "transparent";
+
+                                e.currentTarget.style.borderColor =
+                                  isDark
+                                    ? "#1a2a4a"
+                                    : "#e2e8f0";
+
+                                e.currentTarget.style.color =
+                                  isDark
+                                    ? "#8b95ad"
+                                    : "#64748b";
                               }}
                             >
                               <Eye size={16} />
                               View
                             </button>
+
                           </div>
                         </div>
+
                       </div>
                     </div>
                   )}
+
                 </div>
               ))
             )}
