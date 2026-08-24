@@ -66,6 +66,8 @@ export default function ReportCenter() {
   const [dateRange, setDateRange] = useState();
   const [showReport, setShowReport] = useState(false);
   const [fetchedDevices, setFetchedDevices] = useState([]);
+  const [fromDate, setFromDate]= useState();
+  const [toDate, setToDate]= useState();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -138,8 +140,11 @@ export default function ReportCenter() {
       report: selectedReport,
       branch:branch,
       devices: device,
-      duration:dateRange
+      duration:dateRange,
+      fromDate:fromDate,
+      toDate:toDate
     };
+    alert(JSON.stringify(requestData));
     // alert("User section is :"+branch+" "+ device+" "+selectedModule+" "+selectedReport+" "+dateRange);
       const ReportFetchedData = dashboardService.GetReports(requestData);
 
