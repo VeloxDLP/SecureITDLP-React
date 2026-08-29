@@ -67,14 +67,22 @@ const Login = () => {
         }
 
        
-        .login-wrapper {
+.login-wrapper {
   height: 100vh;
   width: 100%;
-  background: url(${LoginBackground}) center center / cover no-repeat;
+
+  background:
+    linear-gradient(
+      rgba(2, 14, 36, 0.85),
+      rgba(2, 14, 36, 0.85)
+    ),
+    url(${LoginBackground}) center center / cover no-repeat;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
   padding: 20px;
   font-family: 'Segoe UI', sans-serif;
   overflow: hidden;

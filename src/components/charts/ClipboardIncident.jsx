@@ -7,42 +7,123 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { dashboardService } from "../../services/dashboardService";
 
-// Column configuration for modal table
+// ======================================================
+// TABLE COLUMNS
+// ======================================================
 const incidentColumns = [
-  { accessor: "ipAddress", header: "IP ADDRESS" },
-  { accessor: "username", header: "USERNAME" },
-  { accessor: "eventType", header: "EVENT TYPE" },
-  { accessor: "fileDetails", header: "FILE DETAILS" },
-  { accessor: "timestamp", header: "TIMESTAMP" },
+  {
+    accessor: "hostname",
+    header: "HOSTNAME",
+  },
+  {
+    accessor: "ipaddress",
+    header: "IP ADDRESS",
+  },
+  {
+    accessor: "keyword",
+    header: "KEYWORD",
+  },
+  {
+    accessor: "branch",
+    header: "BRANCH",
+  },
 ];
 
-// Event type color mapping
+// ======================================================
+// EVENT TYPE COLOR
+// ======================================================
 const eventTypeColor = (eventType) => {
   const type = eventType?.toLowerCase() || "";
-  if (type.includes("upload")) return "text-blue-600 dark:text-blue-400";
-  if (type.includes("transfer")) return "text-green-600 dark:text-green-400";
-  if (type.includes("usb")) return "text-yellow-600 dark:text-yellow-400";
-  if (type.includes("clipboard")) return "text-emerald-600 dark:text-emerald-400";
+
+  if (type.includes("upload")) {
+    return "text-blue-600 dark:text-blue-400";
+  }
+
+  if (type.includes("transfer")) {
+    return "text-green-600 dark:text-green-400";
+  }
+
+  if (type.includes("usb")) {
+    return "text-yellow-600 dark:text-yellow-400";
+  }
+
+  if (type.includes("clipboard")) {
+    return "text-emerald-600 dark:text-emerald-400";
+  }
+
   return "text-slate-600 dark:text-white/50";
 };
 
+// ======================================================
+// FORMAT DATE AS YYYY-MM-DD
+// ======================================================
+const formatDateForApi = (date) => {
+  const year = date.getFullYear();
+
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+// ======================================================
+// GET LAST 7 DAYS
+// ======================================================
+const getLast7Days = () => {
+  const dates = [];
+
+  const today = new Date();
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(today);
+
+    date.setDate(today.getDate() - i);
+
+    dates.push(formatDateForApi(date));
+  }
+
+  return dates;
+};
+
+// ======================================================
+// MAIN COMPONENT
+// ======================================================
 export default function ClipboardIncident({
-  data,
-  isDark,
+  data = [],
+  isDark = false,
   axisStyle,
   Tip,
-  total = 670,
+  total = 0,
 }) {
   const [showModal, setShowModal] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("");
+
+  const [selectedCategory, setSelectedCategory] =
+    useState("Clipboard Incidents");
+
   const [search, setSearch] = useState("");
-  const pageSize = 10; // Fixed page size, dropdown removed
+
+  const [modalData, setModalData] = useState([]);
+
+  const [loading, setLoading] = useState(false);
+
+  const [apiError, setApiError] = useState("");
+
+  const pageSize = 10;
+
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Lock body scroll when modal is open
+  // ======================================================
+  // LOCK BODY SCROLL
+  // ======================================================
   useEffect(() => {
     if (showModal) {
       document.body.style.overflow = "hidden";
@@ -61,190 +142,271 @@ export default function ClipboardIncident({
     };
   }, [showModal]);
 
-  // Hardcoded modal data for clipboard incidents
-  const modalData = [
-    {
-      ipAddress: "192.168.0.41",
-      username: "VELOX",
-      eventType: "CLIPBOARD COPY",
-      fileDetails: "Sensitive Data",
-      timestamp: "2024-01-15 10:30:00",
-    },
-    {
-      ipAddress: "192.168.0.42",
-      username: "Admin",
-      eventType: "CLIPBOARD PASTE",
-      fileDetails: "Password",
-      timestamp: "2024-01-15 11:15:00",
-    },
-    {
-      ipAddress: "192.168.0.43",
-      username: "User1",
-      eventType: "CLIPBOARD COPY",
-      fileDetails: "Credit Card Info",
-      timestamp: "2024-01-15 12:00:00",
-    },
-    {
-      ipAddress: "192.168.0.44",
-      username: "VELOX",
-      eventType: "CLIPBOARD PASTE",
-      fileDetails: "Personal Data",
-      timestamp: "2024-01-15 13:30:00",
-    },
-    {
-      ipAddress: "192.168.0.45",
-      username: "Kiran_Tester",
-      eventType: "CLIPBOARD COPY",
-      fileDetails: "API Keys",
-      timestamp: "2024-01-15 14:45:00",
-    },
-    {
-      ipAddress: "192.168.0.46",
-      username: "VELOX",
-      eventType: "CLIPBOARD PASTE",
-      fileDetails: "Confidential Report",
-      timestamp: "2024-01-15 15:20:00",
-    },
-    {
-      ipAddress: "192.168.0.47",
-      username: "User2",
-      eventType: "CLIPBOARD COPY",
-      fileDetails: "User Credentials",
-      timestamp: "2024-01-15 16:10:00",
-    },
-    {
-      ipAddress: "192.168.0.48",
-      username: "VELOX",
-      eventType: "CLIPBOARD PASTE",
-      fileDetails: "Meeting Notes",
-      timestamp: "2024-01-15 17:00:00",
-    },
-    {
-      ipAddress: "192.168.0.49",
-      username: "Kira_Tester",
-      eventType: "CLIPBOARD COPY",
-      fileDetails: "Source Code",
-      timestamp: "2024-01-15 18:30:00",
-    },
-    {
-      ipAddress: "192.168.0.50",
-      username: "VELOX",
-      eventType: "CLIPBOARD PASTE",
-      fileDetails: "Email Content",
-      timestamp: "2024-01-15 19:45:00",
-    },
-    {
-      ipAddress: "192.168.0.51",
-      username: "Admin",
-      eventType: "CLIPBOARD COPY",
-      fileDetails: "Database Query",
-      timestamp: "2024-01-15 20:30:00",
-    },
-    {
-      ipAddress: "192.168.0.52",
-      username: "User3",
-      eventType: "CLIPBOARD PASTE",
-      fileDetails: "Configuration Data",
-      timestamp: "2024-01-15 21:15:00",
-    },
-    {
-      ipAddress: "192.168.0.53",
-      username: "VELOX",
-      eventType: "CLIPBOARD COPY",
-      fileDetails: "Security Token",
-      timestamp: "2024-01-15 22:00:00",
-    },
-  ];
+  // ======================================================
+  // FETCH LAST 7 DAYS CLIPBOARD DATA
+  // ======================================================
+  const fetchClipboardData = async () => {
+    try {
+      setLoading(true);
+      setApiError("");
 
-  const safeData = Array.isArray(modalData) ? modalData : [];
+      const last7Days = getLast7Days();
 
+      console.log("Last 7 days:", last7Days);
+
+      const responses = await Promise.all(
+        last7Days.map(async (date) => {
+          try {
+            console.log(
+              `Calling Clipboard API for date: ${date}`
+            );
+
+            const response =
+              await dashboardService.getClipboardModal(date);
+
+            console.log(
+              `Clipboard API response for ${date}:`,
+              response
+            );
+
+            return response;
+          } catch (error) {
+            console.error(
+              `Clipboard API error for ${date}:`,
+              error
+            );
+
+            return null;
+          }
+        })
+      );
+
+      // ==================================================
+      // COMBINE ALL API DATA
+      // ==================================================
+      const combinedData = [];
+
+      responses.forEach((response) => {
+        if (
+          response &&
+          response.success === true &&
+          Array.isArray(response.data)
+        ) {
+          response.data.forEach((item) => {
+            combinedData.push(item);
+          });
+        }
+      });
+
+      console.log(
+        "Combined Clipboard data:",
+        combinedData
+      );
+
+      setModalData(combinedData);
+    } catch (error) {
+      console.error(
+        "Error fetching clipboard modal data:",
+        error
+      );
+
+      setApiError(
+        "Unable to load clipboard incident data."
+      );
+
+      setModalData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ======================================================
+  // OPEN MODAL
+  // ======================================================
+  const openModal = async (category) => {
+    setSelectedCategory(
+      category || "Clipboard Incidents"
+    );
+
+    setSearch("");
+
+    setCurrentPage(1);
+
+    setShowModal(true);
+
+    await fetchClipboardData();
+  };
+
+  // ======================================================
+  // CLOSE MODAL
+  // ======================================================
+  const closeModal = () => {
+    setShowModal(false);
+
+    setSearch("");
+
+    setCurrentPage(1);
+  };
+
+  // ======================================================
+  // SEARCH
+  // ======================================================
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return safeData;
 
-    return safeData.filter((row) =>
-      incidentColumns.some((col) =>
-        String(row[col.accessor] ?? "").toLowerCase().includes(term)
+    if (!term) {
+      return modalData;
+    }
+
+    return modalData.filter((row) =>
+      incidentColumns.some((column) =>
+        String(row?.[column.accessor] ?? "")
+          .toLowerCase()
+          .includes(term)
       )
     );
-  }, [safeData, search]);
+  }, [modalData, search]);
 
+  // ======================================================
+  // RESET PAGE WHEN SEARCH CHANGES
+  // ======================================================
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]); // Removed pageSize dependency
+  }, [search]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
-  const safePage = Math.min(currentPage, totalPages);
+  // ======================================================
+  // PAGINATION
+  // ======================================================
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredRows.length / pageSize)
+  );
+
+  const safePage = Math.min(
+    currentPage,
+    totalPages
+  );
+
   const paginatedRows = filteredRows.slice(
     (safePage - 1) * pageSize,
     safePage * pageSize
   );
-  const startRecord = filteredRows.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
-  const endRecord = Math.min(safePage * pageSize, filteredRows.length);
 
-  const openModal = (category) => {
-      // alert(`No incidents in  channel`);
-      const dateData = dashboardService.getClipboardModal("2026-07-22");
-                                  console.log(dateData);
-                                  alert(dateData);
-    setSelectedCategory(category);
-    setSearch("");
-    setCurrentPage(1);
-    setShowModal(true);
-  };
+  const startRecord =
+    filteredRows.length === 0
+      ? 0
+      : (safePage - 1) * pageSize + 1;
 
-  const closeModal = () => {
-    setShowModal(false);
-    setSearch("");
-    setCurrentPage(1);
-  };
+  const endRecord = Math.min(
+    safePage * pageSize,
+    filteredRows.length
+  );
 
-  // Custom Tooltip with click handler
-  const CustomTooltip = (props) => {
-    const { active, payload } = props;
-    if (active && payload && payload.length) {
+  // ======================================================
+  // CUSTOM TOOLTIP
+  // ======================================================
+  const CustomTooltip = ({
+    active,
+    payload,
+  }) => {
+    if (
+      active &&
+      payload &&
+      payload.length
+    ) {
       return (
-        <div 
-          className="bg-white dark:bg-[#020617] p-2 rounded shadow border border-slate-200 dark:border-white/10 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#0a0f1e] transition-colors"
-          onClick={() => {      
-            //  if (entry.value === 0) {
-            //                       alert(`No incidents in ${entry.name} channel`);
-            //                     } else {
-            //                       // alert(`${entry.name}: ${entry.value} incidents found`);
-            //                       const dateData = dashboardService.getClipboardModal(entry.name);
-            //                       console.log(dateData);
-            //                       alert(dateData);
-            //                     }
-                                openChannel(entry.name);
-            openModal("Clipboard Incidents")}}
+        <div
+          className="
+            cursor-pointer
+            rounded-lg
+            border
+            border-slate-200
+            bg-white
+            p-3
+            shadow-xl
+            transition-all
+            duration-200
+            hover:-translate-y-0.5
+            hover:shadow-2xl
+            dark:border-white/10
+            dark:bg-[#020617]
+          "
+          onClick={() =>
+            openModal("Clipboard Incidents")
+          }
         >
-          <p className="text-sm font-medium">{`${payload[0].payload.x}`}</p>
-          <p className="text-sm text-emerald-600 dark:text-emerald-400">{`${payload[0].value}% usage`}</p>
-          <p className="text-xs text-emerald-500 mt-1">Click to view details →</p>
+          <p className="text-sm font-medium text-slate-800 dark:text-white">
+            {payload[0]?.payload?.x}
+          </p>
+
+          <p className="mt-1 text-sm text-emerald-600 dark:text-emerald-400">
+            {payload[0]?.value}% usage
+          </p>
+
+          <p className="mt-1 text-xs text-emerald-500">
+            Click to view details →
+          </p>
         </div>
       );
     }
+
     return null;
   };
 
+  // ======================================================
+  // RENDER
+  // ======================================================
   return (
     <>
+      {/* ==================================================
+          CHART SECTION
+      ================================================== */}
       <div>
-        <div className="flex items-baseline gap-1 mb-4">
-          <span className="text-4xl font-bold dark:text-white text-slate-800">
+        {/* TOTAL */}
+        <div className="mb-4 flex items-baseline gap-1">
+          <span
+            className="
+              text-4xl
+              font-bold
+              text-slate-800
+              transition-all
+              duration-300
+              dark:text-white
+            "
+          >
             {total}
           </span>
 
-          <span className="text-emerald-400 text-sm font-bold">
+          <span
+            className="
+              text-sm
+              font-bold
+              text-emerald-400
+              transition-transform
+              duration-300
+              hover:-translate-y-1
+            "
+          >
             ↑
           </span>
         </div>
 
-        <ResponsiveContainer width="100%" height={160}>
+        {/* CHART */}
+        <ResponsiveContainer
+          width="100%"
+          height={160}
+        >
           <AreaChart
             data={data}
-            margin={{ top: 8, right: 8, left: -10, bottom: 0 }}
-            onClick={() => openModal("Clipboard Incidents")}
+            margin={{
+              top: 8,
+              right: 8,
+              left: -10,
+              bottom: 0,
+            }}
+            onClick={() =>
+              openModal("Clipboard Incidents")
+            }
             className="cursor-pointer"
           >
             <defs>
@@ -258,8 +420,11 @@ export default function ClipboardIncident({
                 <stop
                   offset="5%"
                   stopColor="#22c55e"
-                  stopOpacity={isDark ? 0.35 : 0.18}
+                  stopOpacity={
+                    isDark ? 0.35 : 0.18
+                  }
                 />
+
                 <stop
                   offset="95%"
                   stopColor="#22c55e"
@@ -276,13 +441,17 @@ export default function ClipboardIncident({
             />
 
             <YAxis
-              tickFormatter={(v) => `${v}%`}
+              tickFormatter={(value) =>
+                `${value}%`
+              }
               tick={axisStyle}
               axisLine={false}
               tickLine={false}
             />
 
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={<CustomTooltip />}
+            />
 
             <Area
               type="monotone"
@@ -295,110 +464,452 @@ export default function ClipboardIncident({
                 fill: "#22c55e",
                 stroke: "#ffffff",
                 strokeWidth: 2,
-                className: "cursor-pointer hover:r-5 transition-all",
               }}
               activeDot={{
                 r: 5,
                 fill: "#22c55e",
-                className: "cursor-pointer",
-                onClick: () => openModal("Clipboard Incidents"),
               }}
               name="%"
+              animationDuration={800}
+              animationEasing="ease-out"
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Modal */}
+      {/* ==================================================
+          MODAL
+      ================================================== */}
       {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-[#020617]">
+        <div
+          className="
+            fixed
+            inset-0
+            z-[9999]
+            flex
+            items-center
+            justify-center
+            bg-slate-950/55
+            p-4
+            backdrop-blur-sm
+            animate-[fadeIn_0.25s_ease-out]
+          "
+        >
+          {/* ==================================================
+              MODAL BOX
+          ================================================== */}
+          <div
+            className="
+              flex
+              h-[80vh]
+              w-full
+              max-w-6xl
+              flex-col
+              overflow-hidden
+              rounded-xl
+              border
+              border-slate-200
+              bg-white
+              shadow-2xl
 
-            {/* Header */}
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
+              animate-[modalIn_0.3s_ease-out]
+
+              dark:border-white/[0.08]
+              dark:bg-[#020617]
+            "
+          >
+            {/* ==================================================
+                HEADER
+            ================================================== */}
+            <div
+              className="
+                flex
+                shrink-0
+                items-center
+                justify-between
+                gap-3
+                border-b
+                border-slate-200
+                px-4
+                py-3
+                dark:border-white/[0.08]
+              "
+            >
+              {/* TITLE */}
               <div className="min-w-0">
-                <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
-                  Clipboard Incident Details - <span className="text-emerald-600 dark:text-emerald-400">{selectedCategory}</span>
+                <h2
+                  className="
+                    truncate
+                    text-[15px]
+                    font-semibold
+                    text-slate-800
+                    dark:text-white
+                  "
+                >
+                  Clipboard Incident Details -
+
+                  <span
+                    className="
+                      ml-1
+                      text-emerald-600
+                      transition-colors
+                      duration-200
+                      dark:text-emerald-400
+                    "
+                  >
+                    {selectedCategory}
+                  </span>
                 </h2>
+
+                <p className="mt-1 text-[10px] text-slate-400 dark:text-white/30">
+                  Last 7 Days
+                </p>
               </div>
 
+              {/* RIGHT SIDE */}
               <div className="flex shrink-0 items-center gap-2">
+                {/* ==================================================
+                    SEARCH
+                ================================================== */}
                 <div className="relative w-[220px] sm:w-[260px]">
                   <Search
                     size={14}
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30"
+                    className="
+                      pointer-events-none
+                      absolute
+                      left-3
+                      top-1/2
+                      -translate-y-1/2
+                      text-slate-400
+                      transition-colors
+                      duration-200
+                      dark:text-white/30
+                    "
                   />
+
                   <input
                     type="text"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(event) =>
+                      setSearch(event.target.value)
+                    }
                     placeholder="Search..."
-                    className="h-9 w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-[12px] text-slate-700 outline-none transition focus:border-[#7094ff] focus:ring-2 focus:ring-[#7094ff]/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/80"
+                    className="
+                      h-9
+                      w-full
+                      rounded-lg
+                      border
+                      border-slate-200
+                      bg-white
+                      pl-8
+                      pr-3
+                      text-[12px]
+                      text-slate-700
+                      outline-none
+
+                      transition-all
+                      duration-200
+                      ease-out
+
+                      focus:border-[#7094ff]
+                      focus:ring-2
+                      focus:ring-[#7094ff]/20
+                      focus:shadow-[0_0_12px_rgba(112,148,255,0.12)]
+
+                      dark:border-white/10
+                      dark:bg-white/[0.04]
+                      dark:text-white/80
+                    "
                   />
                 </div>
 
+                {/* ==================================================
+                    CLOSE BUTTON
+                ================================================== */}
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/[0.06] dark:text-white/60 dark:hover:bg-white/[0.1]"
+                  className="
+                    inline-flex
+                    h-9
+                    w-9
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-lg
+                    bg-slate-100
+                    text-slate-600
+
+                    transition-all
+                    duration-200
+                    ease-out
+
+                    hover:scale-105
+                    hover:bg-slate-200
+                    active:scale-95
+
+                    dark:bg-white/[0.06]
+                    dark:text-white/60
+                    dark:hover:bg-white/[0.1]
+                  "
                 >
-                  <X size={17} />
+                  <X
+                    size={17}
+                    className="
+                      transition-transform
+                      duration-200
+                      hover:rotate-90
+                    "
+                  />
                 </button>
               </div>
             </div>
 
-            {/* Table */}
+            {/* ==================================================
+                TABLE AREA
+            ================================================== */}
             <div className="min-h-0 flex-1 overflow-hidden p-4">
-              <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
+              <div
+                className="
+                  flex
+                  h-full
+                  min-h-0
+                  flex-col
+                  overflow-hidden
+                  rounded-xl
+                  border
+                  border-slate-200
+                  transition-colors
+                  duration-200
+                  dark:border-white/[0.08]
+                "
+              >
+                {/* ==================================================
+                    SCROLLABLE TABLE
+                ================================================== */}
                 <div className="min-h-0 flex-1 overflow-auto">
                   <table className="w-full text-[13px]">
-                    <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
+                    {/* ==================================================
+                        TABLE HEADER
+                    ================================================== */}
+                    <thead
+                      className="
+                        sticky
+                        top-0
+                        z-10
+                        bg-slate-100
+                        transition-colors
+                        duration-200
+                        dark:bg-white/[0.06]
+                      "
+                    >
                       <tr className="text-left text-slate-500 dark:text-white/50">
-                        {incidentColumns.map((col) => (
-                          <th
-                            key={col.accessor}
-                            className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]"
-                          >
-                            {col.header}
-                          </th>
-                        ))}
+                        {incidentColumns.map(
+                          (column) => (
+                            <th
+                              key={column.accessor}
+                              className="
+                                border-b
+                                border-slate-200
+                                px-4
+                                py-3
+                                text-[11px]
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                transition-colors
+                                duration-200
+                                dark:border-white/[0.08]
+                              "
+                            >
+                              {column.header}
+                            </th>
+                          )
+                        )}
                       </tr>
                     </thead>
 
+                    {/* ==================================================
+                        TABLE BODY
+                    ================================================== */}
                     <tbody>
-                      {paginatedRows.length > 0 ? (
-                        paginatedRows.map((row, index) => (
-                          <tr
-                            key={index}
-                            className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
-                          >
-                            <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
-                              {row.ipAddress || "NA"}
-                            </td>
-                            <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
-                              {row.username || "NA"}
-                            </td>
-                            <td className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(row.eventType)}`}>
-                              {row.eventType || "NA"}
-                            </td>
-                            <td
-                              className="max-w-[360px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/30"
-                              title={row.fileDetails}
-                            >
-                              {row.fileDetails || "NA"}
-                            </td>
-                            <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-right text-slate-400 dark:border-white/[0.05] dark:text-white/40">
-                              {row.timestamp || "NA"}
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
+                      {/* ==================================================
+                          LOADING
+                      ================================================== */}
+                      {loading ? (
                         <tr>
                           <td
-                            colSpan={incidentColumns.length}
-                            className="px-3 py-10 text-center text-slate-400 dark:text-white/30"
+                            colSpan={
+                              incidentColumns.length
+                            }
+                            className="
+                              px-3
+                              py-12
+                              text-center
+                              text-slate-400
+                              dark:text-white/40
+                            "
                           >
-                            No records found
+                            <div className="flex flex-col items-center gap-2">
+                              <div
+                                className="
+                                  h-6
+                                  w-6
+                                  animate-spin
+                                  rounded-full
+                                  border-2
+                                  border-slate-300
+                                  border-t-[#7094ff]
+                                  dark:border-white/10
+                                  dark:border-t-[#7094ff]
+                                "
+                              />
+
+                              <span>
+                                Loading clipboard
+                                incidents...
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : apiError ? (
+                        /* ==================================================
+                            ERROR
+                        ================================================== */
+                        <tr>
+                          <td
+                            colSpan={
+                              incidentColumns.length
+                            }
+                            className="
+                              px-3
+                              py-10
+                              text-center
+                              text-red-500
+                            "
+                          >
+                            {apiError}
+                          </td>
+                        </tr>
+                      ) : paginatedRows.length > 0 ? (
+                        /* ==================================================
+                            DATA
+                        ================================================== */
+                        paginatedRows.map(
+                          (row, index) => (
+                            <tr
+                              key={`${row.hostname}-${row.keyword}-${index}`}
+                              className="
+                                group
+                                bg-white
+
+                                transition-all
+                                duration-200
+                                ease-out
+
+                                hover:bg-[#7094ff]/5
+                                hover:shadow-[inset_3px_0_0_#7094ff]
+
+                                dark:bg-transparent
+                                dark:hover:bg-white/[0.03]
+                                dark:hover:shadow-[inset_3px_0_0_#7094ff]
+                              "
+                            >
+                              {/* HOSTNAME */}
+                              <td
+                                className="
+                                  border-b
+                                  border-slate-100
+                                  px-4
+                                  py-3
+                                  font-medium
+                                  text-blue-600
+                                  transition-all
+                                  duration-200
+                                  group-hover:translate-x-1
+                                  dark:border-white/[0.05]
+                                  dark:text-blue-400
+                                "
+                              >
+                                {row.hostname || "NA"}
+                              </td>
+
+                              {/* IP ADDRESS */}
+                              <td
+                                className="
+                                  border-b
+                                  border-slate-100
+                                  px-4
+                                  py-3
+                                  font-medium
+                                  text-sky-600
+                                  transition-colors
+                                  duration-200
+                                  dark:border-white/[0.05]
+                                  dark:text-sky-400
+                                "
+                              >
+                                {row.ipaddress || "NA"}
+                              </td>
+
+                              {/* KEYWORD */}
+                              <td
+                                className="
+                                  max-w-[360px]
+                                  truncate
+                                  border-b
+                                  border-slate-100
+                                  px-4
+                                  py-3
+                                  text-slate-700
+                                  transition-colors
+                                  duration-200
+                                  dark:border-white/[0.05]
+                                  dark:text-white/80
+                                "
+                                title={row.keyword}
+                              >
+                                {row.keyword || "NA"}
+                              </td>
+
+                              {/* BRANCH */}
+                              <td
+                                className="
+                                  border-b
+                                  border-slate-100
+                                  px-4
+                                  py-3
+                                  text-slate-600
+                                  transition-colors
+                                  duration-200
+                                  dark:border-white/[0.05]
+                                  dark:text-white/60
+                                "
+                              >
+                                {row.branch || "NA"}
+                              </td>
+                            </tr>
+                          )
+                        )
+                      ) : (
+                        /* ==================================================
+                            EMPTY
+                        ================================================== */
+                        <tr>
+                          <td
+                            colSpan={
+                              incidentColumns.length
+                            }
+                            className="
+                              px-3
+                              py-10
+                              text-center
+                              text-slate-400
+                              dark:text-white/30
+                            "
+                          >
+                            No clipboard incidents
+                            found for the last 7 days.
                           </td>
                         </tr>
                       )}
@@ -406,37 +917,186 @@ export default function ClipboardIncident({
                   </table>
                 </div>
 
-                {/* Footer / pagination - Dropdown REMOVED */}
-                <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-[12px] text-slate-500 dark:text-white/40">
-                    Showing {startRecord}-{endRecord} of {filteredRows.length}
+                {/* ==================================================
+                    PAGINATION
+                ================================================== */}
+                <div
+                  className="
+                    flex
+                    shrink-0
+                    flex-col
+                    gap-3
+                    border-t
+                    border-slate-200
+                    bg-slate-50
+                    px-4
+                    py-3
+
+                    transition-colors
+                    duration-200
+
+                    dark:border-white/[0.08]
+                    dark:bg-white/[0.02]
+
+                    sm:flex-row
+                    sm:items-center
+                    sm:justify-between
+                  "
+                >
+                  {/* RECORD COUNT */}
+                  <span className="text-[12px] text-slate-500 transition-colors duration-200 dark:text-white/40">
+                    Showing {startRecord}-
+                    {endRecord} of{" "}
+                    {filteredRows.length}
                   </span>
 
+                  {/* PAGINATION BUTTONS */}
                   <div className="flex items-center gap-2">
-                    {/* <select> dropdown for pageSize has been removed here */}
-
+                    {/* ==================================================
+                        PREVIOUS
+                    ================================================== */}
                     <button
                       type="button"
-                      disabled={safePage === 1}
-                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
+                      disabled={
+                        safePage === 1 ||
+                        loading
+                      }
+                      onClick={() =>
+                        setCurrentPage(
+                          (previous) =>
+                            Math.max(
+                              1,
+                              previous - 1
+                            )
+                        )
+                      }
+                      className="
+                        inline-flex
+                        h-8
+                        items-center
+                        gap-1
+                        rounded-lg
+                        border
+                        border-slate-200
+                        bg-white
+                        px-2.5
+                        text-[12px]
+                        font-medium
+                        text-slate-700
+
+                        transition-all
+                        duration-200
+                        ease-out
+
+                        hover:-translate-y-[1px]
+                        hover:bg-slate-100
+                        active:translate-y-0
+                        active:scale-[0.97]
+
+                        disabled:cursor-not-allowed
+                        disabled:opacity-50
+                        disabled:hover:translate-y-0
+                        disabled:active:scale-100
+
+                        dark:border-white/10
+                        dark:bg-white/[0.04]
+                        dark:text-white/70
+                        dark:hover:bg-white/[0.08]
+                      "
                     >
-                      <ChevronLeft size={14} />
+                      <ChevronLeft
+                        size={14}
+                        className="transition-transform duration-200 group-hover:-translate-x-0.5"
+                      />
+
                       Prev
                     </button>
 
-                    <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10">
+                    {/* ==================================================
+                        PAGE NUMBER
+                    ================================================== */}
+                    <span
+                      className="
+                        rounded-lg
+                        bg-white
+                        px-3
+                        py-1.5
+                        text-[12px]
+                        font-semibold
+                        text-slate-700
+                        ring-1
+                        ring-slate-200
+
+                        transition-all
+                        duration-200
+
+                        dark:bg-white/[0.06]
+                        dark:text-white/80
+                        dark:ring-white/10
+                      "
+                    >
                       {safePage} / {totalPages}
                     </span>
 
+                    {/* ==================================================
+                        NEXT
+                    ================================================== */}
                     <button
                       type="button"
-                      disabled={safePage === totalPages}
-                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
+                      disabled={
+                        safePage ===
+                          totalPages ||
+                        loading
+                      }
+                      onClick={() =>
+                        setCurrentPage(
+                          (previous) =>
+                            Math.min(
+                              totalPages,
+                              previous + 1
+                            )
+                        )
+                      }
+                      className="
+                        inline-flex
+                        h-8
+                        items-center
+                        gap-1
+                        rounded-lg
+                        border
+                        border-slate-200
+                        bg-white
+                        px-2.5
+                        text-[12px]
+                        font-medium
+                        text-slate-700
+
+                        transition-all
+                        duration-200
+                        ease-out
+
+                        hover:-translate-y-[1px]
+                        hover:bg-slate-100
+                        active:translate-y-0
+                        active:scale-[0.97]
+
+                        disabled:cursor-not-allowed
+                        disabled:opacity-50
+                        disabled:hover:translate-y-0
+                        disabled:active:scale-100
+
+                        dark:border-white/10
+                        dark:bg-white/[0.04]
+                        dark:text-white/70
+                        dark:hover:bg-white/[0.08]
+                      "
                     >
                       Next
-                      <ChevronRight size={14} />
+
+                      <ChevronRight
+                        size={14}
+                        className="transition-transform duration-200 group-hover:translate-x-0.5"
+                      />
                     </button>
                   </div>
                 </div>
@@ -445,6 +1105,33 @@ export default function ClipboardIncident({
           </div>
         </div>
       )}
+
+      {/* ======================================================
+          SMOOTH ANIMATIONS
+      ====================================================== */}
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes modalIn {
+          from {
+            opacity: 0;
+            transform: translateY(12px) scale(0.97);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
     </>
   );
 }

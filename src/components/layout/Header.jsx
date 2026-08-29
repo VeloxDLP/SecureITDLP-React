@@ -53,7 +53,7 @@ export default function Header() {
           Data Loss Protection
         </h1> */}
 
-        <div className="flex items-center gap-3 ml-4">
+        {/* <div className="flex items-center gap-3 ml-4">
           <Button
             className="px-6 py-3 rounded-lg bg-blue-450 hover:bg-blue-300 text-white"
           >
@@ -67,7 +67,7 @@ export default function Header() {
           >
             Reports
           </Button>
-        </div>
+        </div> */}
 
 
       </div>
