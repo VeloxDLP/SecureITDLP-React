@@ -289,6 +289,23 @@ export const dashboardService = {
     return data;
   },
 
+  //[USB API]
+getUSBPolicies: async () => {
+  const { data } = await axiosInstance.get(API_ENDPOINTS.USB_Policy.USB_Policy)
+  return data
+},
+
+ getDrivePolicies: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.Drive_Policy.Drive_Policy
+    );
+
+    return data;
+  },
+
+
+
+  
 
   //[Printer API]
 
@@ -341,6 +358,8 @@ export const dashboardService = {
   return data;
 },
 
+
+
  getFileUploadModal: async (channel) => {
   const { data } = await axiosInstance.post(
     `${API_ENDPOINTS.DASHBOARD.FILE_UPLOAD_MODAL}/${channel}`
@@ -349,7 +368,7 @@ export const dashboardService = {
   return data;
 },
 
- getClipboardModal: async (date) => {
+getClipboardModal: async (date) => {
   const { data } = await axiosInstance.post(
     `${API_ENDPOINTS.DASHBOARD.CLIPBOARD_INCIDENT_MODAL}/${date}`
   );

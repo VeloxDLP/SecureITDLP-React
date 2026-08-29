@@ -382,8 +382,8 @@ function AddForm({ branches, onAdd }) {
         function: ""
     }));
 
-    const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch);
-    setFetchedDevices(DevicesOfBranches.data);
+    const DrivePolicy = await dashboardService.getDrivePolicies(branch);
+    setFetchedDevices(DrivePolicy.data);
   }                  
 
   return (
