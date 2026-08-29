@@ -48,6 +48,12 @@ PRINTER_CONTROL:{
   ADD_PRINTER_POLICY:"/PrinterDLP/addPrinterPolicy"
 },
 
+
+USB_Policy: {
+  USB_Policy: "/UsbProtection/getUsbPolicies",
+},
+
+
 REPORTS:{
   GET_REPORTS:"/reports/getReports",
 },

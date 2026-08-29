@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom"; // added for receiving device data
 import { Search, ArrowLeft } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -158,7 +159,12 @@ const ProtectionCard = ({
 ========================================================= */
 function DriveDetail() {
   const { isDark } = useTheme();
+  const location = useLocation(); // get navigation state
   const [search, setSearch] = useState("");
+
+  // Extract device info passed from the dashboard
+  const device = location.state?.device || {};
+  const hostName = device.host || "N/A";
 
   const driveData = [
     {
@@ -255,7 +261,7 @@ function DriveDetail() {
       `}
     >
       {/* =====================================================
-          NEW HEADER CARD with Back button on the right
+          HEADER CARD with Back button and host name
       ====================================================== */}
       <div className={`${cardClass} p-3 mb-3 flex items-center justify-between`}>
         <div>
@@ -266,7 +272,7 @@ function DriveDetail() {
               ${isDark ? "text-white/85" : "text-[#374151]"}
             `}
           >
-          Endpoint Details
+            Endpoint Details
           </h2>
           <p
             className={`
@@ -274,7 +280,10 @@ function DriveDetail() {
               ${isDark ? "text-white/50" : "text-[#666]"}
             `}
           >
-          System Configuration For 
+            System Configuration For{" "}
+            <span className="font-semibold text-indigo-500 dark:text-indigo-400">
+              {hostName}
+            </span>
           </p>
         </div>
         <button

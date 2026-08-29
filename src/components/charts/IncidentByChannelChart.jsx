@@ -5,10 +5,20 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
-import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 import { dashboardService } from "../../services/dashboardService";
+import { useTheme } from "../../context/ThemeContext";
 
-const colors = {
+/* =========================================================
+   CHANNEL COLORS
+========================================================= */
+const CHANNEL_COLORS = {
   Email: "#1613d3",
   Network: "#0d2e88",
   Printer: "#375ab9",
@@ -17,344 +27,1234 @@ const colors = {
   Peripherals: "#7BBDE8",
 };
 
-// Maps a channel label to the keyword(s) used to match it against
-// row.eventType in the raw incident data. Adjust the keywords if your
-// backend's eventType strings differ (e.g. "MAIL" vs "EMAIL").
-const channelKeywords = {
-  Email: ["MAIL"],
-  Network: ["NETWORK"],
-  Printer: ["PRINT"],
-  Clipboard: ["CLIPBOARD"],
-  Drive: ["DRIVE"],
-  Peripherals: ["USB", "DVD"],
+/* =========================================================
+   CHANNEL API VALUES
+========================================================= */
+const CHANNEL_API_VALUES = {
+  Email: "Email",
+  Network: "Network",
+  Printer: "Printer",
+  Clipboard: "Clipboard",
+  Drive: "Drive",
+  Peripherals: "Peripherals",
 };
 
-const incidentColumns = [
-  { accessor: "ipAddress", header: "IP ADDRESS" },
-  { accessor: "username", header: "USERNAME" },
-  { accessor: "eventType", header: "EVENT TYPE" },
-  { accessor: "fileDetails", header: "FILE DETAILS" },
-  { accessor: "timestamp", header: "TIMESTAMP" },
-];
+/* =========================================================
+   FORMAT DATE
+========================================================= */
+const formatTimestamp = (value) => {
+  if (!value) return "NA";
 
-const eventTypeColor = (eventType) => {
-  const type = eventType?.toLowerCase() || "";
-  if (type.includes("upload")) return "text-blue-600 dark:text-blue-400";
-  if (type.includes("transfer")) return "text-green-600 dark:text-green-400";
-  if (type.includes("usb") || type.includes("dvd")) return "text-yellow-600 dark:text-yellow-400";
-  if (type.includes("mail")) return "text-emerald-600 dark:text-emerald-400";
-  return "text-slate-600 dark:text-white/50";
+  try {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return String(value).trim();
+    }
+
+    return date.toLocaleString();
+  } catch {
+    return String(value).trim();
+  }
 };
 
-const IncidentByChannelChart = ({ data, isDark, channelIncidentData = [] }) => {
+/* =========================================================
+   GET CHANNEL VALUE
+========================================================= */
+const getChannelValue = (data, channel) => {
+  if (!data || typeof data !== "object") {
+    return 0;
+  }
+
+  const keys = Object.keys(data);
+
+  const normalizedChannel = channel
+    .replace(/[_\-\s]/g, "")
+    .toLowerCase();
+
+  const matchedKey = keys.find((key) => {
+    const normalizedKey = String(key)
+      .replace(/[_\-\s]/g, "")
+      .toLowerCase();
+
+    return (
+      normalizedKey === normalizedChannel ||
+      normalizedKey.includes(normalizedChannel)
+    );
+  });
+
+  if (!matchedKey) {
+    return 0;
+  }
+
+  return Number(data[matchedKey] || 0);
+};
+
+/* =========================================================
+   COMPONENT
+========================================================= */
+const IncidentByChannel = ({ data = {} }) => {
+  const { isDark } = useTheme();
+
+  /* =======================================================
+     STATES
+  ======================================================= */
   const [showModal, setShowModal] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState("");
+  const [modalData, setModalData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const pageSize = 10; // Removed selectable state, fixed to 10
   const [currentPage, setCurrentPage] = useState(1);
+  const [error, setError] = useState("");
 
-  // Lock body scroll when modal is open
+  const rowsPerPage = 10;
+
+  /* =======================================================
+     CHANNEL DATA
+  ======================================================= */
+  const channelData = useMemo(() => {
+    return [
+      {
+        name: "Email",
+        value: getChannelValue(data, "Email"),
+        color: CHANNEL_COLORS.Email,
+      },
+      {
+        name: "Network",
+        value: getChannelValue(data, "Network"),
+        color: CHANNEL_COLORS.Network,
+      },
+      {
+        name: "Printer",
+        value: getChannelValue(data, "Printer"),
+        color: CHANNEL_COLORS.Printer,
+      },
+      {
+        name: "Clipboard",
+        value: getChannelValue(data, "Clipboard"),
+        color: CHANNEL_COLORS.Clipboard,
+      },
+      {
+        name: "Drive",
+        value: getChannelValue(data, "Drive"),
+        color: CHANNEL_COLORS.Drive,
+      },
+      {
+        name: "Peripherals",
+        value: getChannelValue(data, "Peripheral"),
+        color: CHANNEL_COLORS.Peripherals,
+      },
+    ];
+  }, [data]);
+
+  /* =======================================================
+     TOTAL
+  ======================================================= */
+  const totalIncidents = channelData.reduce(
+    (sum, item) => sum + Number(item.value || 0),
+    0
+  );
+
+  /* =======================================================
+     OPEN MODAL
+  ======================================================= */
+  const openChannelModal = async (channel) => {
+    const apiChannel = CHANNEL_API_VALUES[channel] || channel;
+
+    setSelectedChannel(channel);
+    setShowModal(true);
+    setLoading(true);
+    setModalData([]);
+    setSearch("");
+    setCurrentPage(1);
+    setError("");
+
+    try {
+      console.log("Selected Channel:", channel);
+      console.log("API Channel:", apiChannel);
+
+      const response =
+        await dashboardService.getIncidentByChannelModal(apiChannel);
+
+      console.log(`${channel} API RESPONSE:`, response);
+      console.log(`${channel} API DATA:`, response?.data);
+
+      setModalData(
+        Array.isArray(response?.data) ? response.data : []
+      );
+    } catch (err) {
+      console.error(`${channel} API ERROR:`, err);
+
+      setError(
+        err?.response?.data?.message ||
+          `Unable to load ${channel} data.`
+      );
+
+      setModalData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* =======================================================
+     CLOSE MODAL
+  ======================================================= */
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedChannel("");
+    setModalData([]);
+    setSearch("");
+    setCurrentPage(1);
+    setError("");
+  };
+
+  /* =======================================================
+     ESCAPE KEY
+  ======================================================= */
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        closeModal();
+      }
+    };
+
+    if (showModal) {
+      document.addEventListener("keydown", handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [showModal]);
+
+  /* =======================================================
+     BODY SCROLL
+  ======================================================= */
   useEffect(() => {
     if (showModal) {
       document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
     } else {
       document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
     }
 
     return () => {
       document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
     };
   }, [showModal]);
 
-  // Convert API object to chart array
-  const channelData = [
-    { name: "Email", value: data?.emailIncident ?? 0, color: colors.Email },
-    { name: "Network", value: data?.networkIncident ?? 0, color: colors.Network },
-    { name: "Printer", value: data?.printerIncident ?? 0, color: colors.Printer },
-    { name: "Clipboard", value: data?.clipboardIncident ?? 0, color: colors.Clipboard },
-    { name: "Drive", value: data?.driveIncident ?? 0, color: colors.Drive },
-    { name: "Peripherals", value: data?.peripheralIncident ?? 0, color: colors.Peripherals },
-  ];
+  /* =======================================================
+     SEARCH FILTER
+  ======================================================= */
+  const filteredData = useMemo(() => {
+    if (!search.trim()) {
+      return modalData;
+    }
 
-  const total = channelData.reduce((sum, item) => sum + item.value, 0);
+    const searchValue = search.toLowerCase().trim();
 
-  const openChannel = (channelName) => {
-    setSelectedChannel(channelName);
-    setSearch("");
-    setCurrentPage(1);
-    setShowModal(true);
-  };
+    return modalData.filter((row) => {
+      if (!row) return false;
 
-  const safeRows = Array.isArray(channelIncidentData) ? channelIncidentData : [];
+      if (Array.isArray(row)) {
+        return row.some((value) =>
+          String(value ?? "")
+            .toLowerCase()
+            .includes(searchValue)
+        );
+      }
 
-  const channelRows = useMemo(() => {
-    const keywords = channelKeywords[selectedChannel] || [];
-    if (keywords.length === 0) return safeRows;
-    return safeRows.filter((row) => {
-      const type = String(row.eventType || "").toUpperCase();
-      return keywords.some((kw) => type.includes(kw));
+      if (typeof row === "object") {
+        return Object.values(row).some((value) =>
+          String(value ?? "")
+            .toLowerCase()
+            .includes(searchValue)
+        );
+      }
+
+      return false;
     });
-  }, [safeRows, selectedChannel]);
+  }, [modalData, search]);
 
-  const filteredRows = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return channelRows;
-
-    return channelRows.filter((row) =>
-      incidentColumns.some((col) =>
-        String(row[col.accessor] ?? "").toLowerCase().includes(term)
-      )
-    );
-  }, [channelRows, search]);
-
+  /* =======================================================
+     RESET PAGE
+  ======================================================= */
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]); // Removed pageSize dependency
+  }, [search]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
-  const safePage = Math.min(currentPage, totalPages);
-  const paginatedRows = filteredRows.slice(
-    (safePage - 1) * pageSize,
-    safePage * pageSize
+  /* =======================================================
+     PAGINATION
+  ======================================================= */
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredData.length / rowsPerPage)
   );
-  const startRecord = filteredRows.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
-  const endRecord = Math.min(safePage * pageSize, filteredRows.length);
 
+  const safePage = Math.min(currentPage, totalPages);
+
+  const startIndex = (safePage - 1) * rowsPerPage;
+
+  const currentRows = filteredData.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
+
+  const firstRecord =
+    filteredData.length === 0 ? 0 : startIndex + 1;
+
+  const lastRecord = Math.min(
+    startIndex + rowsPerPage,
+    filteredData.length
+  );
+
+  /* =======================================================
+     TABLE HEADERS
+  ======================================================= */
+  const getTableHeaders = () => {
+    if (selectedChannel === "Drive") {
+      return [
+        "BRANCH",
+        "IP ADDRESS",
+        "PC NAME",
+        "DATE",
+      ];
+    }
+
+    /*
+      PRINTER API DATA:
+
+      {
+        "branch": "...",
+        "date": "...",
+        "hostName": "...",
+        "jobStatus": "..."
+      }
+    */
+    if (selectedChannel === "Printer") {
+      return [
+        "BRANCH",
+        "DATE",
+        "HOST NAME",
+        "JOB STATUS",
+      ];
+    }
+
+    return [
+      "BRANCH",
+      "USERNAME",
+      "EVENT TYPE",
+      "DEVICE / FILE DETAILS",
+      "TIMESTAMP",
+    ];
+  };
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
   return (
     <>
-      <div className="flex items-center justify-between gap-4">
-        {/* Chart Left */}
-        <div className="relative flex-shrink-0" style={{ width: 170, height: 170 }}>
+      {/* =====================================================
+          PIE CHART
+      ===================================================== */}
+      <div className="flex w-full items-center justify-between gap-5">
+        <div className="relative h-[190px] w-[190px] shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={channelData}
                 dataKey="value"
+                nameKey="name"
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={75}
+                innerRadius={70}
+                outerRadius={82}
                 paddingAngle={3}
-                cornerRadius={12}
+                cornerRadius={6}
                 stroke="none"
+                style={{
+                  cursor: "pointer",
+                }}
+                onClick={(entry) => {
+                  if (entry?.name) {
+                    openChannelModal(entry.name);
+                  }
+                }}
               >
                 {channelData.map((entry, index) => (
                   <Cell
-                    key={index}
+                    key={`channel-${index}`}
                     fill={entry.color}
-                    className="cursor-pointer"
-                    onClick={() => {
-                      if (entry.value === 0) {
-                        alert(`No incidents in ${entry.name} channel`);
-                      } else {
-                        const channelData = dashboardService.getIncidentByChannelModal(selectedChannel);
-                        console.log(selectedChannel);
-                        alert(channelData.data);
-                      }
-                      openChannel(entry.name);
-                    }}
                   />
                 ))}
               </Pie>
             </PieChart>
           </ResponsiveContainer>
 
-          {/* Center Circle */}
+          {/* CENTER */}
           <div
-            className="absolute top-1/2 left-1/2 rounded-full flex flex-col items-center justify-center"
+            className="
+              pointer-events-none
+              absolute
+              left-1/2
+              top-1/2
+              flex
+              h-[96px]
+              w-[96px]
+              -translate-x-1/2
+              -translate-y-1/2
+              flex-col
+              items-center
+              justify-center
+              rounded-full
+            "
             style={{
-              width: 95,
-              height: 95,
-              transform: "translate(-50%, -50%)",
-              background: isDark ? "#111827" : "#ffffff",
-              boxShadow: "0 0 10px rgba(0,0,0,0.15)",
+              backgroundColor: isDark
+                ? "#111827"
+                : "#ffffff",
             }}
           >
-            <span
-              className="font-bold"
-              style={{ fontSize: "24px", color: isDark ? "#fff" : "#111827" }}
-            >
-              {total}
+            <span className="text-[24px] font-bold text-slate-800 dark:text-white">
+              {totalIncidents}
             </span>
-            <span style={{ fontSize: "11px", color: "#94a3b8" }}>
+
+            <span className="text-[10px] text-slate-400">
               Incidents
             </span>
           </div>
         </div>
 
-        {/* Legend Right */}
-        <div className="flex flex-col gap-3 flex-1">
+        {/* LEGEND */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
           {channelData.map((item) => (
-            <div
+            <button
               key={item.name}
-              className="flex items-center justify-between cursor-pointer rounded-md px-1 -mx-1 transition hover:bg-slate-100 dark:hover:bg-white/[0.05]"
-              onClick={() => openChannel(item.name)}
+              type="button"
+              onClick={() => openChannelModal(item.name)}
+              className="
+                flex
+                w-full
+                items-center
+                justify-between
+                rounded-md
+                px-2
+                py-1
+                text-left
+                transition-all
+                duration-200
+                ease-out
+                hover:bg-slate-100
+                hover:translate-x-[2px]
+                dark:hover:bg-white/[0.04]
+              "
             >
               <div className="flex items-center gap-2">
                 <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: item.color }}
+                  className="h-[8px] w-[8px] rounded-full"
+                  style={{
+                    backgroundColor: item.color,
+                  }}
                 />
-                <span className="text-xs dark:text-white/70 text-slate-600">
+
+                <span className="text-[11px] text-slate-600 dark:text-white/60">
                   {item.name}
                 </span>
               </div>
-              <span className="text-xs font-semibold" style={{ color: item.color }}>
+
+              <span className="text-[11px] font-semibold text-slate-700 dark:text-white/80">
                 {item.value}
               </span>
-            </div>
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Modal - same format as IncidentTableModal */}
+      {/* =====================================================
+          MODAL OVERLAY
+      ===================================================== */}
       {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-[#020617]">
+        <div
+          className="
+            fixed
+            inset-0
+            z-[9999]
+            flex
+            items-center
+            justify-center
+            bg-black/60
+            p-4
+            backdrop-blur-[3px]
 
-            {/* Header: title + search + close */}
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
-              <div className="min-w-0">
-                <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
-                  Incident by Channel - {selectedChannel}
+            animate-[fadeIn_180ms_ease-out]
+          "
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeModal();
+            }
+          }}
+          style={{
+            animation: "fadeIn 180ms ease-out",
+          }}
+        >
+          {/* =================================================
+              MODAL BOX
+          ================================================= */}
+          <div
+            className="
+              flex
+              h-[78vh]
+              w-full
+              max-w-[1150px]
+              flex-col
+              overflow-hidden
+              rounded-xl
+              border
+              border-slate-200
+              bg-white
+              shadow-2xl
+              dark:border-white/[0.08]
+              dark:bg-[#020617]
+
+              animate-[modalSlideIn_220ms_ease-out]
+            "
+            style={{
+              animation: "modalSlideIn 220ms ease-out",
+            }}
+          >
+            {/* =================================================
+                HEADER
+            ================================================= */}
+            <div
+              className="
+                flex
+                shrink-0
+                items-center
+                justify-between
+                border-b
+                border-slate-200
+                px-4
+                py-3
+                dark:border-white/[0.08]
+              "
+            >
+              <div>
+                <h2 className="text-[15px] font-semibold text-slate-800 dark:text-white">
+                  Incident By Channel
                 </h2>
+
+                <div className="mt-1 flex items-center gap-2">
+                  <span
+                    className="h-[8px] w-[8px] rounded-full"
+                    style={{
+                      backgroundColor:
+                        CHANNEL_COLORS[selectedChannel] ||
+                        "#3B5BFF",
+                    }}
+                  />
+
+                  <span className="text-[11px] text-slate-500 dark:text-white/40">
+                    {selectedChannel}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2">
-                <div className="relative w-[220px] sm:w-[260px]">
+              {/* SEARCH + CLOSE */}
+              <div className="flex items-center gap-2">
+                <div className="relative w-[240px]">
                   <Search
                     size={14}
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30"
+                    className="
+                      pointer-events-none
+                      absolute
+                      left-3
+                      top-1/2
+                      -translate-y-1/2
+                      text-slate-400
+                      dark:text-white/30
+                    "
                   />
+
                   <input
                     type="text"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search..."
-                    className="h-9 w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-[12px] text-slate-700 outline-none transition focus:border-[#7094ff] focus:ring-2 focus:ring-[#7094ff]/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/80"
+                    onChange={(event) =>
+                      setSearch(event.target.value)
+                    }
+                    placeholder={`Search ${selectedChannel}...`}
+                    className="
+                      h-[34px]
+                      w-full
+                      rounded-lg
+                      border
+                      border-slate-200
+                      bg-white
+                      pl-9
+                      pr-3
+                      text-[11px]
+                      text-slate-700
+                      outline-none
+                      transition-all
+                      duration-200
+                      focus:border-[#7094ff]
+                      focus:ring-2
+                      focus:ring-[#7094ff]/20
+                      dark:border-white/10
+                      dark:bg-white/[0.04]
+                      dark:text-white/80
+                    "
                   />
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setSearch("");
-                    setCurrentPage(1);
-                  }}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/[0.06] dark:text-white/60 dark:hover:bg-white/[0.1]"
+                  onClick={closeModal}
+                  className="
+                    flex
+                    h-[34px]
+                    w-[34px]
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-lg
+                    bg-slate-100
+                    text-slate-500
+                    transition-all
+                    duration-200
+                    hover:rotate-90
+                    hover:bg-slate-200
+                    dark:bg-white/[0.06]
+                    dark:text-white/50
+                    dark:hover:bg-white/[0.1]
+                  "
                 >
-                  <X size={17} />
+                  <X size={16} />
                 </button>
               </div>
             </div>
 
-            {/* Table */}
-            <div className="min-h-0 flex-1 overflow-hidden p-4">
-              <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
-                <div className="min-h-0 flex-1 overflow-auto">
-                  <table className="w-full text-[13px]">
-                    <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
-                      <tr className="text-left text-slate-500 dark:text-white/50">
-                        {incidentColumns.map((col) => (
-                          <th
-                            key={col.accessor}
-                            className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]"
-                          >
-                            {col.header}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
+            {/* =================================================
+                TABLE SECTION
+            ================================================= */}
+            <div className="min-h-0 flex-1 p-3">
+              <div
+                className="
+                  flex
+                  h-full
+                  min-h-0
+                  flex-col
+                  overflow-hidden
+                  rounded-lg
+                  border
+                  border-slate-200
+                  dark:border-white/[0.08]
+                "
+              >
+                {/* TABLE */}
+                <div
+                  className="
+                    min-h-0
+                    flex-1
+                    overflow-auto
+                  "
+                  style={{
+                    scrollbarWidth: "thin",
+                  }}
+                >
+                  {/* LOADING */}
+                  {loading ? (
+                    <div
+                      className="
+                        flex
+                        h-full
+                        min-h-[300px]
+                        flex-col
+                        items-center
+                        justify-center
+                        gap-3
+                      "
+                    >
+                      <Loader2
+                        size={25}
+                        className="animate-spin text-[#7094ff]"
+                      />
 
-                    <tbody>
-                      {paginatedRows.length > 0 ? (
-                        paginatedRows.map((row, index) => (
-                          <tr
-                            key={index}
-                            className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
-                          >
-                            <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
-                              {row.ipAddress || "NA"}
-                            </td>
-                            <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
-                              {row.username || "NA"}
-                            </td>
-                            <td className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(row.eventType)}`}>
-                              {row.eventType || "NA"}
-                            </td>
-                            <td
-                              className="max-w-[360px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/30"
-                              title={row.fileDetails}
+                      <span className="text-[11px] text-slate-400 dark:text-white/30">
+                        Loading {selectedChannel} incidents...
+                      </span>
+                    </div>
+                  ) : error ? (
+                    /* ERROR */
+                    <div className="flex h-full min-h-[300px] flex-col items-center justify-center">
+                      <span className="text-[12px] text-red-400">
+                        {error}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openChannelModal(selectedChannel)
+                        }
+                        className="
+                          mt-3
+                          rounded-md
+                          bg-[#7094ff]
+                          px-4
+                          py-2
+                          text-[10px]
+                          font-medium
+                          text-white
+                          transition-all
+                          duration-200
+                          hover:scale-105
+                        "
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : (
+                    <table className="w-full min-w-[900px] border-collapse">
+                      {/* HEADER */}
+                      <thead className="sticky top-0 z-20 bg-[#111827]">
+                        <tr>
+                          {getTableHeaders().map((header) => (
+                            <th
+                              key={header}
+                              className="
+                                whitespace-nowrap
+                                border-b
+                                border-white/[0.08]
+                                px-4
+                                py-3
+                                text-left
+                                text-[10px]
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-white/40
+                              "
                             >
-                              {row.fileDetails || "NA"}
-                            </td>
-                            <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-right text-slate-400 dark:border-white/[0.05] dark:text-white/40">
-                              {row.timestamp || "NA"}
+                              {header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+
+                      {/* BODY */}
+                      <tbody>
+                        {currentRows.length > 0 ? (
+                          currentRows.map((row, index) => {
+                            /* ===================================
+                               PRINTER
+                               
+                               API:
+                               {
+                                 branch: "...",
+                                 date: "...",
+                                 hostName: "...",
+                                 jobStatus: "..."
+                               }
+                            =================================== */
+                            if (selectedChannel === "Printer") {
+                              const branch =
+                                row?.branch ??
+                                row?.branchName ??
+                                "NA";
+
+                              const date =
+                                row?.date ??
+                                row?.cdate ??
+                                "NA";
+
+                              const hostName =
+                                row?.hostName ??
+                                row?.hostname ??
+                                "NA";
+
+                              const jobStatus =
+                                row?.jobStatus ??
+                                row?.jobstatus ??
+                                "NA";
+
+                              return (
+                                <tr
+                                  key={`printer-${index}-${date}-${hostName}`}
+                                  className="
+                                    transition-all
+                                    duration-200
+                                    hover:bg-white/[0.025]
+                                  "
+                                >
+                                  {/* BRANCH */}
+                                  <td
+                                    className="
+                                      whitespace-nowrap
+                                      border-b
+                                      border-white/[0.05]
+                                      px-4
+                                      py-3
+                                      text-[11px]
+                                      font-medium
+                                      text-white/75
+                                    "
+                                  >
+                                    {branch}
+                                  </td>
+
+                                  {/* DATE */}
+                                  <td
+                                    className="
+                                      whitespace-nowrap
+                                      border-b
+                                      border-white/[0.05]
+                                      px-4
+                                      py-3
+                                      text-[11px]
+                                      text-white/40
+                                    "
+                                  >
+                                    {formatTimestamp(date)}
+                                  </td>
+
+                                  {/* HOST NAME */}
+                                  <td
+                                    className="
+                                      max-w-[300px]
+                                      border-b
+                                      border-white/[0.05]
+                                      px-4
+                                      py-3
+                                      text-[11px]
+                                      text-blue-400
+                                    "
+                                  >
+                                    <div
+                                      className="max-w-[300px] truncate"
+                                      title={hostName}
+                                    >
+                                      {hostName}
+                                    </div>
+                                  </td>
+
+                                  {/* JOB STATUS */}
+                                  <td
+                                    className="
+                                      whitespace-nowrap
+                                      border-b
+                                      border-white/[0.05]
+                                      px-4
+                                      py-3
+                                    "
+                                  >
+                                    <span
+                                      className={`
+                                        inline-flex
+                                        rounded-full
+                                        px-2.5
+                                        py-1
+                                        text-[9px]
+                                        font-semibold
+                                        transition-all
+                                        duration-200
+                                        ${
+                                          String(jobStatus)
+                                            .toLowerCase()
+                                            .includes("prevent") ||
+                                          String(jobStatus)
+                                            .toLowerCase()
+                                            .includes("fail") ||
+                                          String(jobStatus)
+                                            .toLowerCase()
+                                            .includes("block")
+                                            ? "bg-red-500/10 text-red-400"
+                                            : "bg-emerald-500/10 text-emerald-400"
+                                        }
+                                      `}
+                                    >
+                                      {jobStatus}
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            }
+
+                            /* ===================================
+                               DRIVE
+                            =================================== */
+                            if (selectedChannel === "Drive") {
+                              const branch =
+                                row?.branchName || "NA";
+
+                              const ipAddress =
+                                row?.ipAddress || "NA";
+
+                              const pcName =
+                                row?.pcName || "NA";
+
+                              const cdate =
+                                row?.cdate || null;
+
+                              return (
+                                <tr
+                                  key={`drive-${index}-${cdate}`}
+                                  className="
+                                    transition-all
+                                    duration-200
+                                    hover:bg-white/[0.025]
+                                  "
+                                >
+                                  <td
+                                    className="
+                                      whitespace-nowrap
+                                      border-b
+                                      border-white/[0.05]
+                                      px-4
+                                      py-3
+                                      text-[11px]
+                                      font-medium
+                                      text-white/75
+                                    "
+                                  >
+                                    {branch}
+                                  </td>
+
+                                  <td
+                                    className="
+                                      whitespace-nowrap
+                                      border-b
+                                      border-white/[0.05]
+                                      px-4
+                                      py-3
+                                      text-[11px]
+                                      text-white/60
+                                    "
+                                  >
+                                    {ipAddress}
+                                  </td>
+
+                                  <td
+                                    className="
+                                      whitespace-nowrap
+                                      border-b
+                                      border-white/[0.05]
+                                      px-4
+                                      py-3
+                                      text-[11px]
+                                      font-medium
+                                      text-blue-400
+                                    "
+                                  >
+                                    {pcName}
+                                  </td>
+
+                                  <td
+                                    className="
+                                      whitespace-nowrap
+                                      border-b
+                                      border-white/[0.05]
+                                      px-4
+                                      py-3
+                                      text-[11px]
+                                      text-white/40
+                                    "
+                                  >
+                                    {formatTimestamp(cdate)}
+                                  </td>
+                                </tr>
+                              );
+                            }
+
+                            /* ===================================
+                               NETWORK / OTHER
+                            =================================== */
+                            const branch = Array.isArray(row)
+                              ? row[0]
+                              : row?.branchName || "NA";
+
+                            const eventType = Array.isArray(row)
+                              ? row[1]
+                              : row?.eventType || "NA";
+
+                            const device = Array.isArray(row)
+                              ? row[2]
+                              : row?.deviceName ||
+                                row?.ipAddress ||
+                                "NA";
+
+                            const username = Array.isArray(row)
+                              ? row[3]
+                              : row?.username || "NA";
+
+                            const timestamp = Array.isArray(row)
+                              ? row[4]
+                              : row?.cdate ||
+                                row?.timestamp ||
+                                null;
+
+                            return (
+                              <tr
+                                key={`other-${index}-${timestamp}`}
+                                className="
+                                  transition-all
+                                  duration-200
+                                  hover:bg-white/[0.025]
+                                "
+                              >
+                                <td
+                                  className="
+                                    whitespace-nowrap
+                                    border-b
+                                    border-white/[0.05]
+                                    px-4
+                                    py-3
+                                    text-[11px]
+                                    font-medium
+                                    text-white/75
+                                  "
+                                >
+                                  {branch}
+                                </td>
+
+                                <td
+                                  className="
+                                    whitespace-nowrap
+                                    border-b
+                                    border-white/[0.05]
+                                    px-4
+                                    py-3
+                                    text-[11px]
+                                    text-white/60
+                                  "
+                                >
+                                  {username}
+                                </td>
+
+                                <td
+                                  className="
+                                    whitespace-nowrap
+                                    border-b
+                                    border-white/[0.05]
+                                    px-4
+                                    py-3
+                                    text-[11px]
+                                    font-medium
+                                    text-blue-400
+                                  "
+                                >
+                                  {eventType}
+                                </td>
+
+                                <td
+                                  className="
+                                    max-w-[430px]
+                                    border-b
+                                    border-white/[0.05]
+                                    px-4
+                                    py-3
+                                    text-[11px]
+                                    text-white/45
+                                  "
+                                >
+                                  <div
+                                    className="max-w-[430px] truncate"
+                                    title={String(device || "")}
+                                  >
+                                    {device}
+                                  </div>
+                                </td>
+
+                                <td
+                                  className="
+                                    whitespace-nowrap
+                                    border-b
+                                    border-white/[0.05]
+                                    px-4
+                                    py-3
+                                    text-[11px]
+                                    text-white/40
+                                  "
+                                >
+                                  {formatTimestamp(timestamp)}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={
+                                selectedChannel === "Printer"
+                                  ? 4
+                                  : selectedChannel === "Drive"
+                                  ? 4
+                                  : 5
+                              }
+                              className="
+                                px-4
+                                py-16
+                                text-center
+                                text-[12px]
+                                text-white/30
+                              "
+                            >
+                              {search
+                                ? "No matching incidents found"
+                                : `No ${selectedChannel} incident records found`}
                             </td>
                           </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={incidentColumns.length}
-                            className="px-3 py-10 text-center text-slate-400 dark:text-white/30"
-                          >
-                            No records found
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
 
-                {/* Footer / pagination */}
-                <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-[12px] text-slate-500 dark:text-white/40">
-                    Showing {startRecord}-{endRecord} of {filteredRows.length}
-                  </span>
-
-                  <div className="flex items-center gap-2">
-                    {/* Page size <select> has been removed here */}
-
-                    <button
-                      type="button"
-                      disabled={safePage === 1}
-                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
-                    >
-                      <ChevronLeft size={14} />
-                      Prev
-                    </button>
-
-                    <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10">
-                      {safePage} / {totalPages}
+                {/* =================================================
+                    PAGINATION
+                ================================================= */}
+                {!loading && !error && (
+                  <div
+                    className="
+                      flex
+                      shrink-0
+                      items-center
+                      justify-between
+                      border-t
+                      border-white/[0.08]
+                      bg-white/[0.02]
+                      px-4
+                      py-3
+                    "
+                  >
+                    <span className="text-[10px] text-white/35">
+                      Showing {firstRecord}-{lastRecord} of{" "}
+                      {filteredData.length}
                     </span>
 
-                    <button
-                      type="button"
-                      disabled={safePage === totalPages}
-                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
-                    >
-                      Next
-                      <ChevronRight size={14} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {/* PREVIOUS */}
+                      <button
+                        type="button"
+                        disabled={safePage <= 1}
+                        onClick={() =>
+                          setCurrentPage((page) =>
+                            Math.max(1, page - 1)
+                          )
+                        }
+                        className="
+                          flex
+                          h-[30px]
+                          items-center
+                          gap-1
+                          rounded-md
+                          border
+                          border-white/10
+                          bg-white/[0.03]
+                          px-2.5
+                          text-[10px]
+                          text-white/50
+                          transition-all
+                          duration-200
+                          hover:bg-white/[0.07]
+                          hover:text-white/80
+                          disabled:cursor-not-allowed
+                          disabled:opacity-30
+                        "
+                      >
+                        <ChevronLeft size={13} />
+                        Prev
+                      </button>
+
+                      {/* CURRENT PAGE */}
+                      <span
+                        className="
+                          flex
+                          h-[30px]
+                          min-w-[50px]
+                          items-center
+                          justify-center
+                          rounded-md
+                          bg-[#7094ff]
+                          px-2
+                          text-[10px]
+                          font-semibold
+                          text-white
+                        "
+                      >
+                        {safePage} / {totalPages}
+                      </span>
+
+                      {/* NEXT */}
+                      <button
+                        type="button"
+                        disabled={safePage >= totalPages}
+                        onClick={() =>
+                          setCurrentPage((page) =>
+                            Math.min(
+                              totalPages,
+                              page + 1
+                            )
+                          )
+                        }
+                        className="
+                          flex
+                          h-[30px]
+                          items-center
+                          gap-1
+                          rounded-md
+                          border
+                          border-white/10
+                          bg-white/[0.03]
+                          px-2.5
+                          text-[10px]
+                          text-white/50
+                          transition-all
+                          duration-200
+                          hover:bg-white/[0.07]
+                          hover:text-white/80
+                          disabled:cursor-not-allowed
+                          disabled:opacity-30
+                        "
+                      >
+                        Next
+                        <ChevronRight size={13} />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* =========================================================
+          SMOOTH MODAL ANIMATIONS
+          Put these in the component so no separate CSS file
+          is required.
+      ========================================================= */}
+      <style>
+        {`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+            }
+            to {
+              opacity: 1;
+            }
+          }
+
+          @keyframes modalSlideIn {
+            from {
+              opacity: 0;
+              transform: translateY(14px) scale(0.98);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+        `}
+      </style>
     </>
   );
 };
 
-export default IncidentByChannelChart;
+export default IncidentByChannel;
