@@ -153,8 +153,8 @@ const IncidentByChannelChart = ({ data, isDark, channelIncidentData = [] }) => {
                       if (entry.value === 0) {
                         alert(`No incidents in ${entry.name} channel`);
                       } else {
-                        const channelData = dashboardService.getIncidentByChannelModal(entry.name);
-                        console.log(channelData);
+                        const channelData = dashboardService.getIncidentByChannelModal(selectedChannel);
+                        console.log(selectedChannel);
                         alert(channelData.data);
                       }
                       openChannel(entry.name);
