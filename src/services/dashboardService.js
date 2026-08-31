@@ -210,6 +210,14 @@ export const dashboardService = {
     return data;
   },
 
+    getPrinterModalIncident: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.DASHBOARD.PRINTER_MODALINCIDENT,
+    );
+
+    return data;
+  },
+
       getIncidentsByChannel: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.DASHBOARD.INCIDENT_BY_CHANNEL,
@@ -294,19 +302,11 @@ getUSBPolicies: async () => {
   const { data } = await axiosInstance.get(API_ENDPOINTS.USB_Policy.USB_Policy)
   return data
 },
-
- getDrivePolicies: async () => {
-    const { data } = await axiosInstance.get(
-      API_ENDPOINTS.Drive_Policy.Drive_Policy
-    );
-
-    return data;
-  },
-
-
-
-  
-
+// [Drive API]
+getDrivePolicies: async () => {
+  const { data } = await axiosInstance.get(API_ENDPOINTS.Drive_Control.Drive_Policy)
+  return data
+},
   //[Printer API]
 
   getPrinterPolicies: async () => {
@@ -358,15 +358,18 @@ getUSBPolicies: async () => {
   return data;
 },
 
+getFileUploadModal: async (requestData) => {
+    const { data } = await axiosInstance.post(API_ENDPOINTS.DASHBOARD.FILE_UPLOAD_MODAL,requestData);
+    return data;
+  },
 
+//  getFileUploadModal: async (channel) => {
+//   const { data } = await axiosInstance.post(
+//     `${API_ENDPOINTS.DASHBOARD.FILE_UPLOAD_MODAL}/${channel}`
+//   );
 
- getFileUploadModal: async (channel) => {
-  const { data } = await axiosInstance.post(
-    `${API_ENDPOINTS.DASHBOARD.FILE_UPLOAD_MODAL}/${channel}`
-  );
-
-  return data;
-},
+//   return data;
+// },
 
 getClipboardModal: async (date) => {
   const { data } = await axiosInstance.post(
@@ -384,4 +387,15 @@ getClipboardModal: async (date) => {
   return data;
 },
 
+
+  getMailIncidentData: async (date) => {
+    const { data } = await axiosInstance.post(
+      `${API_ENDPOINTS.DASHBOARD.EMAIL_INCIDENT_DATA}/${date}`
+    );
+
+    return data;
+  },
 };
+
+
+

@@ -460,19 +460,19 @@ export default function Dashboard() {
 
     return [
       {
-        name: "FTP",
+        name: "FTP TRANSFER",
         value: Math.round((ftp / total) * 100),
         count: ftp,
         color: "#3819e9",
       },
       {
-        name: "Network",
+        name: "NETWORK UPLOAD",
         value: Math.round((network / total) * 100),
         count: network,
         color: "#5c68ec",
       },
       {
-        name: "Web Browser",
+        name: "WEB UPLOAD",
         value: Math.round((web / total) * 100),
         count: web,
         color: "#85a8ea",
