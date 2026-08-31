@@ -8,16 +8,17 @@ import {
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { dashboardService } from "../../services/dashboardService";
 
-// Column configuration for modal table
+// Column configuration – all columns to display in the modal table
 const incidentColumns = [
   { accessor: "ipAddress", header: "IP ADDRESS" },
-  { accessor: "username", header: "USERNAME" },
-  { accessor: "eventType", header: "EVENT TYPE" },
+  { accessor: "action", header: "ACTION" },
+  { accessor: "applicationName", header: "APPLICATION NAME" },
   { accessor: "fileDetails", header: "FILE DETAILS" },
   { accessor: "timestamp", header: "TIMESTAMP" },
+  { accessor: "destinationPath", header: "DESTINATION PATH" },
 ];
 
-// Event type color mapping
+// Event type color mapping (kept for any future use, but not used in current columns)
 const eventTypeColor = (eventType) => {
   const type = eventType?.toLowerCase() || "";
   if (type.includes("upload")) return "text-blue-600 dark:text-blue-400";
@@ -26,12 +27,17 @@ const eventTypeColor = (eventType) => {
   return "text-slate-600 dark:text-white/50";
 };
 
-export default function FileUploadRadialChart({ data, isDark = false }) {
+export default function FileUploadRadialChart({ data = [], isDark = false }) {
   const [showModal, setShowModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [search, setSearch] = useState("");
-  const pageSize = 10; // Fixed page size, dropdown removed
   const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  // State for API data
+  const [modalData, setModalData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState(null);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -44,7 +50,6 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
       document.body.style.position = "";
       document.body.style.width = "";
     }
-
     return () => {
       document.body.style.overflow = "";
       document.body.style.position = "";
@@ -52,100 +57,59 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
     };
   }, [showModal]);
 
-  // Hardcoded modal data for file uploads
-  const modalData = [
-    {
-      ipAddress: "192.168.0.41",
-      username: "VELOX",
-      eventType: "FILE UPLOAD",
-      fileDetails: "document.pdf",
-      timestamp: "2024-01-15 10:30:00",
-    },
-    {
-      ipAddress: "192.168.0.42",
-      username: "Admin",
-      eventType: "FILE UPLOAD",
-      fileDetails: "report.docx",
-      timestamp: "2024-01-15 11:15:00",
-    },
-    {
-      ipAddress: "192.168.0.43",
-      username: "User1",
-      eventType: "FILE UPLOAD",
-      fileDetails: "image.png",
-      timestamp: "2024-01-15 12:00:00",
-    },
-    {
-      ipAddress: "192.168.0.44",
-      username: "VELOX",
-      eventType: "FILE UPLOAD",
-      fileDetails: "data.xlsx",
-      timestamp: "2024-01-15 13:30:00",
-    },
-    {
-      ipAddress: "192.168.0.45",
-      username: "Kiran_Tester",
-      eventType: "FILE UPLOAD",
-      fileDetails: "presentation.pptx",
-      timestamp: "2024-01-15 14:45:00",
-    },
-    {
-      ipAddress: "192.168.0.46",
-      username: "VELOX",
-      eventType: "FILE UPLOAD",
-      fileDetails: "backup.zip",
-      timestamp: "2024-01-15 15:20:00",
-    },
-    {
-      ipAddress: "192.168.0.47",
-      username: "User2",
-      eventType: "FILE UPLOAD",
-      fileDetails: "script.js",
-      timestamp: "2024-01-15 16:10:00",
-    },
-    {
-      ipAddress: "192.168.0.48",
-      username: "VELOX",
-      eventType: "FILE UPLOAD",
-      fileDetails: "style.css",
-      timestamp: "2024-01-15 17:00:00",
-    },
-    {
-      ipAddress: "192.168.0.49",
-      username: "Kira_Tester",
-      eventType: "FILE UPLOAD",
-      fileDetails: "index.html",
-      timestamp: "2024-01-15 18:30:00",
-    },
-    {
-      ipAddress: "192.168.0.50",
-      username: "VELOX",
-      eventType: "FILE UPLOAD",
-      fileDetails: "config.json",
-      timestamp: "2024-01-15 19:45:00",
-    },
-    {
-      ipAddress: "192.168.0.51",
-      username: "Admin",
-      eventType: "FILE UPLOAD",
-      fileDetails: "readme.txt",
-      timestamp: "2024-01-15 20:30:00",
-    },
-    {
-      ipAddress: "192.168.0.52",
-      username: "User3",
-      eventType: "FILE UPLOAD",
-      fileDetails: "database.sql",
-      timestamp: "2024-01-15 21:15:00",
-    },
-    {
-      ipAddress: "192.168.0.53",
-      username: "VELOX",
-      eventType: "FILE UPLOAD",
-      fileDetails: "logs.csv",
-      timestamp: "2024-01-15 22:00:00",
-    },
-  ];
+  // Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  // Open modal + fetch data
+  const openModal = async (category) => {
+    setSelectedCategory(category);
+    setSearch("");
+    setCurrentPage(1);
+    setShowModal(true);
+    setModalData([]);
+    setApiError(null);
+    setLoading(true);
+
+    const requestData = {
+      event_type: category,
+      timestamp: getTodayDate(),
+    };
+
+    console.log("Request Data:", requestData);
+
+    try {
+      const response = await dashboardService.getFileUploadModal(requestData);
+      console.log("API Response:", response);
+
+      if (Array.isArray(response?.data)) {
+        setModalData(response.data);
+      } else if (Array.isArray(response)) {
+        setModalData(response);
+      } else {
+        setModalData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching File Upload Modal data:", error);
+      setApiError(error.message || "Failed to load data. Please try again.");
+      setModalData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSearch("");
+    setCurrentPage(1);
+    setModalData([]);
+    setApiError(null);
+  };
 
   const today = new Date();
   const day = today.getDate();
@@ -153,10 +117,10 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
 
   const safeData = Array.isArray(modalData) ? modalData : [];
 
+  // Search filter – searches across all defined columns
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return safeData;
-
     return safeData.filter((row) =>
       incidentColumns.some((col) =>
         String(row[col.accessor] ?? "").toLowerCase().includes(term)
@@ -164,40 +128,38 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
     );
   }, [safeData, search]);
 
+  // Reset page when filtered data changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]); // Removed pageSize dependency
+  }, [filteredRows]);
 
+  // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const paginatedRows = filteredRows.slice(
     (safePage - 1) * pageSize,
     safePage * pageSize
   );
+
   const startRecord = filteredRows.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const endRecord = Math.min(safePage * pageSize, filteredRows.length);
 
-  const openModal = (category) => {
-    setSelectedCategory(category);
-    setSearch("");
-    setCurrentPage(1);
-    setShowModal(true);
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setSearch("");
-    setCurrentPage(1);
-  };
-
   return (
     <>
+      {/* Chart + Legend */}
       <div className="flex items-center justify-between gap-4 cursor-pointer">
         {/* Chart - Clickable */}
         <div
           className="relative flex-shrink-0"
           style={{ width: 140, height: 180 }}
-          onClick={() => openModal("File Uploads")}
+          onClick={() => openModal(data[0]?.name || "FILE UPLOAD")}
         >
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -215,8 +177,8 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
                 stroke="none"
                 cornerRadius={20}
               >
-                <Cell fill={data[0]?.color || "#7094ff"} />
-                <Cell fill="#23232c" />
+                <Cell key="outer-active" fill={data[0]?.color || "#7094ff"} />
+                <Cell key="outer-inactive" fill="#23232c" />
               </Pie>
 
               {/* Middle Ring */}
@@ -233,8 +195,8 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
                 stroke="none"
                 cornerRadius={20}
               >
-                <Cell fill={data[1]?.color || "#4f8cff"} />
-                <Cell fill="#23232c" />
+                <Cell key="middle-active" fill={data[1]?.color || "#4f8cff"} />
+                <Cell key="middle-inactive" fill="#23232c" />
               </Pie>
 
               {/* Inner Ring */}
@@ -251,54 +213,39 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
                 stroke="none"
                 cornerRadius={20}
               >
-                <Cell fill={data[2]?.color || "#2d5cff"} />
-                <Cell fill="#23232c" />
+                <Cell key="inner-active" fill={data[2]?.color || "#2d5cff"} />
+                <Cell key="inner-inactive" fill="#23232c" />
               </Pie>
             </PieChart>
           </ResponsiveContainer>
 
           {/* Center Text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-xl font-bold dark:text-white">
-              {day}
-            </span>
-            <span className="text-xs dark:text-white/40">
-              {month}
-            </span>
+            <span className="text-xl font-bold dark:text-white">{day}</span>
+            <span className="text-xs dark:text-white/40">{month}</span>
           </div>
         </div>
 
-        {/* Legend Right Side - Clickable */}
+        {/* Legend */}
         <div className="flex flex-col gap-2 flex-1">
           {data.map((item) => (
             <div
               key={item.name}
               className="flex items-center justify-between cursor-pointer rounded-md px-1 -mx-1 transition hover:bg-slate-100 dark:hover:bg-white/[0.05]"
-              onClick={() => {
-            openModal(item.name);
-                  const channelData = dashboardService.getFileUploadModal(item.name);
-                  console.log(channelData);
-                  alert(channelData);
-       
-              }}
+              onClick={() => openModal(item.name)}
             >
               <div className="flex items-center gap-2">
                 <span
                   className="w-3 h-3 rounded-full"
-                  style={{
-                    backgroundColor: item.color
-                  }}
+                  style={{ backgroundColor: item.color }}
                 />
                 <span className="text-xs dark:text-white/70 text-slate-600">
                   {item.name}
                 </span>
               </div>
-
               <span
                 className="text-xs font-semibold"
-                style={{
-                  color: item.color
-                }}
+                style={{ color: item.color }}
               >
                 {item.count}
               </span>
@@ -311,16 +258,18 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
       {showModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
           <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-[#020617]">
-
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
               <div className="min-w-0">
                 <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
-                  File Upload Details - <span className="text-blue-600 dark:text-blue-400">{selectedCategory}</span>
+                  File Upload Details -
+                  <span className="text-blue-600 dark:text-blue-400">
+                    {" "}{selectedCategory}
+                  </span>
                 </h2>
               </div>
-
               <div className="flex shrink-0 items-center gap-2">
+                {/* Search */}
                 <div className="relative w-[220px] sm:w-[260px]">
                   <Search
                     size={14}
@@ -334,7 +283,7 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
                     className="h-9 w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-[12px] text-slate-700 outline-none transition focus:border-[#7094ff] focus:ring-2 focus:ring-[#7094ff]/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/80"
                   />
                 </div>
-
+                {/* Close */}
                 <button
                   type="button"
                   onClick={closeModal}
@@ -362,40 +311,60 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
                         ))}
                       </tr>
                     </thead>
-
                     <tbody>
-                      {paginatedRows.length > 0 ? (
+                      {loading ? (
+                        <tr>
+                          <td colSpan={incidentColumns.length} className="px-3 py-10 text-center text-slate-400 dark:text-white/30">
+                            Loading...
+                          </td>
+                        </tr>
+                      ) : apiError ? (
+                        <tr>
+                          <td colSpan={incidentColumns.length} className="px-3 py-10 text-center text-red-500 dark:text-red-400">
+                            {apiError}
+                          </td>
+                        </tr>
+                      ) : paginatedRows.length > 0 ? (
                         paginatedRows.map((row, index) => (
                           <tr
                             key={index}
                             className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
                           >
+                            {/* IP Address */}
                             <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
-                              {row.ipAddress || "NA"}
+                              {row.ipAddress || row.ipaddress || "NA"}
                             </td>
+                            {/* Action */}
                             <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
-                              {row.username || "NA"}
+                              {row.action || "NA"}
                             </td>
-                            <td className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(row.eventType)}`}>
-                              {row.eventType || "NA"}
+                            {/* Application Name */}
+                            <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
+                              {row.applicationName || "NA"}
                             </td>
+                            {/* File Details */}
                             <td
                               className="max-w-[360px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/30"
-                              title={row.fileDetails}
+                              title={row.fileDetails || row.file_details || row.fileName || ""}
                             >
-                              {row.fileDetails || "NA"}
+                              {row.fileDetails || row.file_details || row.fileName || "NA"}
                             </td>
+                            {/* Timestamp */}
                             <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-right text-slate-400 dark:border-white/[0.05] dark:text-white/40">
                               {row.timestamp || "NA"}
+                            </td>
+                            {/* Destination Path */}
+                            <td
+                              className="max-w-[200px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/40"
+                              title={row.destinationPath || row.destination_path || ""}
+                            >
+                              {row.destinationPath || row.destination_path || "NA"}
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td
-                            colSpan={incidentColumns.length}
-                            className="px-3 py-10 text-center text-slate-400 dark:text-white/30"
-                          >
+                          <td colSpan={incidentColumns.length} className="px-3 py-10 text-center text-slate-400 dark:text-white/30">
                             No records found
                           </td>
                         </tr>
@@ -404,37 +373,30 @@ export default function FileUploadRadialChart({ data, isDark = false }) {
                   </table>
                 </div>
 
-                {/* Footer / pagination - Dropdown REMOVED */}
+                {/* Pagination */}
                 <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-[12px] text-slate-500 dark:text-white/40">
                     Showing {startRecord}-{endRecord} of {filteredRows.length}
                   </span>
-
                   <div className="flex items-center gap-2">
-                    {/* The <select> dropdown for pageSize was removed from here */}
-
                     <button
                       type="button"
                       disabled={safePage === 1}
                       onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                       className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
                     >
-                      <ChevronLeft size={14} />
-                      Prev
+                      <ChevronLeft size={14} /> Prev
                     </button>
-
                     <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10">
                       {safePage} / {totalPages}
                     </span>
-
                     <button
                       type="button"
                       disabled={safePage === totalPages}
                       onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                       className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
                     >
-                      Next
-                      <ChevronRight size={14} />
+                      Next <ChevronRight size={14} />
                     </button>
                   </div>
                 </div>
