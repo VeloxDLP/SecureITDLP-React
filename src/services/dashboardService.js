@@ -379,9 +379,9 @@ getClipboardModal: async (date) => {
   return data;
 },
 
- getMailIncidentModal: async (date) => {
+getPreventedApplicationData: async (date) => {
   const { data } = await axiosInstance.post(
-    `${API_ENDPOINTS.DASHBOARD.EMAIL_INCIDENT_MODAL}/${date}`
+    `${API_ENDPOINTS.DASHBOARD.PREVENTED_APPLICATIONDATA}/${date}`
   );
 
   return data;

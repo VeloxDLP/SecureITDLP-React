@@ -3,7 +3,8 @@ import {
   PieChart,
   Pie,
   Cell,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { dashboardService } from "../../services/dashboardService";
@@ -18,30 +19,65 @@ const incidentColumns = [
   { accessor: "destinationPath", header: "DESTINATION PATH" },
 ];
 
-// Event type color mapping (kept for any future use, but not used in current columns)
-const eventTypeColor = (eventType) => {
-  const type = eventType?.toLowerCase() || "";
-  if (type.includes("upload")) return "text-blue-600 dark:text-blue-400";
-  if (type.includes("transfer")) return "text-green-600 dark:text-green-400";
-  if (type.includes("usb")) return "text-yellow-600 dark:text-yellow-400";
-  return "text-slate-600 dark:text-white/50";
+// ============================================================
+// CUSTOM TOOLTIP – matches the "Email 23 Incidents" style
+// ============================================================
+const CustomPieTooltip = ({ active, payload, isDark }) => {
+  if (active && payload && payload.length) {
+    // Get the actual segment (skip "remaining")
+    const item = payload.find((p) => p.name && p.name !== "remaining");
+    if (!item) return null;
+
+    // Find the matching data item to get the count
+    // The payload doesn't have count directly, we need to find it from the outer data
+    // But we can access the count from the payload's payload object if we pass it
+    const count = item.payload?.count ?? item.value;
+
+    return (
+      <div
+        className={`rounded-lg border px-3 py-2 shadow-lg ${
+          isDark
+            ? "border-white/10 bg-[#1a1a2e] text-white"
+            : "border-slate-200 bg-white text-slate-800"
+        }`}
+      >
+        <p className={`text-xs font-medium ${isDark ? "text-white" : "text-slate-700"}`}>
+          {item.name}
+        </p>
+        <p className={`text-xs ${isDark ? "text-white/70" : "text-slate-500"}`}>
+          {count} Incidents
+        </p>
+      </div>
+    );
+  }
+  return null;
 };
 
-export default function FileUploadRadialChart({ data = [], isDark = false }) {
-  const [showModal, setShowModal] = useState(false);
+export default function FileUploadRadialChart({
+  data = [],
+  isDark = false,
+}) {
+  // ====================================================
+  // MODAL TRANSITION STATES
+  // ====================================================
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
   const [selectedCategory, setSelectedCategory] = useState("");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  // State for API data
   const [modalData, setModalData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
 
-  // Lock body scroll when modal is open
+  // ====================================================
+  // LOCK BODY SCROLL
+  // ====================================================
   useEffect(() => {
-    if (showModal) {
+    if (isOpen) {
       document.body.style.overflow = "hidden";
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
@@ -55,9 +91,11 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
       document.body.style.position = "";
       document.body.style.width = "";
     };
-  }, [showModal]);
+  }, [isOpen]);
 
-  // Get today's date in YYYY-MM-DD format
+  // ====================================================
+  // GET TODAY'S DATE
+  // ====================================================
   const getTodayDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -66,27 +104,25 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
     return `${year}-${month}-${day}`;
   };
 
-  // Open modal + fetch data
+  // ====================================================
+  // OPEN MODAL + FETCH DATA
+  // ====================================================
   const openModal = async (category) => {
     setSelectedCategory(category);
     setSearch("");
     setCurrentPage(1);
-    setShowModal(true);
     setModalData([]);
     setApiError(null);
     setLoading(true);
+    setIsMounted(true);
 
     const requestData = {
       event_type: category,
       timestamp: getTodayDate(),
     };
 
-    console.log("Request Data:", requestData);
-
     try {
       const response = await dashboardService.getFileUploadModal(requestData);
-      console.log("API Response:", response);
-
       if (Array.isArray(response?.data)) {
         setModalData(response.data);
       } else if (Array.isArray(response)) {
@@ -100,24 +136,81 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
       setModalData([]);
     } finally {
       setLoading(false);
+      requestAnimationFrame(() => setIsOpen(true));
     }
   };
 
+  // ====================================================
+  // CLOSE MODAL
+  // ====================================================
   const closeModal = () => {
-    setShowModal(false);
-    setSearch("");
-    setCurrentPage(1);
-    setModalData([]);
-    setApiError(null);
+    if (!isOpen) return;
+    setIsClosing(true);
+    setIsOpen(false);
   };
 
+  const handleTransitionEnd = () => {
+    if (isClosing) {
+      setIsMounted(false);
+      setIsClosing(false);
+      setModalData([]);
+      setSelectedCategory("");
+      setSearch("");
+      setCurrentPage(1);
+      setApiError(null);
+    }
+  };
+
+  // ====================================================
+  // CHART DATA
+  // ====================================================
   const today = new Date();
   const day = today.getDate();
   const month = today.toLocaleString("default", { month: "short" });
 
+  // Prepare pie data with names and counts for tooltip
+  const outerData = [
+    { 
+      name: data[0]?.name || "FTP", 
+      value: data[0]?.value || 0,
+      count: data[0]?.count || 0,
+    },
+    { 
+      name: "remaining", 
+      value: 100 - (data[0]?.value || 0),
+      count: 0,
+    },
+  ];
+  const middleData = [
+    { 
+      name: data[1]?.name || "Network", 
+      value: data[1]?.value || 0,
+      count: data[1]?.count || 0,
+    },
+    { 
+      name: "remaining", 
+      value: 100 - (data[1]?.value || 0),
+      count: 0,
+    },
+  ];
+  const innerData = [
+    { 
+      name: data[2]?.name || "Web", 
+      value: data[2]?.value || 0,
+      count: data[2]?.count || 0,
+    },
+    { 
+      name: "remaining", 
+      value: 100 - (data[2]?.value || 0),
+      count: 0,
+    },
+  ];
+
+  // ====================================================
+  // SEARCH & FILTER
+  // ====================================================
   const safeData = Array.isArray(modalData) ? modalData : [];
 
-  // Search filter – searches across all defined columns
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return safeData;
@@ -128,12 +221,13 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
     );
   }, [safeData, search]);
 
-  // Reset page when filtered data changes
   useEffect(() => {
     setCurrentPage(1);
   }, [filteredRows]);
 
-  // Pagination
+  // ====================================================
+  // PAGINATION
+  // ====================================================
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
 
@@ -151,13 +245,16 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
   const startRecord = filteredRows.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const endRecord = Math.min(safePage * pageSize, filteredRows.length);
 
+  // ====================================================
+  // RENDER
+  // ====================================================
   return (
     <>
       {/* Chart + Legend */}
-      <div className="flex items-center justify-between gap-4 cursor-pointer">
+      <div className="flex items-center justify-between gap-4">
         {/* Chart - Clickable */}
         <div
-          className="relative flex-shrink-0"
+          className="relative flex-shrink-0 cursor-pointer"
           style={{ width: 140, height: 180 }}
           onClick={() => openModal(data[0]?.name || "FILE UPLOAD")}
         >
@@ -165,11 +262,9 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
             <PieChart>
               {/* Outer Ring */}
               <Pie
-                data={[
-                  { value: data[0]?.value || 0 },
-                  { value: 100 - (data[0]?.value || 0) }
-                ]}
+                data={outerData}
                 dataKey="value"
+                nameKey="name"
                 startAngle={90}
                 endAngle={-250}
                 innerRadius={60}
@@ -183,11 +278,9 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
 
               {/* Middle Ring */}
               <Pie
-                data={[
-                  { value: data[1]?.value || 0 },
-                  { value: 100 - (data[1]?.value || 0) }
-                ]}
+                data={middleData}
                 dataKey="value"
+                nameKey="name"
                 startAngle={90}
                 endAngle={-250}
                 innerRadius={44}
@@ -201,11 +294,9 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
 
               {/* Inner Ring */}
               <Pie
-                data={[
-                  { value: data[2]?.value || 0 },
-                  { value: 100 - (data[2]?.value || 0) }
-                ]}
+                data={innerData}
                 dataKey="value"
+                nameKey="name"
                 startAngle={90}
                 endAngle={-250}
                 innerRadius={28}
@@ -216,6 +307,12 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
                 <Cell key="inner-active" fill={data[2]?.color || "#2d5cff"} />
                 <Cell key="inner-inactive" fill="#23232c" />
               </Pie>
+
+              {/* Custom Tooltip – shows "Name Incidents" like the image */}
+              <Tooltip
+                content={<CustomPieTooltip isDark={isDark} />}
+                cursor={false}
+              />
             </PieChart>
           </ResponsiveContainer>
 
@@ -254,10 +351,25 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
         </div>
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-[#020617]">
+      {/* ==================================================
+          MODAL – with smooth transitions
+      ================================================== */}
+      {isMounted && (
+        <div
+          className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
+            isOpen ? "opacity-100" : "opacity-0"
+          } ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+          onTransitionEnd={handleTransitionEnd}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeModal();
+          }}
+        >
+          <div
+            className={`flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ease-in-out dark:border-white/[0.08] dark:bg-[#020617] ${
+              isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
               <div className="min-w-0">
@@ -287,7 +399,7 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/[0.06] dark:text-white/60 dark:hover:bg-white/[0.1]"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 dark:bg-white/[0.06] dark:text-white/60 dark:hover:bg-white/[0.1]"
                 >
                   <X size={17} />
                 </button>
@@ -330,30 +442,24 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
                             key={index}
                             className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
                           >
-                            {/* IP Address */}
                             <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
                               {row.ipAddress || row.ipaddress || "NA"}
                             </td>
-                            {/* Action */}
                             <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
                               {row.action || "NA"}
                             </td>
-                            {/* Application Name */}
                             <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
                               {row.applicationName || "NA"}
                             </td>
-                            {/* File Details */}
                             <td
                               className="max-w-[360px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/30"
                               title={row.fileDetails || row.file_details || row.fileName || ""}
                             >
                               {row.fileDetails || row.file_details || row.fileName || "NA"}
                             </td>
-                            {/* Timestamp */}
                             <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-right text-slate-400 dark:border-white/[0.05] dark:text-white/40">
                               {row.timestamp || "NA"}
                             </td>
-                            {/* Destination Path */}
                             <td
                               className="max-w-[200px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/40"
                               title={row.destinationPath || row.destination_path || ""}
@@ -374,32 +480,34 @@ export default function FileUploadRadialChart({ data = [], isDark = false }) {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-[12px] text-slate-500 dark:text-white/40">
-                    Showing {startRecord}-{endRecord} of {filteredRows.length}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={safePage === 1}
-                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
-                    >
-                      <ChevronLeft size={14} /> Prev
-                    </button>
-                    <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10">
-                      {safePage} / {totalPages}
+                {!loading && modalData.length > 0 && (
+                  <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
+                    <span className="text-[12px] text-slate-500 dark:text-white/40">
+                      Showing {startRecord}-{endRecord} of {filteredRows.length}
                     </span>
-                    <button
-                      type="button"
-                      disabled={safePage === totalPages}
-                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
-                    >
-                      Next <ChevronRight size={14} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={safePage === 1}
+                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                        className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
+                      >
+                        <ChevronLeft size={14} /> Prev
+                      </button>
+                      <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10">
+                        {safePage} / {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={safePage === totalPages}
+                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                        className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
+                      >
+                        Next <ChevronRight size={14} />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

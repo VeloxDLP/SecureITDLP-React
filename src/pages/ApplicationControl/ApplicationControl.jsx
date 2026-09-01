@@ -4,14 +4,10 @@ import {
   ShieldCheck, Trash2, Search, ChevronDown, X,
 } from 'lucide-react'
 import { useTheme } from '../../context/ThemeContext'
-// import { alert as showAlert } from '../../components/ui/AlertModal' // optional
-// import { dashboardService } from '../../services/dashboardService'   // optional
+import { dashboardService } from '../../services/dashboardService'
+import { alert as showAlert } from '../../components/ui/AlertModal'   // ✅ added
 
-/* ─────────────────────────────────────────────────────────────
-   STATIC MOCK DATA (replace with real API calls later)
-───────────────────────────────────────────────────────────── */
-const MOCK_BRANCHES = ['MUMBAI-HEAD', 'VASHI', 'PUNE', 'AHMEDABAD', 'NAGPUR', 'BANGALORE', 'HYDERABAD', 'KOLKATA', 'CHENNAI', 'DELHI']
-
+// ─── Static data (mock devices fallback, initial policies) ───
 const MOCK_DEVICES_BY_BRANCH = {
   'MUMBAI-HEAD': ['DESKTOP-6RTJ7G1', 'DESKTOP-ABC123'],
   'VASHI': ['DESKTOP-B4J2VDM'],
@@ -25,13 +21,13 @@ const MOCK_DEVICES_BY_BRANCH = {
   'DELHI': ['WIN10-11E4M12A2'],
 }
 
+// (optional) keep for fallback but we'll not use in the form
 const MOCK_APPLICATIONS = [
   'Chrome', 'Excel', 'Zoom', 'Slack', 'Teams', 'Outlook',
   'Firefox', 'VSCode', 'Notepad++', 'Photoshop', 'Word',
   'PowerPoint', 'Spotify', 'Discord', 'Telegram'
 ]
 
-// Initial policies matching the mockup data (all "Allow" for demo)
 const INITIAL_POLICIES = [
   { id: 1, ipAddress: '192.168.1.100', branch: 'MUMBAI-HEAD', pcName: 'DESKTOP-6RTJ7G1', mode: 'Allow' },
   { id: 2, ipAddress: '192.168.1.105', branch: 'VASHI', pcName: 'DESKTOP-B4J2VDM', mode: 'Allow' },
@@ -203,7 +199,7 @@ function Dropdown({
 }
 
 /* ─────────────────────────────────────────────────────────────
-   MULTI‑SELECT DROPDOWN (for applications)
+   MULTI‑SELECT DROPDOWN (for applications – kept for reference)
 ───────────────────────────────────────────────────────────── */
 function MultiSelectDropdown({
   values = [],
@@ -643,54 +639,102 @@ function GlassCard({ children, className = '' }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   ADD FORM (with static data and simulated API)
+   ADD FORM – with success/error alerts like Printer Control
 ───────────────────────────────────────────────────────────── */
 function AddForm({ branches, onAdd }) {
   const { isDark } = useTheme()
-  const [form, setForm] = useState({ branch: '', device: '', applications: [], mode: '' })
+  const [form, setForm] = useState({ branch: '', device: '', mode: '' })
   const [submitted, setSubmitted] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [fetchedDevices, setFetchedDevices] = useState([])
 
   const branchOptions = branches.map(b => ({ value: b, label: b }))
   const deviceOptions = fetchedDevices.map(d => ({ value: d, label: d }))
-  const appOptions = MOCK_APPLICATIONS.map(app => ({ value: app, label: app }))
   const modeOptions = [
-    { value: 'Allow', label: 'Allow' },
-    { value: 'Prevent', label: 'Prevent' },
+    { value: 'learning', label: 'learning' },
+    { value: 'Protection', label: 'Protection' },
   ]
 
-  const isValid = form.branch && form.device && form.applications.length > 0 && form.mode
+  const isValid = form.branch && form.device && form.mode
 
-  const handleBranchChange = (branch) => {
+  const handleBranchChange = async (branch) => {
     setForm(f => ({ ...f, branch, device: '' }))
-    const devices = MOCK_DEVICES_BY_BRANCH[branch] || []
-    setFetchedDevices(devices)
+    setFetchedDevices([])
+
+    try {
+      const response = await dashboardService.getDevicesByBranch(branch)
+      if (response?.data && Array.isArray(response.data)) {
+        setFetchedDevices(response.data)
+      } else {
+        const fallback = MOCK_DEVICES_BY_BRANCH[branch] || []
+        setFetchedDevices(fallback)
+      }
+    } catch (error) {
+      console.error('Failed to load devices:', error)
+      const fallback = MOCK_DEVICES_BY_BRANCH[branch] || []
+      setFetchedDevices(fallback)
+    }
   }
 
   const handleSubmit = async () => {
     setSubmitted(true)
     if (!isValid) return
 
+    setIsSubmitting(true)
+
     const requestData = {
       branch: form.branch,
       device: form.device,
-      applications: form.applications,
       mode: form.mode,
     }
 
-    setSuccess(true)
-    setTimeout(() => setSuccess(false), 2000)
+    try {
+      // Replace with your actual API endpoint
+      const response = await dashboardService.addApplicationPolicy(requestData)
+      console.log('Application policy response:', response)
 
-    onAdd({
-      ipAddress: '192.168.1.' + (Math.floor(Math.random() * 200) + 1),
-      branch: form.branch,
-      pcName: form.device,
-      mode: form.mode,
-    })
+      // Check for success – adjust based on your API response structure
+      if (response?.data === 'SUCCESS' || response?.success === true) {
+        await showAlert({
+          icon: 'success',
+          title: 'Policy Saved',
+          text: 'Application policy added successfully.',
+          timer: 2500,
+          timerProgressBar: true,
+          showConfirmButton: true,
+        })
 
-    setSubmitted(false)
-    setForm({ branch: '', device: '', applications: [], mode: '' })
+        // Add the new policy to the local list and switch to view tab
+        onAdd({
+          ipAddress: '192.168.1.' + (Math.floor(Math.random() * 200) + 1),
+          branch: form.branch,
+          pcName: form.device,
+          mode: form.mode,
+        })
+
+        setSubmitted(false)
+        setForm({ branch: '', device: '', mode: '' })
+        setFetchedDevices([])
+      } else {
+        // API returned error
+        await showAlert({
+          icon: 'error',
+          title: 'Policy Failed',
+          text: response?.message || 'Failed to save application policy.',
+          confirmButtonText: 'Try Again',
+        })
+      }
+    } catch (error) {
+      console.error('Error saving application policy:', error)
+      await showAlert({
+        icon: 'error',
+        title: 'Policy Failed',
+        text: error?.message || 'An error occurred while saving the policy.',
+        confirmButtonText: 'Try Again',
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5
@@ -698,7 +742,7 @@ function AddForm({ branches, onAdd }) {
 
   return (
     <GlassCard className="p-6 mb-5">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
         {/* Branch */}
         <div>
           <label className={labelCls}>
@@ -731,12 +775,10 @@ function AddForm({ branches, onAdd }) {
           {submitted && !form.device && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
 
-
-
         {/* Mode */}
         <div>
           <label className={labelCls}>
-            Mode of Access <span className="text-rose-500 normal-case tracking-normal">*</span>
+             Set Mode <span className="text-rose-500 normal-case tracking-normal">*</span>
           </label>
           <Dropdown
             value={form.mode}
@@ -753,21 +795,34 @@ function AddForm({ branches, onAdd }) {
       <div className="flex items-center justify-end gap-3">
         <GlassButton
           onClick={() => {
-            setForm({ branch: '', device: '', applications: [], mode: '' })
+            setForm({ branch: '', device: '', mode: '' })
             setSubmitted(false)
+            setFetchedDevices([])
           }}
           variant="default"
           className="px-4 py-2"
+          disabled={isSubmitting}
         >
           <RotateCcw size={13} /> Reset
         </GlassButton>
 
         <GlassButton
           onClick={handleSubmit}
-          variant={success ? 'success' : 'primary'}
+          variant="primary"
           className="px-5 py-2 font-semibold"
+          disabled={isSubmitting}
         >
-          {success ? <><Check size={13} /> Saved!</> : <><Plus size={13} /> Submit</>}
+          {isSubmitting ? (
+            <span className="flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+              Saving...
+            </span>
+          ) : (
+            <><Plus size={13} /> Submit</>
+          )}
         </GlassButton>
       </div>
     </GlassCard>
@@ -775,16 +830,15 @@ function AddForm({ branches, onAdd }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   POLICY TABLE – now scrollable + paginated
+   POLICY TABLE – scrollable + paginated
 ───────────────────────────────────────────────────────────── */
 function PolicyTable({ policies, onDelete }) {
   const { isDark } = useTheme()
   const [search, setSearch] = useState('')
   const [filterMode, setFilterMode] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 5 // entries per page
+  const pageSize = 5
 
-  // Filter
   const filtered = policies.filter(p => {
     const q = search.toLowerCase()
     return (
@@ -793,22 +847,18 @@ function PolicyTable({ policies, onDelete }) {
     )
   })
 
-  // Pagination
   const totalEntries = filtered.length
   const totalPages = Math.ceil(totalEntries / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = Math.min(startIndex + pageSize, totalEntries)
   const currentEntries = filtered.slice(startIndex, endIndex)
 
-  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1)
   }, [search, filterMode])
 
   const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
-    }
+    if (page >= 1 && page <= totalPages) setCurrentPage(page)
   }
 
   const thCls = `text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3
@@ -817,8 +867,8 @@ function PolicyTable({ policies, onDelete }) {
 
   const filterOptions = [
     { value: '', label: 'All Modes' },
-    { value: 'Allow', label: 'Allow' },
-    { value: 'Prevent', label: 'Prevent' },
+    { value: 'Learning', label: 'Learning' },
+    { value: 'Protection', label: 'Protection' },
   ]
 
   return (
@@ -829,7 +879,7 @@ function PolicyTable({ policies, onDelete }) {
         <div className="flex items-center gap-2">
           <ShieldCheck size={15} className="text-[#7094ff]" />
           <span className={`text-[13px] font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-           View Mode
+            View Mode
           </span>
           <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold
                            bg-[#7094ff]/15 text-[#7094ff] border border-[#7094ff]/20">
@@ -868,7 +918,7 @@ function PolicyTable({ policies, onDelete }) {
         </div>
       </div>
 
-      {/* Table container with scroll */}
+      {/* Table */}
       <div className="overflow-y-auto max-h-[400px]">
         {currentEntries.length === 0 ? (
           <div className={`py-16 text-center text-[13px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
@@ -922,7 +972,7 @@ function PolicyTable({ policies, onDelete }) {
         )}
       </div>
 
-      {/* Pagination footer */}
+      {/* Pagination */}
       {totalEntries > 0 && (
         <div className={`flex items-center justify-between px-5 py-3 border-t
                          ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
@@ -1011,7 +1061,24 @@ export default function ApplicationControl() {
   const { isDark } = useTheme()
   const [tab, setTab] = useState('add')
   const [policies, setPolicies] = useState(INITIAL_POLICIES)
-  const [branches] = useState(MOCK_BRANCHES)
+  const [branches, setBranches] = useState([])
+
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const response = await dashboardService.getBranch()
+        if (response?.data && Array.isArray(response.data)) {
+          setBranches(response.data)
+        } else {
+          setBranches(['MUMBAI-HEAD', 'VASHI', 'PUNE', 'AHMEDABAD', 'NAGPUR', 'BANGALORE', 'HYDERABAD', 'KOLKATA', 'CHENNAI', 'DELHI'])
+        }
+      } catch (error) {
+        console.error('Failed to load branches:', error)
+        setBranches(['MUMBAI-HEAD', 'VASHI', 'PUNE', 'AHMEDABAD', 'NAGPUR', 'BANGALORE', 'HYDERABAD', 'KOLKATA', 'CHENNAI', 'DELHI'])
+      }
+    }
+    loadBranches()
+  }, [])
 
   const handleAdd = (newPolicy) => {
     const newId = Math.max(...policies.map(p => p.id), 0) + 1
@@ -1025,6 +1092,7 @@ export default function ApplicationControl() {
         mode: newPolicy.mode,
       }
     ])
+    setTab('view') // switch to view tab after adding
   }
 
   const handleDelete = (id) => {
@@ -1034,7 +1102,6 @@ export default function ApplicationControl() {
   return (
     <div className="w-full">
       <br />
-      {/* Page header */}
       <div className="flex items-start justify-between mb-7">
         <div className="flex items-center gap-3">
           <div
@@ -1065,10 +1132,7 @@ export default function ApplicationControl() {
       {tab === 'add' && (
         <AddForm
           branches={branches}
-          onAdd={(newPolicy) => {
-            handleAdd(newPolicy)
-            setTab('view')
-          }}
+          onAdd={handleAdd}
         />
       )}
       {tab === 'view' && (

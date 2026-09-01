@@ -20,7 +20,7 @@ export const API_ENDPOINTS = {
     CLIPBOARD_INCIDENT: "/ClipboardControl/7DaysClipboardIncident",
     MAIL_INCIDENT: "/Dashboard/mailIncident",
     PRINTER_INCIDENT: "/PrinterDLP/printerIncidentcount",
-PREVENTED_APPLICATION: "/DashboardModal/PreventedApplication",
+PREVENTED_APPLICATIONDATA: "/DashboardModal/PreventedApplication",
     ENDPOINT_TABLE: "/Dashboard/endpointTable",
     FILE_UPLOAD:"/NetworkDLP/getTodaysUploadCount",
     INCIDENT_BY_CHANNEL:"/incidents/by-channel",
