@@ -1,704 +1,627 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Eye, ShieldCheck, RotateCcw, Filter, Search, ChevronDown, X,
-  Check, AlertTriangle, Eye as ViewIcon,
-} from 'lucide-react'
-import { useTheme } from '../../context/ThemeContext'
+  Search,
+  X,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  ClipboardList,
+  Check,
+  Eye,
+  ArrowLeft,
+} from "lucide-react";
 
-/* ─────────────────────────────────────────────────────────────
-   HELPERS
-───────────────────────────────────────────────────────────── */
+import { dashboardService } from "../../services/dashboardService";
+import { useTheme } from "../../context/ThemeContext";
 
-// Single‑select Dropdown (not used here, but kept for completeness)
-function Dropdown({ value, onChange, options, placeholder = 'Select…', disabled = false, searchable = false, error = false }) {
-  const { isDark } = useTheme()
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const containerRef = useRef(null)
-
-  const normalised = options.map(o => typeof o === 'string' ? { value: o, label: o } : o)
-  const filtered = searchable && query ? normalised.filter(o => o.label.toLowerCase().includes(query.toLowerCase())) : normalised
-  const selected = normalised.find(o => o.value === value)
-
-  useEffect(() => {
-    const handler = e => { if (containerRef.current && !containerRef.current.contains(e.target)) { setOpen(false); setQuery('') } }
-    if (open) document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  const handleSelect = val => { onChange(val); setOpen(false); setQuery('') }
-
-  const glassSurface = isDark ? { background: '#2a2a2a', backdropFilter: 'none' } : { background: 'rgba(255,255,255,0.80)', backdropFilter: 'blur(24px)' }
-  const triggerBorder = error ? 'border-rose-500/60' : open ? 'border-[#7094ff]/60' : isDark ? 'border-white/[0.10]' : 'border-slate-300/70'
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button type="button" disabled={disabled} onClick={() => !disabled && setOpen(!open)}
-        className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-[13px] text-left border transition-all duration-200 outline-none disabled:opacity-40 disabled:cursor-not-allowed ${triggerBorder} ${open ? 'ring-2 ring-[#7094ff]/20' : ''} ${isDark ? 'text-slate-200' : 'text-slate-800'}`}
-        style={glassSurface}
-      >
-        <span className={selected ? '' : isDark ? 'text-slate-500' : 'text-slate-400'}>{selected ? selected.label : placeholder}</span>
-        <ChevronDown size={14} className={`flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''} ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
-      </button>
-      {open && (
-        <div className={`absolute top-full left-0 right-0 mt-1.5 z-[200] rounded-xl border overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.35)] ${isDark ? 'border-white/[0.10]' : 'border-slate-200/80'}`}
-          style={{ background: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.98)', backdropFilter: 'blur(32px) saturate(180%)' }}
-        >
-          {searchable && (
-            <div className={`px-3 py-2 border-b ${isDark ? 'border-white/[0.07]' : 'border-slate-100'}`}>
-              <div className="relative flex items-center">
-                <Search size={12} className={`absolute left-2.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
-                <input autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder="Search…"
-                  className={`w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none border transition-all duration-150 ${isDark ? 'bg-[#2a2a2a] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]' : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`} />
-                {query && <button onClick={() => setQuery('')} className="absolute right-2 text-slate-400 hover:text-slate-200"><X size={11} /></button>}
-              </div>
-            </div>
-          )}
-          <div className="max-h-52 overflow-y-auto py-1">
-            {filtered.length === 0 ? <p className={`px-4 py-3 text-[12px] text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>No results</p> : filtered.map(o => {
-              const isSelected = o.value === value
-              return (
-                <button key={o.value} type="button" onClick={() => handleSelect(o.value)}
-                  className={`w-full text-left px-4 py-2.5 text-[13px] flex items-center justify-between gap-2 transition-colors duration-100 ${isSelected ? 'text-[#7094ff] bg-[#7094ff]/10' : isDark ? 'text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]' : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'}`}
-                >
-                  {o.label}
-                  {isSelected && <Check size={13} className="text-[#7094ff] flex-shrink-0" />}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Multi‑select Dropdown with "Select All" and "None Selected" / "X selected"
-function MultiSelectDropdown({
-  values = [],
-  onChange,
-  options = [],
-  placeholder = 'Select...',
-  disabled = false,
-  searchable = false,
-  error = false,
-}) {
-  const { isDark } = useTheme()
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const containerRef = useRef(null)
-
-  const normalized = options.map(o =>
-    typeof o === 'string' ? { value: o, label: o } : o
-  )
-
-  const filtered = searchable && query
-    ? normalized.filter(o =>
-        o.label.toLowerCase().includes(query.toLowerCase())
-      )
-    : normalized
-
-  // Check if all options are selected
-  const allSelected = normalized.length > 0 && normalized.every(o => values.includes(o.value))
-
-  useEffect(() => {
-    const handler = e => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false)
-        setQuery('')
-      }
-    }
-    if (open) document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  const toggleValue = val => {
-    if (values.includes(val)) {
-      onChange(values.filter(v => v !== val))
-    } else {
-      onChange([...values, val])
-    }
-  }
-
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      onChange([])
-    } else {
-      onChange(normalized.map(o => o.value))
-    }
-  }
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => !disabled && setOpen(!open)}
-        className={`
-          w-full min-h-[44px]
-          px-3 py-2
-          rounded-xl border
-
-          flex items-center
-          justify-between
-          gap-2
-
-          transition-all duration-200
-
-          ${
-            error
-              ? 'border-rose-500/60'
-              : open
-                ? 'border-[#7094ff]/60 ring-2 ring-[#7094ff]/20'
-                : isDark
-                  ? 'border-white/[0.08]'
-                  : 'border-slate-200'
-          }
-
-          ${
-            disabled
-              ? 'opacity-50 cursor-not-allowed'
-              : ''
-          }
-
-          ${
-            isDark
-              ? `
-                bg-[#2a2a2a]
-                text-[#d0d0d0]
-              `
-              : `
-                bg-white/80
-                text-slate-700
-
-
-
-                backdrop-blur-xl
-              `
-          }
-        `}
-      >
-        {/* ─── Trigger text: "None Selected" or "X selected" ─── */}
-        <div className="flex-1 text-left">
-          {values.length === 0 ? (
-            <span className={isDark ? 'text-[#666]' : 'text-slate-400'}>
-              None Selected
-            </span>
-          ) : (
-            <span className={isDark ? 'text-slate-200' : 'text-slate-700'}>
-              {values.length} selected
-            </span>
-          )}
-        </div>
-
-        <ChevronDown
-          size={14}
-          className={`
-            flex-shrink-0
-            transition-transform duration-200
-
-            ${open ? 'rotate-180' : ''}
-
-            ${
-              isDark
-                ? 'text-[#666]'
-                : 'text-slate-400'
-            }
-          `}
-        />
-      </button>
-
-      {/* ─── Dropdown panel ─── */}
-      {open && (
-        <div
-          className={`
-            absolute top-full left-0 right-0
-            mt-1.5 z-[200]
-
-            rounded-xl overflow-hidden
-            border
-
-            shadow-[0_16px_48px_rgba(0,0,0,0.35)]
-
-            ${
-              isDark
-                ? `
-                  bg-[#2a2a2a]
-                  border-white/[0.08]
-                `
-                : `
-                  bg-white/95
-                  border-slate-200
-                  backdrop-blur-2xl
-                `
-            }
-          `}
-        >
-          {/* ─── Search ─── */}
-          {searchable && (
-            <div
-              className={`
-                p-2 border-b
-
-                ${
-                  isDark
-                    ? 'border-white/[0.06]'
-                    : 'border-slate-100'
-                }
-              `}
-            >
-              <div className="relative">
-                <Search
-                  size={12}
-                  className={`
-                    absolute left-2.5 top-1/2
-                    -translate-y-1/2
-
-                    ${
-                      isDark
-                        ? 'text-[#666]'
-                        : 'text-slate-400'
-                    }
-                  `}
-                />
-                <input
-                  autoFocus
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  placeholder="Search..."
-                  className={`
-                    w-full pl-7 pr-3 py-2
-                    rounded-lg outline-none
-                    text-[12px] border
-
-                    ${
-                      isDark
-                        ? `
-                          bg-[#242424]
-                          border-white/[0.07]
-                          text-[#d0d0d0]
-                          placeholder-[#555]
-                        `
-                        : `
-                          bg-slate-50
-                          border-slate-200
-                          text-slate-700
-                          placeholder-slate-400
-                        `
-                    }
-                  `}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ─── Select All / Deselect All ─── */}
-          <div className={`px-3 py-2 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
-            <button
-              onClick={toggleSelectAll}
-              className={`
-                w-full text-left text-[12px] flex items-center gap-2
-                ${isDark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900'}
-                transition-colors duration-150
-              `}
-            >
-              {allSelected ? (
-                <>
-                  <X size={14} className="text-rose-500" />
-                  <span>Deselect all</span>
-                </>
-              ) : (
-                <>
-                  <Check size={14} className="text-[#7094ff]" />
-                  <span>Select all</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* ─── Options list ─── */}
-          <div className="max-h-56 overflow-y-auto py-1">
-            {filtered.length === 0 ? (
-              <p
-                className={`
-                  px-4 py-3 text-center text-[12px]
-
-                  ${
-                    isDark
-                      ? 'text-[#666]'
-                      : 'text-slate-400'
-                  }
-                `}
-              >
-                No results found
-              </p>
-            ) : (
-              filtered.map(o => {
-                const selected = values.includes(o.value)
-                return (
-                  <button
-                    key={o.value}
-                    type="button"
-                    onClick={() => toggleValue(o.value)}
-                    className={`
-                      w-full px-4 py-2.5
-                      flex items-center justify-between
-                      text-left
-                      transition-colors duration-150
-
-                      ${
-                        selected
-                          ? `
-                            bg-[#7094ff]/10
-                            text-[#7094ff]
-                          `
-                          : isDark
-                            ? `
-                              text-[#c0c0c0]
-                              hover:bg-white/[0.04]
-                            `
-                            : `
-                              text-slate-700
-                              hover:bg-slate-100/80
-                            `
-                      }
-                    `}
-                  >
-                    <span className="text-[12px]">
-                      {o.label}
-                    </span>
-                    {selected && (
-                      <Check
-                        size={13}
-                        className="text-[#7094ff]"
-                      />
-                    )}
-                  </button>
-                )
-              })
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function GlassButton({ children, onClick, variant = 'default', className = '', disabled = false, type = 'button' }) {
-  const { isDark } = useTheme()
-  const variants = {
-    default: {
-      className: isDark ? 'text-slate-300 hover:text-white border-white/[0.10] hover:border-white/[0.20]' : 'text-slate-600 hover:text-slate-900 border-slate-300/70 hover:border-slate-400/60',
-      style: { background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,0.06)' : '0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)' }
-    },
-    primary: {
-      className: 'text-white border-[#7094ff]/40 hover:border-[#7094ff]/60',
-      style: { background: 'rgba(112, 148, 255, 0.85)', backdropFilter: 'blur(16px)', boxShadow: '0 4px 20px rgba(112,148,255,0.35), inset 0 1px 0 rgba(255,255,255,0.18)' }
-    },
-    chip_allow: {
-      className: isDark ? 'text-emerald-400 border-emerald-500/25' : 'text-emerald-600 border-emerald-300/60',
-      style: { background: isDark ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.72)', backdropFilter: 'blur(12px)', boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.06)' }
-    },
-    chip_prevent: {
-      className: isDark ? 'text-rose-400 border-rose-500/25' : 'text-rose-600 border-rose-300/60',
-      style: { background: isDark ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.72)', backdropFilter: 'blur(12px)', boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.06)' }
-    }
-  }
-  const v = variants[variant] || variants.default
-  return (
-    <button type={type} disabled={disabled} onClick={onClick}
-      className={`flex items-center gap-2 rounded-xl border text-[13px] font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${v.className} ${className}`}
-      style={v.style}
-    >
-      {children}
-    </button>
-  )
-}
-
-function Badge({ mode }) {
-  const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border'
-  if (mode === 'Allow')
-    return <span className={`${base} bg-emerald-500/10 text-emerald-500 border-emerald-500/20`}><Check size={10} /> Allow</span>
-  return <span className={`${base} bg-rose-500/10 text-rose-500 border-rose-500/20`}><AlertTriangle size={10} /> Prevent</span>
-}
-
-function GlassCard({ children, className = '' }) {
-  const { isDark } = useTheme()
-  return (
-    <div className={`rounded-2xl border ${className}`}
-      style={{
-        background: isDark ? '#020617' : 'rgba(255,255,255,0.95)',
-        backdropFilter: isDark ? 'none' : 'blur(24px)',
-        WebkitBackdropFilter: isDark ? 'none' : 'blur(24px)',
-        borderColor: isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0',
-        boxShadow: isDark ? '0 4px 24px rgba(0,0,0,0.5)' : '0 2px 16px rgba(0,0,0,0.08)',
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-/* ───────────────────────── MAIN COMPONENT ───────────────────────── */
 export default function ViewApplication() {
-  const { isDark } = useTheme()
-  const [branches, setBranches] = useState([])
-  const [devices, setDevices] = useState([])
-  const [submitted, setSubmitted] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 5
+  const { isDark } = useTheme();
 
-  // Mock data (matches your second image)
-  const allRows = [
-    { id: 1, branch: 'BEL', ip: '192.168.0.180', pc: 'velox-H410M-H-V2', count: 1731 },
-    { id: 2, branch: 'ISRO', ip: '192.168.0.44', pc: 'Swapppyy101', count: 2280 },
-    { id: 3, branch: 'ISRO', ip: '192.168.0.22', pc: 'DESKTOP-GGHUO6H', count: 491 },
-    { id: 4, branch: 'KHADIGRAM', ip: '192.168.0.67', pc: 'DESKTOP-IGOUAUO', count: 803 },
-    { id: 5, branch: 'KHADIGRAM', ip: '192.168.0.67', pc: 'Sanket', count: 2671 },
-    { id: 6, branch: 'KHADIGRAM', ip: '192.168.0.150', pc: 'DESKTOP-VM8O1CP', count: 1632 },
-    { id: 7, branch: 'KHADIGRAM', ip: '192.168.0.69', pc: 'DESKTOP-GIBIBC4', count: 373 },
-    { id: 8, branch: 'NRLDC', ip: '192.168.0.139', pc: 'DESKTOP-P2TR0U9', count: 1418 },
-  ]
+  // =========================
+  // STATES (unchanged)
+  // =========================
+  const [applications, setApplications] = useState([]);
+  const [branches, setBranches] = useState([]);
+  const [devices, setDevices] = useState([]);
 
-  // Filtering – only when submitted
-  const filteredData = submitted
-    ? allRows.filter(row => {
-        if (branches.length > 0 && !branches.includes(row.branch)) return false
-        if (devices.length > 0 && !devices.includes(row.pc)) return false
-        return true
-      })
-    : []
+  const [selectedBranch, setSelectedBranch] = useState("");
+  const [selectedDevices, setSelectedDevices] = useState([]);
 
-  // Search filter
-  const filteredRows = filteredData.filter(row => {
-    if (!searchQuery) return true
-    const q = searchQuery.toLowerCase()
-    return row.branch.toLowerCase().includes(q) ||
-           row.ip.toLowerCase().includes(q) ||
-           row.pc.toLowerCase().includes(q) ||
-           row.count.toString().includes(q)
-  })
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Pagination
-  const totalEntries = filteredRows.length
-  const totalPages = Math.ceil(totalEntries / pageSize)
-  const startIndex = (currentPage - 1) * pageSize
-  const endIndex = Math.min(startIndex + pageSize, totalEntries)
-  const currentRows = filteredRows.slice(startIndex, endIndex)
+  const [loading, setLoading] = useState(false);
+  const [deviceLoading, setDeviceLoading] = useState(false);
 
-  useEffect(() => { setCurrentPage(1) }, [searchQuery, branches, devices, submitted])
+  const [showResults, setShowResults] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const goToPage = (page) => { if (page >= 1 && page <= totalPages) setCurrentPage(page) }
+  // =========================
+  // INLINE DETAILS
+  // =========================
+  const [viewingHostname, setViewingHostname] = useState(null);
+  const [viewDetails, setViewDetails] = useState([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
 
-  // Stats (only for displayed data)
-  const allowed = filteredData.filter(row => row.count > 1000).length
-  const prevented = filteredData.filter(row => row.count <= 1000).length
+  const itemsPerPage = 10;
 
-  const branchOptions = [...new Set(allRows.map(r => r.branch))].map(b => ({ value: b, label: b }))
-  const deviceOptions = [...new Set(allRows.map(r => r.pc))].map(d => ({ value: d, label: d }))
+  const applicationResultRef = useRef(null);
+  const detailsSectionRef = useRef(null);
 
-  const handleSubmit = () => setSubmitted(true)
+  // =========================
+  // LOAD BRANCHES
+  // =========================
+  useEffect(() => {
+    loadBranches();
+  }, []);
 
+  const loadBranches = async () => {
+    try {
+      const response = await dashboardService.getBranch();
+      setBranches(response?.data || []);
+    } catch (error) {
+      console.error("Failed to load branches:", error);
+      setBranches([]);
+    }
+  };
+
+  // =========================
+  // BRANCH CHANGE
+  // =========================
+  const handleBranchChange = async (branchValue) => {
+    setSelectedBranch(branchValue);
+    setSelectedDevices([]);
+    setDevices([]);
+    if (!branchValue) return;
+    try {
+      setDeviceLoading(true);
+      const response = await dashboardService.getDevicesByBranch(branchValue);
+      setDevices(response?.data || []);
+    } catch (error) {
+      console.error("Failed to load devices:", error);
+      setDevices([]);
+    } finally {
+      setDeviceLoading(false);
+    }
+  };
+
+  // =========================
+  // SUBMIT
+  // =========================
+  const handleSubmit = async () => {
+    setViewingHostname(null);
+    setViewDetails([]);
+    setDetailError("");
+
+    try {
+      setLoading(true);
+      const requestData = { branch: selectedBranch, device: selectedDevices };
+      const response = await dashboardService.getApplicationCount(requestData);
+      const responseData = response?.data;
+      let applicationData = [];
+      if (Array.isArray(responseData)) applicationData = responseData;
+      else if (responseData && typeof responseData === "object") applicationData = [responseData];
+      setApplications(applicationData);
+      setShowResults(true);
+      setCurrentPage(1);
+
+      setTimeout(() => {
+        if (applicationResultRef.current) {
+          applicationResultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 150);
+    } catch (error) {
+      console.error("View Application API Error:", error);
+      setApplications([]);
+      setShowResults(true);
+      setTimeout(() => {
+        if (applicationResultRef.current) {
+          applicationResultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 150);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================
+  // VIEW DETAILS
+  // =========================
+  const handleView = async (row) => {
+    const hostname = row?.pcName ?? row?.pc ?? row?.computerName ?? "";
+    if (!hostname) {
+      setDetailError("Host name is not available");
+      setViewDetails([]);
+      setViewingHostname(hostname);
+      setTimeout(() => {
+        if (detailsSectionRef.current) {
+          detailsSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 150);
+      return;
+    }
+
+    setViewingHostname(hostname);
+    setDetailLoading(true);
+    setDetailError("");
+    setViewDetails([]);
+
+    try {
+      const response = await dashboardService.getApplicationDetails(hostname);
+      const details = Array.isArray(response?.data) ? response.data : response?.data ? [response.data] : [];
+      setViewDetails(details);
+    } catch (error) {
+      console.error("Application details error:", error);
+      setViewDetails([]);
+      setDetailError(error?.response?.data?.message || "Failed to fetch application details");
+    } finally {
+      setDetailLoading(false);
+      setTimeout(() => {
+        if (detailsSectionRef.current) {
+          detailsSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 150);
+    }
+  };
+
+  // =========================
+  // CLOSE DETAILS
+  // =========================
+  const handleCloseDetails = () => {
+    setViewingHostname(null);
+    setViewDetails([]);
+    setDetailError("");
+    setDetailLoading(false);
+  };
+
+  // =========================
+  // RESET
+  // =========================
   const handleReset = () => {
-    setBranches([])
-    setDevices([])
-    setSearchQuery('')
-    setSubmitted(false)
-    setCurrentPage(1)
+    setSelectedBranch("");
+    setSelectedDevices([]);
+    setDevices([]);
+    setApplications([]);
+    setSearchTerm("");
+    setShowResults(false);
+    setCurrentPage(1);
+    setViewingHostname(null);
+    setViewDetails([]);
+    setDetailError("");
+    setDetailLoading(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // =========================
+  // FILTER & PAGINATION
+  // =========================
+  const filteredApplications = applications.filter((item) => {
+    const search = searchTerm.toLowerCase();
+    return Object.values(item || {}).some((value) =>
+      String(value ?? "").toLowerCase().includes(search)
+    );
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredApplications.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedApplications = filteredApplications.slice(startIndex, startIndex + itemsPerPage);
+
+  // =========================
+  // DROPDOWN COMPONENTS (UPDATED BACKGROUND TO #172439)
+  // =========================
+  function Dropdown({ value, onChange, options, placeholder = "Select...", disabled = false }) {
+    const [open, setOpen] = useState(false);
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+      const handleOutsideClick = (event) => {
+        if (containerRef.current && !containerRef.current.contains(event.target)) setOpen(false);
+      };
+      document.addEventListener("mousedown", handleOutsideClick);
+      return () => document.removeEventListener("mousedown", handleOutsideClick);
+    }, []);
+
+    const normalizedOptions = (options || []).map((item) => {
+      if (typeof item === "string") return { value: item, label: item };
+      return {
+        value: item.value ?? item.branchName ?? item.deviceName ?? item.name,
+        label: item.label ?? item.branchName ?? item.deviceName ?? item.name,
+      };
+    });
+
+    const selected = normalizedOptions.find((item) => item.value === value);
+
+    return (
+      <div ref={containerRef} className="relative w-full">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => !disabled && setOpen((prev) => !prev)}
+          className={`
+            w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] text-left border transition-all
+            disabled:opacity-40 disabled:cursor-not-allowed
+            ${isDark 
+              ? "bg-[#172439] border-white/[0.10] text-slate-200"   // <-- changed to #172439
+              : "bg-white border-slate-300 text-slate-800"}
+            ${open ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60" : ""}
+          `}
+        >
+          <span className={selected ? "" : isDark ? "text-slate-500" : "text-slate-400"}>
+            {selected ? selected.label : placeholder}
+          </span>
+          <ChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""} ${isDark ? "text-slate-500" : "text-slate-400"}`} />
+        </button>
+        {open && (
+          <div className={`absolute top-full left-0 right-0 mt-1.5 z-[200] rounded-xl border overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.35)] ${isDark ? "bg-[#172439] border-white/[0.10]" : "bg-white border-slate-200"}`}>
+            <div className="max-h-52 overflow-y-auto py-1">
+              {normalizedOptions.length === 0 ? (
+                <p className={`px-4 py-3 text-[12px] text-center ${isDark ? "text-slate-600" : "text-slate-400"}`}>No options available</p>
+              ) : (
+                normalizedOptions.map((option) => {
+                  const selectedOption = option.value === value;
+                  return (
+                    <button
+                      key={String(option.value)}
+                      type="button"
+                      onClick={() => { onChange(option.value); setOpen(false); }}
+                      className={`
+                        w-full text-left px-4 py-2.5 text-[13px] flex items-center justify-between gap-2 transition-colors
+                        ${selectedOption 
+                          ? "text-[#7094ff] bg-[#7094ff]/10" 
+                          : isDark 
+                            ? "text-[#a0aec0] hover:bg-white/[0.06] hover:text-white"   // adjusted text for #172439
+                            : "text-slate-700 hover:bg-slate-100"}
+                      `}
+                    >
+                      {option.label}
+                      {selectedOption && <Check size={13} className="text-[#7094ff]" />}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   }
 
-  const handleRefresh = () => {
-    setBranches([])
-    setDevices([])
-    setSearchQuery('')
-    setSubmitted(false)
-    setCurrentPage(1)
+  function MultiSelectDropdown({ values = [], onChange, options = [], placeholder = "Select...", disabled = false }) {
+    const [open, setOpen] = useState(false);
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+      const handleOutsideClick = (event) => {
+        if (containerRef.current && !containerRef.current.contains(event.target)) setOpen(false);
+      };
+      document.addEventListener("mousedown", handleOutsideClick);
+      return () => document.removeEventListener("mousedown", handleOutsideClick);
+    }, []);
+
+    const normalizedOptions = (options || []).map((item) => {
+      if (typeof item === "string") return { value: item, label: item };
+      return {
+        value: item.value ?? item.deviceName ?? item.name,
+        label: item.label ?? item.deviceName ?? item.name,
+      };
+    });
+
+    const allSelected = normalizedOptions.length > 0 && normalizedOptions.every((item) => values.includes(item.value));
+
+    const toggleDevice = (deviceValue) => {
+      if (values.includes(deviceValue)) {
+        onChange(values.filter((v) => v !== deviceValue));
+      } else {
+        onChange([...values, deviceValue]);
+      }
+    };
+
+    const toggleSelectAll = () => {
+      if (allSelected) {
+        onChange([]);
+      } else {
+        onChange(normalizedOptions.map((item) => item.value));
+      }
+    };
+
+    return (
+      <div ref={containerRef} className="relative w-full">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => !disabled && setOpen((prev) => !prev)}
+          className={`
+            w-full min-h-[42px] flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] text-left border transition-all
+            disabled:opacity-40 disabled:cursor-not-allowed
+            ${isDark 
+              ? "bg-[#172439] border-white/[0.10] text-slate-200"   // <-- changed to #172439
+              : "bg-white border-slate-300 text-slate-800"}
+            ${open ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60" : ""}
+          `}
+        >
+          <span className={values.length > 0 ? "" : isDark ? "text-slate-500" : "text-slate-400"}>
+            {values.length > 0 ? `${values.length} device${values.length !== 1 ? "s" : ""} selected` : placeholder}
+          </span>
+          <ChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""} ${isDark ? "text-slate-500" : "text-slate-400"}`} />
+        </button>
+        {open && (
+          <div className={`absolute top-full left-0 right-0 mt-1.5 z-[200] rounded-xl border overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.35)] ${isDark ? "bg-[#172439] border-white/[0.10]" : "bg-white border-slate-200"}`}>
+            <div className={`px-3 py-2.5 border-b ${isDark ? "border-white/[0.06]" : "border-slate-100"}`}>
+              <button type="button" onClick={toggleSelectAll} className={`w-full flex items-center gap-2 text-left text-[12px] ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}>
+                {allSelected ? <><X size={14} className="text-red-400" /> Deselect all</> : <><Check size={14} className="text-[#7094ff]" /> Select all</>}
+              </button>
+            </div>
+            <div className="max-h-52 overflow-y-auto py-1">
+              {normalizedOptions.length === 0 ? (
+                <p className={`px-4 py-3 text-[12px] text-center ${isDark ? "text-slate-600" : "text-slate-400"}`}>No devices available</p>
+              ) : (
+                normalizedOptions.map((option) => {
+                  const selected = values.includes(option.value);
+                  return (
+                    <button
+                      key={String(option.value)}
+                      type="button"
+                      onClick={() => toggleDevice(option.value)}
+                      className={`
+                        w-full text-left px-4 py-2.5 text-[13px] flex items-center justify-between gap-2 transition-colors
+                        ${selected 
+                          ? "text-[#7094ff] bg-[#7094ff]/10" 
+                          : isDark 
+                            ? "text-[#a0aec0] hover:bg-white/[0.06] hover:text-white"
+                            : "text-slate-700 hover:bg-slate-100"}
+                      `}
+                    >
+                      <span>{option.label}</span>
+                      {selected && <Check size={13} className="text-[#7094ff]" />}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   }
 
-  const thCls = `text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3 ${isDark ? 'text-slate-500 border-b border-white/[0.06]' : 'text-slate-400 border-b border-slate-100'}`
-  const tdCls = `px-4 py-3 text-[12px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`
-
+  // =========================
+  // MAIN RENDER (unchanged)
+  // =========================
   return (
-    <div className="w-full">
-      <br />
+    <div className="min-h-screen p-6">
+      {/* HEADER */}
+      <div className={`w-full mb-6 rounded-xl border px-6 py-4 ${isDark ? "bg-[#020617] border-[#2B3345]" : "bg-white border-slate-200"}`}>
+        <h2 className={`text-lg font-medium ${isDark ? "text-white" : "text-gray-900"}`}>View Application</h2>
+        <p className={`mt-1 text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+          View application control policies and application details.
+        </p>
+      </div>
 
-      {/* ─── Header ─── */}
-      <div className="flex items-start justify-between mb-7">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(112,148,255,0.15)', border: '1px solid rgba(112,148,255,0.25)', backdropFilter: 'blur(12px)' }}>
-            <Eye size={18} className="text-[#7094ff]" />
+      {/* FILTER SECTION */}
+      <div className={`w-full rounded-xl border p-5 ${isDark ? "bg-[#020617] border-indigo-950" : "bg-white border-slate-200"}`}>
+        <div className="grid grid-cols-3 gap-5">
+          <div>
+            <label className={`block text-xs mb-1.5 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Branch</label>
+            <Dropdown value={selectedBranch} onChange={handleBranchChange} options={branches} placeholder="Select Branch" />
           </div>
           <div>
-            <h2 className={`font-display font-bold text-lg leading-tight ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
-              View Application
-            </h2>
-            <p className={`text-[11px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-              View application control policies across endpoints
-            </p>
+            <label className={`block text-xs mb-1.5 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Device</label>
+            <MultiSelectDropdown
+              values={selectedDevices}
+              onChange={setSelectedDevices}
+              options={devices}
+              placeholder={selectedBranch ? (deviceLoading ? "Loading devices..." : "Select Device(s)") : "Select branch first"}
+              disabled={!selectedBranch || deviceLoading}
+            />
           </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-5">
+          <button
+            type="button"
+            onClick={handleReset}
+            className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border text-sm font-medium transition-colors ${isDark ? "border-gray-600 text-gray-300 hover:bg-white/5" : "border-slate-300 text-gray-700 hover:bg-slate-100"}`}
+          >
+            <RefreshCw className="h-4 w-4" /> Reset
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#4f56f0] text-white text-sm font-semibold shadow-lg shadow-indigo-900/40 hover:bg-[#5c63f5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <><RefreshCw className="h-4 w-4 animate-spin" /> Loading...</>
+            ) : (
+              <><Eye className="h-4 w-4" /> Submit</>
+            )}
+          </button>
         </div>
       </div>
 
-      
-
-      {/* ─── Filter Card ─── (visible only when not submitted) */}
-      {!submitted && (
-        <GlassCard className="p-6 mb-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-            <div>
-              <label className={`block text-[11px] font-semibold uppercase tracking-wider mb-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                BRANCH NAME *
-              </label>
-              <MultiSelectDropdown
-                values={branches}
-                onChange={setBranches}
-                options={branchOptions}
-                placeholder="Select Branch(es)"
-                searchable
+      {/* APPLICATION RESULTS (unchanged) */}
+      {showResults && (
+        <div
+          ref={applicationResultRef}
+          className={`mt-8 rounded-xl border p-6 scroll-mt-6 ${isDark ? "bg-[#020617] border-indigo-950" : "bg-white border-slate-200"}`}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <ClipboardList className={`h-5 w-5 ${isDark ? "text-indigo-400" : "text-indigo-600"}`} />
+              <h3 className={`font-semibold text-lg ${isDark ? "text-white" : "text-gray-900"}`}>Application Results</h3>
+            </div>
+            <div className="relative w-64">
+              <Search size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-500" : "text-gray-400"}`} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                placeholder="Search application..."
+                className={`w-full pl-9 pr-9 py-2 rounded-lg border outline-none text-xs ${isDark ? "bg-[#0b1120] border-gray-800 text-gray-200 placeholder-gray-600" : "bg-white border-slate-200 text-gray-700 placeholder-gray-400"}`}
               />
-            </div>
-            <div>
-              <label className={`block text-[11px] font-semibold uppercase tracking-wider mb-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                DEVICE NAME *
-              </label>
-              <MultiSelectDropdown
-                values={devices}
-                onChange={setDevices}
-                options={deviceOptions}
-                placeholder="Select Device(s)"
-                searchable
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-end gap-3">
-            <GlassButton onClick={handleReset} variant="default" className="px-4 py-2">
-              <RotateCcw size={13} /> Reset
-            </GlassButton>
-            <GlassButton onClick={handleSubmit} variant="primary" className="px-5 py-2 font-semibold">
-              <Filter size={13} /> Submit
-            </GlassButton>
-          </div>
-        </GlassCard>
-      )}
-
-      {/* ─── Table ─── (visible only after submit) */}
-      {submitted && (
-        <GlassCard className="overflow-hidden">
-          <div className={`flex items-center justify-between gap-3 px-5 py-4 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={15} className="text-[#7094ff]" />
-              <span className={`text-[13px] font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                View Application List
-              </span>
-              <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7094ff]/15 text-[#7094ff] border border-[#7094ff]/20">
-                {totalEntries}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Search input */}
-              <div className="relative flex items-center rounded-xl border text-[12px] px-3 py-1.5"
-                style={{
-                  background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.72)',
-                  backdropFilter: 'blur(16px)',
-                  borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(203,213,225,0.80)',
-                }}
-              >
-                <Search size={12} className={`mr-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
-                <input
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search..."
-                  className={`bg-transparent outline-none w-36 ${isDark ? 'text-slate-300 placeholder-slate-600' : 'text-slate-700 placeholder-slate-400'}`}
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="ml-1 text-slate-400 hover:text-slate-200">
-                    <X size={12} />
-                  </button>
-                )}
-              </div>
-              {/* Refresh button */}
-              <button
-                onClick={handleRefresh}
-                className="p-2 rounded-xl border transition hover:bg-[#7094ff]/10"
-                style={{
-                  background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.72)',
-                  backdropFilter: 'blur(16px)',
-                  borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(203,213,225,0.80)',
-                }}
-                title="Refresh & go back to filter selection"
-              >
-                <RotateCcw size={14} className={isDark ? 'text-slate-400' : 'text-slate-600'} />
-              </button>
+              {searchTerm && (
+                <button type="button" onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <X size={13} />
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="overflow-y-auto max-h-[400px]">
-            <table className="w-full">
-              <thead className={`sticky top-0 z-10 ${isDark ? 'bg-[#020617]' : 'bg-white/95'}`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className={`text-xs uppercase border-b ${isDark ? "text-gray-400 border-gray-800" : "text-gray-500 border-slate-200"}`}>
                 <tr>
-                  <th className={thCls}>SR. NO.</th>
-                  <th className={thCls}>BRANCH NAME</th>
-                  <th className={thCls}>IP ADDRESS</th>
-                  <th className={thCls}>PC NAME</th>
-                  <th className={thCls}>COUNT</th>
-                  <th className={`${thCls} text-center`}>VIEW</th>
+                  <th className="px-4 py-3">#</th>
+                  <th className="px-4 py-3">PC Name</th>
+                  <th className="px-4 py-3">Branch</th>
+                  <th className="px-4 py-3">Application Count</th>
+                  <th className="px-4 py-3">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {currentRows.length === 0 ? (
-                  <tr><td colSpan="6" className={`py-10 text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>No records found</td></tr>
+                {paginatedApplications.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className={`px-4 py-12 text-center ${isDark ? "text-gray-500" : "text-gray-400"}`}>No application data found</td>
+                  </tr>
                 ) : (
-                  currentRows.map((row, index) => {
-                    const globalIndex = startIndex + index + 1
+                  paginatedApplications.map((row, index) => {
+                    const pcName = row.pcName ?? row.pc ?? row.computerName ?? "—";
+                    const branchName = row.branchName ?? row.branch ?? selectedBranch ?? "—";
+                    const applicationCount = row.applicationCount ?? row.count ?? 0;
                     return (
-                      <tr key={row.id} className={`border-b last:border-b-0 transition-colors duration-150 ${isDark ? 'border-white/[0.04] hover:bg-[#2e2e2e]' : 'border-slate-50 hover:bg-slate-50/60'}`}>
-                        <td className={`${tdCls} text-[11px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{globalIndex}</td>
-                        <td className={tdCls}>{row.branch}</td>
-                        <td className={`${tdCls} font-mono text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{row.ip}</td>
-                        <td className={tdCls}>{row.pc}</td>
-                        <td className={tdCls}>{row.count}</td>
-                        <td className={`${tdCls} text-center`}>
-                          <button className="p-1 rounded hover:bg-[#7094ff]/10 transition">
-                            <ViewIcon size={14} className="text-[#7094ff]" />
+                      <tr key={row.id ?? row.srNo ?? `${pcName}-${index}`} className={`border-b ${isDark ? "border-gray-800/50 hover:bg-white/5" : "border-slate-100 hover:bg-slate-50"}`}>
+                        <td className={`px-4 py-3 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{startIndex + index + 1}</td>
+                        <td className={`px-4 py-3 font-medium ${isDark ? "text-gray-200" : "text-gray-800"}`}>{pcName}</td>
+                        <td className={`px-4 py-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{branchName || "—"}</td>
+                        <td className={`px-4 py-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isDark ? "bg-indigo-900/30 text-indigo-400 border border-indigo-800/50" : "bg-indigo-100 text-indigo-700 border border-indigo-200"}`}>
+                            {applicationCount}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleView(row)}
+                            className={`p-1.5 rounded-md transition ${isDark ? "text-indigo-400 hover:bg-indigo-900/30" : "text-indigo-600 hover:bg-indigo-50"}`}
+                            title="View"
+                          >
+                            <Eye size={15} />
                           </button>
                         </td>
                       </tr>
-                    )
+                    );
                   })
                 )}
               </tbody>
             </table>
           </div>
 
-          {totalEntries > 0 && (
-            <div className={`flex items-center justify-between px-5 py-3 border-t ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
-              <span className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                Showing {startIndex + 1} to {endIndex} of {totalEntries} entries
+          <div className="flex items-center justify-between mt-5 pt-4">
+            <div className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+              Showing {paginatedApplications.length} of {filteredApplications.length} records
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${currentPage === 1 ? "opacity-40 cursor-not-allowed" : isDark ? "bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60" : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"}`}
+              >
+                <ChevronLeft size={14} /> Previous
+              </button>
+              <span className={`text-xs px-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                Page {currentPage} of {totalPages}
               </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-1 rounded-lg text-[11px] font-medium border transition ${isDark ? 'border-white/[0.08] text-slate-400 hover:text-white hover:border-white/[0.15] disabled:opacity-40 disabled:hover:border-white/[0.08]' : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 disabled:opacity-40'}`}
-                >
-                  Previous
-                </button>
-                <span className={`text-[11px] px-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  {currentPage} / {totalPages}
-                </span>
-                <button
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-1 rounded-lg text-[11px] font-medium border transition ${isDark ? 'border-white/[0.08] text-slate-400 hover:text-white hover:border-white/[0.15] disabled:opacity-40 disabled:hover:border-white/[0.08]' : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 disabled:opacity-40'}`}
-                >
-                  Next
-                </button>
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${currentPage === totalPages ? "opacity-40 cursor-not-allowed" : isDark ? "bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60" : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"}`}
+              >
+                Next <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* INLINE DETAILS SECTION */}
+      {viewingHostname !== null && (
+        <div
+          ref={detailsSectionRef}
+          className={`mt-8 rounded-xl border p-6 scroll-mt-6 ${isDark ? "bg-[#020617] border-indigo-950" : "bg-white border-slate-200"}`}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <ClipboardList className={`h-5 w-5 ${isDark ? "text-indigo-400" : "text-indigo-600"}`} />
+              <div>
+                <h3 className={`font-semibold text-lg ${isDark ? "text-white" : "text-gray-900"}`}>Application Details</h3>
+                <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>Host: {viewingHostname || "—"}</p>
               </div>
             </div>
-          )}
-        </GlassCard>
+            <button
+              type="button"
+              onClick={handleCloseDetails}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs transition ${isDark ? "text-gray-400 hover:text-white hover:bg-white/10" : "text-gray-500 hover:bg-slate-100"}`}
+            >
+              <ArrowLeft size={14} /> Back
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            {detailLoading ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <RefreshCw size={24} className="animate-spin text-indigo-500 mb-3" />
+                <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Loading application details...</p>
+              </div>
+            ) : detailError ? (
+              <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${isDark ? "bg-red-900/20" : "bg-red-50"}`}>
+                  <X size={20} className={isDark ? "text-red-400" : "text-red-500"} />
+                </div>
+                <p className={`text-sm font-medium ${isDark ? "text-red-400" : "text-red-600"}`}>{detailError}</p>
+              </div>
+            ) : viewDetails.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                <ClipboardList size={28} className={`mb-3 ${isDark ? "text-gray-600" : "text-gray-300"}`} />
+                <p className={`text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`}>No application details found for this host.</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm text-left">
+                <thead className={`text-xs uppercase border-b ${isDark ? "text-gray-400 border-gray-800" : "text-gray-500 border-slate-200 bg-slate-50"}`}>
+                  <tr>
+                    <th className="px-4 py-3">#</th>
+                    <th className="px-4 py-3">Application Hash</th>
+                    <th className="px-4 py-3">Application Name</th>
+                    <th className="px-4 py-3">Application Path</th>
+                    <th className="px-4 py-3">IP Address</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {viewDetails.map((detail, index) => {
+                    const applicationHash = detail?.applicationHash ?? detail?.APPLICATION_HASH ?? "—";
+                    const applicationName = detail?.applicationName ?? detail?.APPLICATION_NAME ?? "—";
+                    const applicationPath = detail?.applicationPath ?? detail?.APPLICATION_PATH ?? "—";
+                    const ipAddress = detail?.ipAddress ?? detail?.IP_ADDRESS ?? "—";
+                    return (
+                      <tr
+                        key={`${applicationHash}-${index}`}
+                        className={`border-b last:border-b-0 ${isDark ? "border-gray-800/50 hover:bg-white/5" : "border-slate-100 hover:bg-slate-50"}`}
+                      >
+                        <td className={`px-4 py-3 ${isDark ? "text-gray-500" : "text-gray-400"}`}>{index + 1}</td>
+                        <td className={`px-4 py-3 max-w-[260px] break-all ${isDark ? "text-gray-300" : "text-gray-700"}`}>{applicationHash}</td>
+                        <td className={`px-4 py-3 font-medium max-w-[220px] break-words ${isDark ? "text-gray-200" : "text-gray-800"}`}>{applicationName}</td>
+                        <td className={`px-4 py-3 max-w-[360px] break-all ${isDark ? "text-gray-300" : "text-gray-700"}`}>{applicationPath}</td>
+                        <td className={`px-4 py-3 whitespace-nowrap ${isDark ? "text-gray-300" : "text-gray-700"}`}>{ipAddress}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
       )}
     </div>
-  )
+  );
 }
