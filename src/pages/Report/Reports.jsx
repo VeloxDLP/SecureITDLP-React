@@ -133,7 +133,7 @@ export default function ReportCenter() {
   const allowedCount = dummyRows.filter(row => row.status === "Success").length;
   const preventedCount = dummyRows.filter(row => row.status === "Blocked").length;
 
-  const handleViewReport = () => {
+  const handleViewReport = async () => {
     
     const requestData = {
       module: selectedModule,
@@ -146,8 +146,8 @@ export default function ReportCenter() {
     };
     alert(JSON.stringify(requestData));
     // alert("User section is :"+branch+" "+ device+" "+selectedModule+" "+selectedReport+" "+dateRange);
-      const ReportFetchedData = dashboardService.GetReports(requestData);
-      console.log("ReportData : "+JSON.stringify(ReportFetchedData));
+      const ReportFetchedData = await dashboardService.GetReports(requestData);
+      console.log("ReportData : ",ReportFetchedData.data);
       alert(JSON.stringify(ReportFetchedData));
     setCurrentPage(1); 
     setShowReport(true);
