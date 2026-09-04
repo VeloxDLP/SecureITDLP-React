@@ -318,6 +318,10 @@ getDrivePolicies: async () => {
     const { data } = await axiosInstance.post(API_ENDPOINTS.PRINTER_CONTROL.ADD_PRINTER_POLICY,requestData);
     return data;
   },
+
+  
+  
+
   
   //[Post APIS]//
 
@@ -363,13 +367,6 @@ getFileUploadModal: async (requestData) => {
     return data;
   },
 
-//  getFileUploadModal: async (channel) => {
-//   const { data } = await axiosInstance.post(
-//     `${API_ENDPOINTS.DASHBOARD.FILE_UPLOAD_MODAL}/${channel}`
-//   );
-
-//   return data;
-// },
 
 getClipboardModal: async (date) => {
   const { data } = await axiosInstance.post(
@@ -382,7 +379,7 @@ getClipboardModal: async (date) => {
 getPreventedApplicationData: async (date) => {
   const { data } = await axiosInstance.post(
     `${API_ENDPOINTS.DASHBOARD.PREVENTED_APPLICATIONDATA}/${date}`
-  );
+  ); 
 
   return data;
 },
@@ -395,6 +392,29 @@ getPreventedApplicationData: async (date) => {
 
     return data;
   },
+
+getApplicationPolicies: async () => {
+  const { data } = await axiosInstance.get(
+    API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_CONTROLDATA   // 👈 corrected
+  );
+  return data;
+},
+
+getApplicationCount: async (requestData) => {
+    const { data } = await axiosInstance.post(API_ENDPOINTS.APPLICATION_CONTROL.VIEW_APPLICATION_COUNT,requestData);
+    return data;
+  },
+
+getApplicationDetails: async (hostname) => {
+  const { data } = await axiosInstance.get(
+    `${API_ENDPOINTS.APPLICATION_CONTROL.VIEW_APPLICATION_DETAILS}/${encodeURIComponent(hostname)}`
+  );
+
+  return data;
+},
+
+
+
 };
 
 

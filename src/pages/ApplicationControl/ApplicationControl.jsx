@@ -1,13 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react';
 import {
   AppWindow, Plus, Eye, RotateCcw, Check, AlertTriangle,
   ShieldCheck, Trash2, Search, ChevronDown, X,
-} from 'lucide-react'
-import { useTheme } from '../../context/ThemeContext'
-import { dashboardService } from '../../services/dashboardService'
-import { alert as showAlert } from '../../components/ui/AlertModal'   // ✅ added
+} from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
+import { dashboardService } from '../../services/dashboardService';
+import { alert as showAlert } from '../../components/ui/AlertModal';
 
-// ─── Static data (mock devices fallback, initial policies) ───
+// ─── Static data (fallback) ─────────────────────────────────────
 const MOCK_DEVICES_BY_BRANCH = {
   'MUMBAI-HEAD': ['DESKTOP-6RTJ7G1', 'DESKTOP-ABC123'],
   'VASHI': ['DESKTOP-B4J2VDM'],
@@ -19,81 +19,52 @@ const MOCK_DEVICES_BY_BRANCH = {
   'KOLKATA': ['LAPTOP-8FJ2K3L'],
   'CHENNAI': ['DELL-LATITUDE'],
   'DELHI': ['WIN10-11E4M12A2'],
-}
-
-// (optional) keep for fallback but we'll not use in the form
-const MOCK_APPLICATIONS = [
-  'Chrome', 'Excel', 'Zoom', 'Slack', 'Teams', 'Outlook',
-  'Firefox', 'VSCode', 'Notepad++', 'Photoshop', 'Word',
-  'PowerPoint', 'Spotify', 'Discord', 'Telegram'
-]
+};
 
 const INITIAL_POLICIES = [
-  { id: 1, ipAddress: '192.168.1.100', branch: 'MUMBAI-HEAD', pcName: 'DESKTOP-6RTJ7G1', mode: 'Allow' },
-  { id: 2, ipAddress: '192.168.1.105', branch: 'VASHI', pcName: 'DESKTOP-B4J2VDM', mode: 'Allow' },
-  { id: 3, ipAddress: '192.168.1.110', branch: 'PUNE', pcName: 'DESKTOP-F3E8J4M', mode: 'Allow' },
-  { id: 4, ipAddress: '192.168.1.120', branch: 'AHMEDABAD', pcName: 'DESKTOP-C6DE2A4', mode: 'Allow' },
-  { id: 5, ipAddress: '192.168.1.130', branch: 'NAGPUR', pcName: 'DESKTOP-D7F3B1Q', mode: 'Allow' },
-  { id: 6, ipAddress: '192.168.1.200', branch: 'BANGALORE', pcName: 'DESKTOP-9A21L0D', mode: 'Allow' },
-  { id: 7, ipAddress: '192.168.1.101', branch: 'HYDERABAD', pcName: 'DESKTOP-V9H7K1P', mode: 'Allow' },
-  { id: 8, ipAddress: '192.168.1.107', branch: 'KOLKATA', pcName: 'LAPTOP-8FJ2K3L', mode: 'Allow' },
-  { id: 9, ipAddress: '192.168.1.108', branch: 'CHENNAI', pcName: 'DELL-LATITUDE', mode: 'Allow' },
-  { id: 10, ipAddress: '192.168.1.150', branch: 'DELHI', pcName: 'WIN10-11E4M12A2', mode: 'Allow' },
-]
+  { id: 1, ipAddress: '192.168.1.100', mode: 'Learning', date: '2026-08-20' },
+  { id: 2, ipAddress: '192.168.1.105', mode: 'Protection', date: '2026-08-21' },
+];
 
-/* ─────────────────────────────────────────────────────────────
-   CUSTOM DROPDOWN (single select)
-───────────────────────────────────────────────────────────── */
-function Dropdown({
-  value,
-  onChange,
-  options,
-  placeholder = 'Select…',
-  disabled = false,
-  searchable = false,
-  error = false,
-}) {
-  const { isDark } = useTheme()
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const containerRef = useRef(null)
+// ─── Dropdown ──────────────────────────────────────────────────
+function Dropdown({ value, onChange, options, placeholder = 'Select…', disabled = false, searchable = false, error = false }) {
+  const { isDark } = useTheme();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const containerRef = useRef(null);
 
-  const normalised = options.map(o =>
-    typeof o === 'string' ? { value: o, label: o } : o
-  )
-
+  const normalised = options.map(o => (typeof o === 'string' ? { value: o, label: o } : o));
   const filtered = searchable && query
     ? normalised.filter(o => o.label.toLowerCase().includes(query.toLowerCase()))
-    : normalised
-
-  const selected = normalised.find(o => o.value === value)
+    : normalised;
+  const selected = normalised.find(o => o.value === value);
 
   useEffect(() => {
     const handler = e => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false)
-        setQuery('')
+        setOpen(false);
+        setQuery('');
       }
-    }
-    if (open) document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
+    };
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
 
   const handleSelect = val => {
-    onChange(val)
-    setOpen(false)
-    setQuery('')
-  }
+    onChange(val);
+    setOpen(false);
+    setQuery('');
+  };
 
   const glassSurface = isDark
     ? { background: '#2a2a2a', backdropFilter: 'none', WebkitBackdropFilter: 'none' }
-    : { background: 'rgba(255,255,255,0.80)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }
+    : { background: 'rgba(255,255,255,0.80)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' };
 
   const triggerBorder = error
     ? 'border-rose-500/60'
     : open
       ? 'border-[#7094ff]/60'
-      : isDark ? 'border-white/[0.10]' : 'border-slate-300/70'
+      : isDark ? 'border-white/[0.10]' : 'border-slate-300/70';
 
   return (
     <div ref={containerRef} className="relative">
@@ -102,12 +73,9 @@ function Dropdown({
         disabled={disabled}
         onClick={() => !disabled && setOpen(!open)}
         className={`
-          w-full flex items-center justify-between gap-2
-          px-3 py-2.5 rounded-xl text-[13px] text-left
-          border transition-all duration-200 outline-none
-          disabled:opacity-40 disabled:cursor-not-allowed
-          ${triggerBorder}
-          ${open ? 'ring-2 ring-[#7094ff]/20' : ''}
+          w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-[13px] text-left
+          border transition-all duration-200 outline-none disabled:opacity-40 disabled:cursor-not-allowed
+          ${triggerBorder} ${open ? 'ring-2 ring-[#7094ff]/20' : ''}
           ${isDark ? 'text-slate-200' : 'text-slate-800'}
         `}
         style={glassSurface}
@@ -115,23 +83,12 @@ function Dropdown({
         <span className={selected ? '' : isDark ? 'text-slate-500' : 'text-slate-400'}>
           {selected ? selected.label : placeholder}
         </span>
-        <ChevronDown
-          size={14}
-          className={`flex-shrink-0 transition-transform duration-200
-                      ${open ? 'rotate-180' : ''}
-                      ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
-        />
+        <ChevronDown size={14} className={`flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''} ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
       </button>
 
       {open && (
         <div
-          className={`
-            absolute top-full left-0 right-0 mt-1.5 z-[200]
-            rounded-xl border overflow-hidden
-            shadow-[0_16px_48px_rgba(0,0,0,0.35)]
-            animate-slide-up
-            ${isDark ? 'border-white/[0.10]' : 'border-slate-200/80'}
-          `}
+          className={`absolute top-full left-0 right-0 mt-1.5 z-[200] rounded-xl border overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.35)] animate-slide-up ${isDark ? 'border-white/[0.10]' : 'border-slate-200/80'}`}
           style={{
             background: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.98)',
             backdropFilter: 'blur(32px) saturate(180%)',
@@ -147,10 +104,7 @@ function Dropdown({
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Search…"
-                  className={`w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none border transition-all duration-150
-                              ${isDark
-                      ? 'bg-[#2a2a2a] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`}
+                  className={`w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none border transition-all duration-150 ${isDark ? 'bg-[#2a2a2a] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]' : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`}
                 />
                 {query && (
                   <button onClick={() => setQuery('')} className="absolute right-2 text-slate-400 hover:text-slate-200">
@@ -160,363 +114,43 @@ function Dropdown({
               </div>
             </div>
           )}
-
           <div className="max-h-52 overflow-y-auto py-1">
             {filtered.length === 0 ? (
-              <p className={`px-4 py-3 text-[12px] text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-                No results
-              </p>
+              <p className={`px-4 py-3 text-[12px] text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>No results</p>
             ) : (
               filtered.map(o => {
-                const isSelected = o.value === value
+                const isSelected = o.value === value;
                 return (
                   <button
                     key={o.value}
                     type="button"
                     onClick={() => handleSelect(o.value)}
-                    className={`
-                      w-full text-left px-4 py-2.5 text-[13px]
-                      flex items-center justify-between gap-2
-                      transition-colors duration-100
-                      ${isSelected
-                        ? 'text-[#7094ff] bg-[#7094ff]/10'
-                        : isDark
-                          ? 'text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]'
-                          : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'}
-                    `}
+                    className={`w-full text-left px-4 py-2.5 text-[13px] flex items-center justify-between gap-2 transition-colors duration-100 ${isSelected ? 'text-[#7094ff] bg-[#7094ff]/10' : isDark ? 'text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]' : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'}`}
                   >
                     {o.label}
                     {isSelected && <Check size={13} className="text-[#7094ff] flex-shrink-0" />}
                   </button>
-                )
+                );
               })
             )}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   MULTI‑SELECT DROPDOWN (for applications – kept for reference)
-───────────────────────────────────────────────────────────── */
-function MultiSelectDropdown({
-  values = [],
-  onChange,
-  options = [],
-  placeholder = 'Select...',
-  disabled = false,
-  searchable = false,
-  error = false,
-}) {
-  const { isDark } = useTheme()
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const containerRef = useRef(null)
-
-  const normalized = options.map(o =>
-    typeof o === 'string' ? { value: o, label: o } : o
-  )
-
-  const filtered = searchable && query
-    ? normalized.filter(o =>
-        o.label.toLowerCase().includes(query.toLowerCase())
-      )
-    : normalized
-
-  useEffect(() => {
-    const handler = e => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false)
-        setQuery('')
-      }
-    }
-    if (open) document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  const toggleValue = val => {
-    if (values.includes(val)) {
-      onChange(values.filter(v => v !== val))
-    } else {
-      onChange([...values, val])
-    }
-  }
-
-  const removeValue = val => {
-    onChange(values.filter(v => v !== val))
-  }
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => !disabled && setOpen(!open)}
-        className={`
-          w-full min-h-[44px]
-          px-3 py-2
-          rounded-xl border
-
-          flex items-center
-          justify-between
-          gap-2
-
-          transition-all duration-200
-
-          ${
-            error
-              ? 'border-rose-500/60'
-              : open
-                ? 'border-[#7094ff]/60 ring-2 ring-[#7094ff]/20'
-                : isDark
-                  ? 'border-white/[0.08]'
-                  : 'border-slate-200'
-          }
-
-          ${
-            disabled
-              ? 'opacity-50 cursor-not-allowed'
-              : ''
-          }
-
-          ${
-            isDark
-              ? `
-                bg-[#2a2a2a]
-                text-[#d0d0d0]
-              `
-              : `
-                bg-white/80
-                text-slate-700
-                backdrop-blur-xl
-              `
-          }
-        `}
-      >
-        <div className="flex flex-wrap gap-1 flex-1 text-left">
-          {values.length === 0 ? (
-            <span className={isDark ? 'text-[#666]' : 'text-slate-400'}>
-              {placeholder}
-            </span>
-          ) : (
-            values.map(v => {
-              const option = normalized.find(o => o.value === v)
-              return (
-                <span
-                  key={v}
-                  className="
-                    inline-flex items-center gap-1
-                    px-2 py-0.5 rounded-md
-                    text-[11px]
-
-                    bg-[#7094ff]/12
-                    text-[#7094ff]
-                    border border-[#7094ff]/20
-                  "
-                >
-                  {option?.label}
-                  <button
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation()
-                      removeValue(v)
-                    }}
-                  >
-                    <X size={10} />
-                  </button>
-                </span>
-              )
-            })
-          )}
-        </div>
-        <ChevronDown
-          size={14}
-          className={`
-            flex-shrink-0
-            transition-transform duration-200
-
-            ${open ? 'rotate-180' : ''}
-
-            ${
-              isDark
-                ? 'text-[#666]'
-                : 'text-slate-400'
-            }
-          `}
-        />
-      </button>
-
-      {open && (
-        <div
-          className={`
-            absolute top-full left-0 right-0
-            mt-1.5 z-[200]
-
-            rounded-xl overflow-hidden
-            border
-
-            shadow-[0_16px_48px_rgba(0,0,0,0.35)]
-
-            ${
-              isDark
-                ? `
-                  bg-[#2a2a2a]
-                  border-white/[0.08]
-                `
-                : `
-                  bg-white/95
-                  border-slate-200
-                  backdrop-blur-2xl
-                `
-            }
-          `}
-        >
-          {searchable && (
-            <div
-              className={`
-                p-2 border-b
-
-                ${
-                  isDark
-                    ? 'border-white/[0.06]'
-                    : 'border-slate-100'
-                }
-              `}
-            >
-              <div className="relative">
-                <Search
-                  size={12}
-                  className={`
-                    absolute left-2.5 top-1/2
-                    -translate-y-1/2
-
-                    ${
-                      isDark
-                        ? 'text-[#666]'
-                        : 'text-slate-400'
-                    }
-                  `}
-                />
-                <input
-                  autoFocus
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  placeholder="Search..."
-                  className={`
-                    w-full pl-7 pr-3 py-2
-                    rounded-lg outline-none
-                    text-[12px] border
-
-                    ${
-                      isDark
-                        ? `
-                          bg-[#242424]
-                          border-white/[0.07]
-                          text-[#d0d0d0]
-                          placeholder-[#555]
-                        `
-                        : `
-                          bg-slate-50
-                          border-slate-200
-                          text-slate-700
-                          placeholder-slate-400
-                        `
-                    }
-                  `}
-                />
-              </div>
-            </div>
-          )}
-          <div className="max-h-56 overflow-y-auto py-1">
-            {filtered.length === 0 ? (
-              <p
-                className={`
-                  px-4 py-3 text-center text-[12px]
-
-                  ${
-                    isDark
-                      ? 'text-[#666]'
-                      : 'text-slate-400'
-                  }
-                `}
-              >
-                No results found
-              </p>
-            ) : (
-              filtered.map(o => {
-                const selected = values.includes(o.value)
-                return (
-                  <button
-                    key={o.value}
-                    type="button"
-                    onClick={() => toggleValue(o.value)}
-                    className={`
-                      w-full px-4 py-2.5
-                      flex items-center justify-between
-                      text-left
-                      transition-colors duration-150
-
-                      ${
-                        selected
-                          ? `
-                            bg-[#7094ff]/10
-                            text-[#7094ff]
-                          `
-                          : isDark
-                            ? `
-                              text-[#c0c0c0]
-                              hover:bg-white/[0.04]
-                            `
-                            : `
-                              text-slate-700
-                              hover:bg-slate-100/80
-                            `
-                      }
-                    `}
-                  >
-                    <span className="text-[12px]">
-                      {o.label}
-                    </span>
-                    {selected && (
-                      <Check
-                        size={13}
-                        className="text-[#7094ff]"
-                      />
-                    )}
-                  </button>
-                )
-              })
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-/* ─────────────────────────────────────────────────────────────
-   GLASS BUTTON
-───────────────────────────────────────────────────────────── */
-function GlassButton({
-  children, onClick, variant = 'default',
-  className = '', disabled = false, type = 'button',
-}) {
-  const { isDark } = useTheme()
-
+// ─── GlassButton ──────────────────────────────────────────────
+function GlassButton({ children, onClick, variant = 'default', className = '', disabled = false, type = 'button' }) {
+  const { isDark } = useTheme();
   const variants = {
     default: {
-      className: isDark
-        ? 'text-slate-300 hover:text-white border-white/[0.10] hover:border-white/[0.20]'
-        : 'text-slate-600 hover:text-slate-900 border-slate-300/70 hover:border-slate-400/60',
+      className: isDark ? 'text-slate-300 hover:text-white border-white/[0.10] hover:border-white/[0.20]' : 'text-slate-600 hover:text-slate-900 border-slate-300/70 hover:border-slate-400/60',
       style: {
         background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.65)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        boxShadow: isDark
-          ? 'inset 0 1px 0 rgba(255,255,255,0.06)'
-          : '0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
+        boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,0.06)' : '0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
       },
     },
     primary: {
@@ -547,15 +181,11 @@ function GlassButton({
       },
     },
     tab_inactive: {
-      className: isDark
-        ? 'text-slate-400 hover:text-slate-100 border-transparent hover:border-white/[0.08]'
-        : 'text-slate-500 hover:text-slate-800 border-transparent hover:border-slate-300/50',
+      className: isDark ? 'text-slate-400 hover:text-slate-100 border-transparent hover:border-white/[0.08]' : 'text-slate-500 hover:text-slate-800 border-transparent hover:border-slate-300/50',
       style: { background: 'transparent', backdropFilter: 'none' },
     },
     chip_allow: {
-      className: isDark
-        ? 'text-emerald-400 border-emerald-500/25'
-        : 'text-emerald-600 border-emerald-300/60',
+      className: isDark ? 'text-emerald-400 border-emerald-500/25' : 'text-emerald-600 border-emerald-300/60',
       style: {
         background: isDark ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.72)',
         backdropFilter: 'blur(12px)',
@@ -564,9 +194,7 @@ function GlassButton({
       },
     },
     chip_prevent: {
-      className: isDark
-        ? 'text-rose-400 border-rose-500/25'
-        : 'text-rose-600 border-rose-300/60',
+      className: isDark ? 'text-rose-400 border-rose-500/25' : 'text-rose-600 border-rose-300/60',
       style: {
         background: isDark ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.72)',
         backdropFilter: 'blur(12px)',
@@ -574,52 +202,39 @@ function GlassButton({
         boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
       },
     },
-  }
-
-  const v = variants[variant] || variants.default
-
+  };
+  const v = variants[variant] || variants.default;
   return (
     <button
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className={`
-        flex items-center gap-2 rounded-xl border
-        text-[13px] font-medium
-        transition-all duration-200
-        disabled:opacity-40 disabled:cursor-not-allowed
-        ${v.className} ${className}
-      `}
+      className={`flex items-center gap-2 rounded-xl border text-[13px] font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${v.className} ${className}`}
       style={v.style}
     >
       {children}
     </button>
-  )
+  );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   BADGE
-───────────────────────────────────────────────────────────── */
+// ─── Badge (case‑insensitive) ─────────────────────────────────
 function Badge({ mode }) {
-  const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border'
-  if (mode === 'Allow')
-    return (
-      <span className={`${base} bg-emerald-500/10 text-emerald-500 border-emerald-500/20`}>
-        <Check size={10} /> Allow
-      </span>
-    )
-  return (
-    <span className={`${base} bg-rose-500/10 text-rose-500 border-rose-500/20`}>
-      <AlertTriangle size={10} /> Prevent
+  const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border';
+  const isAllowed = ['allow', 'learning'].includes(mode?.toLowerCase());
+  return isAllowed ? (
+    <span className={`${base} bg-emerald-500/10 text-emerald-500 border-emerald-500/20`}>
+      <Check size={10} /> {mode}
     </span>
-  )
+  ) : (
+    <span className={`${base} bg-rose-500/10 text-rose-500 border-rose-500/20`}>
+      <AlertTriangle size={10} /> {mode}
+    </span>
+  );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   GLASS CARD
-───────────────────────────────────────────────────────────── */
+// ─── GlassCard ──────────────────────────────────────────────────
 function GlassCard({ children, className = '' }) {
-  const { isDark } = useTheme()
+  const { isDark } = useTheme();
   return (
     <div
       className={`rounded-2xl border ${className}`}
@@ -628,72 +243,57 @@ function GlassCard({ children, className = '' }) {
         backdropFilter: isDark ? 'none' : 'blur(24px)',
         WebkitBackdropFilter: isDark ? 'none' : 'blur(24px)',
         borderColor: isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0',
-        boxShadow: isDark
-          ? '0 4px 24px rgba(0,0,0,0.5)'
-          : '0 2px 16px rgba(0,0,0,0.08)',
+        boxShadow: isDark ? '0 4px 24px rgba(0,0,0,0.5)' : '0 2px 16px rgba(0,0,0,0.08)',
       }}
     >
       {children}
     </div>
-  )
+  );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   ADD FORM – with success/error alerts like Printer Control
-───────────────────────────────────────────────────────────── */
+// ─── Add Form ──────────────────────────────────────────────────
 function AddForm({ branches, onAdd }) {
-  const { isDark } = useTheme()
-  const [form, setForm] = useState({ branch: '', device: '', mode: '' })
-  const [submitted, setSubmitted] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [fetchedDevices, setFetchedDevices] = useState([])
+  const { isDark } = useTheme();
+  const [form, setForm] = useState({ branch: '', device: '', mode: '' });
+  const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fetchedDevices, setFetchedDevices] = useState([]);
 
-  const branchOptions = branches.map(b => ({ value: b, label: b }))
-  const deviceOptions = fetchedDevices.map(d => ({ value: d, label: d }))
+  const branchOptions = branches.map(b => ({ value: b, label: b }));
+  const deviceOptions = fetchedDevices.map(d => ({ value: d, label: d }));
   const modeOptions = [
-    { value: 'learning', label: 'learning' },
+    { value: 'Learning', label: 'Learning' },
     { value: 'Protection', label: 'Protection' },
-  ]
+  ];
 
-  const isValid = form.branch && form.device && form.mode
+  const isValid = form.branch && form.device && form.mode;
 
   const handleBranchChange = async (branch) => {
-    setForm(f => ({ ...f, branch, device: '' }))
-    setFetchedDevices([])
-
+    setForm(f => ({ ...f, branch, device: '' }));
+    setFetchedDevices([]);
     try {
-      const response = await dashboardService.getDevicesByBranch(branch)
+      const response = await dashboardService.getDevicesByBranch(branch);
       if (response?.data && Array.isArray(response.data)) {
-        setFetchedDevices(response.data)
+        setFetchedDevices(response.data);
       } else {
-        const fallback = MOCK_DEVICES_BY_BRANCH[branch] || []
-        setFetchedDevices(fallback)
+        setFetchedDevices(MOCK_DEVICES_BY_BRANCH[branch] || []);
       }
     } catch (error) {
-      console.error('Failed to load devices:', error)
-      const fallback = MOCK_DEVICES_BY_BRANCH[branch] || []
-      setFetchedDevices(fallback)
+      console.error('Failed to load devices:', error);
+      setFetchedDevices(MOCK_DEVICES_BY_BRANCH[branch] || []);
     }
-  }
+  };
 
   const handleSubmit = async () => {
-    setSubmitted(true)
-    if (!isValid) return
-
-    setIsSubmitting(true)
-
-    const requestData = {
-      branch: form.branch,
-      device: form.device,
-      mode: form.mode,
-    }
-
+    setSubmitted(true);
+    if (!isValid) return;
+    setIsSubmitting(true);
     try {
-      // Replace with your actual API endpoint
-      const response = await dashboardService.addApplicationPolicy(requestData)
-      console.log('Application policy response:', response)
-
-      // Check for success – adjust based on your API response structure
+      const response = await dashboardService.addApplicationPolicy({
+        branch: form.branch,
+        device: form.device,
+        mode: form.mode,
+      });
       if (response?.data === 'SUCCESS' || response?.success === true) {
         await showAlert({
           icon: 'success',
@@ -702,116 +302,62 @@ function AddForm({ branches, onAdd }) {
           timer: 2500,
           timerProgressBar: true,
           showConfirmButton: true,
-        })
-
-        // Add the new policy to the local list and switch to view tab
+        });
         onAdd({
           ipAddress: '192.168.1.' + (Math.floor(Math.random() * 200) + 1),
-          branch: form.branch,
-          pcName: form.device,
           mode: form.mode,
-        })
-
-        setSubmitted(false)
-        setForm({ branch: '', device: '', mode: '' })
-        setFetchedDevices([])
+          date: new Date().toISOString().slice(0, 10),
+        });
+        setSubmitted(false);
+        setForm({ branch: '', device: '', mode: '' });
+        setFetchedDevices([]);
       } else {
-        // API returned error
         await showAlert({
           icon: 'error',
           title: 'Policy Failed',
-          text: response?.message || 'Failed to save application policy.',
+          text: response?.message || 'Failed to save policy.',
           confirmButtonText: 'Try Again',
-        })
+        });
       }
     } catch (error) {
-      console.error('Error saving application policy:', error)
+      console.error('Error saving policy:', error);
       await showAlert({
         icon: 'error',
         title: 'Policy Failed',
-        text: error?.message || 'An error occurred while saving the policy.',
+        text: error?.message || 'An error occurred.',
         confirmButtonText: 'Try Again',
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5
-                    ${isDark ? 'text-slate-500' : 'text-slate-400'}`
+  const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`;
 
   return (
-    <GlassCard className="p-6 mb-5">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-        {/* Branch */}
+    <GlassCard className="p-6 mb-50">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
         <div>
-          <label className={labelCls}>
-            Branch Name <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
-          <Dropdown
-            value={form.branch}
-            onChange={handleBranchChange}
-            options={branchOptions}
-            placeholder="Select Branch"
-            searchable
-            error={submitted && !form.branch}
-          />
+          <label className={labelCls}>Branch Name <span className="text-rose-500 normal-case tracking-normal">*</span></label>
+          <Dropdown value={form.branch} onChange={handleBranchChange} options={branchOptions} placeholder="Select Branch" searchable error={submitted && !form.branch} />
           {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
-
-        {/* Device */}
         <div>
-          <label className={labelCls}>
-            Device Name <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
-          <Dropdown
-            value={form.device}
-            onChange={val => setForm(f => ({ ...f, device: val }))}
-            options={deviceOptions}
-            placeholder={form.branch ? 'Select Device' : 'Select branch first'}
-            disabled={!form.branch}
-            error={submitted && !form.device}
-          />
+          <label className={labelCls}>Device Name <span className="text-rose-500 normal-case tracking-normal">*</span></label>
+          <Dropdown value={form.device} onChange={val => setForm(f => ({ ...f, device: val }))} options={deviceOptions} placeholder={form.branch ? 'Select Device' : 'Select branch first'} disabled={!form.branch} error={submitted && !form.device} />
           {submitted && !form.device && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
-
-        {/* Mode */}
         <div>
-          <label className={labelCls}>
-             Set Mode <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
-          <Dropdown
-            value={form.mode}
-            onChange={val => setForm(f => ({ ...f, mode: val }))}
-            options={modeOptions}
-            placeholder="Select Mode"
-            error={submitted && !form.mode}
-          />
+          <label className={labelCls}>Set Mode <span className="text-rose-500 normal-case tracking-normal">*</span></label>
+          <Dropdown value={form.mode} onChange={val => setForm(f => ({ ...f, mode: val }))} options={modeOptions} placeholder="Select Mode" error={submitted && !form.mode} />
           {submitted && !form.mode && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
       </div>
-
-      {/* Actions */}
       <div className="flex items-center justify-end gap-3">
-        <GlassButton
-          onClick={() => {
-            setForm({ branch: '', device: '', mode: '' })
-            setSubmitted(false)
-            setFetchedDevices([])
-          }}
-          variant="default"
-          className="px-4 py-2"
-          disabled={isSubmitting}
-        >
+        <GlassButton onClick={() => { setForm({ branch: '', device: '', mode: '' }); setSubmitted(false); setFetchedDevices([]); }} variant="default" className="px-4 py-2" disabled={isSubmitting}>
           <RotateCcw size={13} /> Reset
         </GlassButton>
-
-        <GlassButton
-          onClick={handleSubmit}
-          variant="primary"
-          className="px-5 py-2 font-semibold"
-          disabled={isSubmitting}
-        >
+        <GlassButton onClick={handleSubmit} variant="primary" className="px-5 py-2 font-semibold" disabled={isSubmitting}>
           {isSubmitting ? (
             <span className="flex items-center gap-2">
               <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -826,202 +372,135 @@ function AddForm({ branches, onAdd }) {
         </GlassButton>
       </div>
     </GlassCard>
-  )
+  );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   POLICY TABLE – scrollable + paginated
-───────────────────────────────────────────────────────────── */
-function PolicyTable({ policies, onDelete }) {
-  const { isDark } = useTheme()
-  const [search, setSearch] = useState('')
-  const [filterMode, setFilterMode] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 5
+// ─── Policy Table ──────────────────────────────────────────────
+function PolicyTable({ policies, onDelete, loading = false }) {
+  const { isDark } = useTheme();
+  const [search, setSearch] = useState('');
+  const [filterMode, setFilterMode] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
 
+  // 🔥 FIX: case‑insensitive filter
   const filtered = policies.filter(p => {
-    const q = search.toLowerCase()
+    const q = search.toLowerCase();
     return (
-      (!q || p.branch?.toLowerCase().includes(q) || p.ipAddress?.toLowerCase().includes(q) || p.pcName?.toLowerCase().includes(q)) &&
-      (!filterMode || p.mode === filterMode)
-    )
-  })
+      (!q || p.ipAddress?.toLowerCase().includes(q) || p.mode?.toLowerCase().includes(q)) &&
+      (!filterMode || p.mode?.toLowerCase() === filterMode.toLowerCase())
+    );
+  });
 
-  const totalEntries = filtered.length
-  const totalPages = Math.ceil(totalEntries / pageSize)
-  const startIndex = (currentPage - 1) * pageSize
-  const endIndex = Math.min(startIndex + pageSize, totalEntries)
-  const currentEntries = filtered.slice(startIndex, endIndex)
+  const totalEntries = filtered.length;
+  const totalPages = Math.ceil(totalEntries / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalEntries);
+  const currentEntries = filtered.slice(startIndex, endIndex);
 
   useEffect(() => {
-    setCurrentPage(1)
-  }, [search, filterMode])
+    setCurrentPage(1);
+  }, [search, filterMode]);
 
   const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) setCurrentPage(page)
-  }
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
 
-  const thCls = `text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3
-                 ${isDark ? 'text-slate-500 border-b border-white/[0.06]' : 'text-slate-400 border-b border-slate-100'}`
-  const tdCls = `px-4 py-3 text-[12px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`
-
+  const thCls = `text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3 ${isDark ? 'text-slate-500 border-b border-white/[0.06]' : 'text-slate-400 border-b border-slate-100'}`;
+  const tdCls = `px-4 py-3 text-[12px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`;
   const filterOptions = [
     { value: '', label: 'All Modes' },
     { value: 'Learning', label: 'Learning' },
     { value: 'Protection', label: 'Protection' },
-  ]
+  ];
+
+  if (loading) {
+    return (
+      <GlassCard className="overflow-hidden">
+        <div className="py-16 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7094ff] mx-auto" />
+          <p className={`mt-3 text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Loading policies...</p>
+        </div>
+      </GlassCard>
+    );
+  }
 
   return (
     <GlassCard className="overflow-hidden">
-      {/* Toolbar */}
-      <div className={`flex items-center justify-between gap-3 px-5 py-4 border-b
-                       ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
+      <div className={`flex items-center justify-between gap-3 px-5 py-4 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
         <div className="flex items-center gap-2">
           <ShieldCheck size={15} className="text-[#7094ff]" />
-          <span className={`text-[13px] font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-            View Mode
-          </span>
-          <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold
-                           bg-[#7094ff]/15 text-[#7094ff] border border-[#7094ff]/20">
-            {totalEntries}
-          </span>
+          <span className={`text-[13px] font-semibold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>View Mode</span>
+          <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7094ff]/15 text-[#7094ff] border border-[#7094ff]/20">{totalEntries}</span>
         </div>
-
         <div className="flex items-center gap-2">
-          <div
-            className={`relative flex items-center rounded-xl border text-[12px]
-                        ${isDark ? 'border-white/[0.08]' : 'border-slate-200/80'}`}
-            style={{
-              background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.72)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-            }}
-          >
+          <div className={`relative flex items-center rounded-xl border text-[12px] ${isDark ? 'border-white/[0.08]' : 'border-slate-200/80'}`} style={{ background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.72)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
             <Search size={12} className={`absolute left-2.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search..."
-              className={`bg-transparent pl-7 pr-3 py-1.5 outline-none w-36
-                          ${isDark ? 'text-slate-300 placeholder-slate-600' : 'text-slate-700 placeholder-slate-400'}`}
-            />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className={`bg-transparent pl-7 pr-3 py-1.5 outline-none w-36 ${isDark ? 'text-slate-300 placeholder-slate-600' : 'text-slate-700 placeholder-slate-400'}`} />
           </div>
-
           <div className="w-36">
-            <Dropdown
-              value={filterMode}
-              onChange={setFilterMode}
-              options={filterOptions}
-              placeholder="All Modes"
-            />
+            <Dropdown value={filterMode} onChange={setFilterMode} options={filterOptions} placeholder="All Modes" />
           </div>
         </div>
       </div>
 
-      {/* Table */}
       <div className="overflow-y-auto max-h-[400px]">
         {currentEntries.length === 0 ? (
-          <div className={`py-16 text-center text-[13px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-            No application policies found.
-          </div>
+          <div className={`py-16 text-center text-[13px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>No application policies found.</div>
         ) : (
           <table className="w-full">
             <thead className={`sticky top-0 z-10 ${isDark ? 'bg-[#020617]' : 'bg-white/95'}`}>
               <tr>
                 <th className={thCls}>SR. NO.</th>
                 <th className={thCls}>IP ADDRESS</th>
-                <th className={thCls}>BRANCH NAME</th>
-                <th className={thCls}>PC NAME</th>
-                <th className={thCls}>MODE TYPE</th>
+                <th className={thCls}>MODE</th>
+                <th className={thCls}>DATE</th>
                 <th className={`${thCls} text-right`}>Action</th>
               </tr>
             </thead>
             <tbody>
               {currentEntries.map((p, i) => {
-                const globalIndex = startIndex + i + 1
+                const globalIndex = startIndex + i + 1;
                 return (
-                  <tr
-                    key={p.id}
-                    className={`border-b last:border-b-0 transition-colors duration-150
-                                ${isDark
-                        ? 'border-white/[0.04] hover:bg-[#2e2e2e]'
-                        : 'border-slate-50 hover:bg-slate-50/60'}`}
-                  >
+                  <tr key={p.id} className={`border-b last:border-b-0 transition-colors duration-150 ${isDark ? 'border-white/[0.04] hover:bg-[#2e2e2e]' : 'border-slate-50 hover:bg-slate-50/60'}`}>
                     <td className={`${tdCls} text-[11px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{globalIndex}</td>
-                    <td className={`${tdCls} font-mono text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {p.ipAddress}
-                    </td>
-                    <td className={tdCls}>{p.branch}</td>
-                    <td className={tdCls}>{p.pcName}</td>
+                    <td className={`${tdCls} font-mono text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{p.ipAddress}</td>
                     <td className={tdCls}><Badge mode={p.mode} /></td>
+                    <td className={`${tdCls} ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{p.date || '—'}</td>
                     <td className={`${tdCls} text-right`}>
-                      <button
-                        onClick={() => onDelete(p.id)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center ml-auto
-                                   text-slate-400 hover:text-rose-500 hover:bg-rose-500/10
-                                   transition-all duration-150"
-                      >
+                      <button onClick={() => onDelete(p.id)} className="w-7 h-7 rounded-lg flex items-center justify-center ml-auto text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all duration-150">
                         <Trash2 size={13} />
                       </button>
                     </td>
                   </tr>
-                )
+                );
               })}
             </tbody>
           </table>
         )}
       </div>
 
-      {/* Pagination */}
       {totalEntries > 0 && (
-        <div className={`flex items-center justify-between px-5 py-3 border-t
-                         ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
-          <span className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-            Showing {startIndex + 1} to {endIndex} of {totalEntries} entries
-          </span>
+        <div className={`flex items-center justify-between px-5 py-3 border-t ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
+          <span className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Showing {startIndex + 1} to {endIndex} of {totalEntries} entries</span>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className={`px-3 py-1 rounded-lg text-[11px] font-medium border transition
-                          ${isDark
-                    ? 'border-white/[0.08] text-slate-400 hover:text-white hover:border-white/[0.15] disabled:opacity-40 disabled:hover:border-white/[0.08]'
-                    : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 disabled:opacity-40'
-                }`}
-            >
-              Previous
-            </button>
-            <span className={`text-[11px] px-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              {currentPage} / {totalPages}
-            </span>
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className={`px-3 py-1 rounded-lg text-[11px] font-medium border transition
-                          ${isDark
-                    ? 'border-white/[0.08] text-slate-400 hover:text-white hover:border-white/[0.15] disabled:opacity-40 disabled:hover:border-white/[0.08]'
-                    : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 disabled:opacity-40'
-                }`}
-            >
-              Next
-            </button>
+            <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className={`px-3 py-1 rounded-lg text-[11px] font-medium border transition ${isDark ? 'border-white/[0.08] text-slate-400 hover:text-white hover:border-white/[0.15] disabled:opacity-40 disabled:hover:border-white/[0.08]' : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 disabled:opacity-40'}`}>Previous</button>
+            <span className={`text-[11px] px-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{currentPage} / {totalPages}</span>
+            <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className={`px-3 py-1 rounded-lg text-[11px] font-medium border transition ${isDark ? 'border-white/[0.08] text-slate-400 hover:text-white hover:border-white/[0.15] disabled:opacity-40 disabled:hover:border-white/[0.08]' : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 disabled:opacity-40'}`}>Next</button>
           </div>
         </div>
       )}
     </GlassCard>
-  )
+  );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   TAB BAR
-───────────────────────────────────────────────────────────── */
+// ─── Tab Bar ────────────────────────────────────────────────────
 function TabBar({ active, onChange }) {
-  const { isDark } = useTheme()
+  const { isDark } = useTheme();
   const tabs = [
     { id: 'add', label: 'Set Mode', icon: Plus },
     { id: 'view', label: 'View Mode', icon: Eye },
-  ]
-
+  ];
   return (
     <div
       className="inline-flex items-center gap-1.5 rounded-2xl p-1.5 mb-6 border"
@@ -1030,114 +509,130 @@ function TabBar({ active, onChange }) {
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(203,213,225,0.70)',
-        boxShadow: isDark
-          ? '0 4px 16px rgba(0,0,0,0.40)'
-          : '0 4px 16px rgba(148,163,184,0.15)',
+        boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.40)' : '0 4px 16px rgba(148,163,184,0.15)',
       }}
     >
       {tabs.map(t => {
-        const Icon = t.icon
-        const isActive = active === t.id
+        const Icon = t.icon;
+        const isActive = active === t.id;
         return (
-          <GlassButton
-            key={t.id}
-            onClick={() => onChange(t.id)}
-            variant={isActive ? 'tab_active' : 'tab_inactive'}
-            className="px-5 py-2.5 font-semibold"
-          >
-            <Icon size={14} />
-            {t.label}
+          <GlassButton key={t.id} onClick={() => onChange(t.id)} variant={isActive ? 'tab_active' : 'tab_inactive'} className="px-5 py-2.5 font-semibold">
+            <Icon size={14} /> {t.label}
           </GlassButton>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   MAIN PAGE
-───────────────────────────────────────────────────────────── */
+// ─── MAIN COMPONENT ────────────────────────────────────────────
 export default function ApplicationControl() {
-  const { isDark } = useTheme()
-  const [tab, setTab] = useState('add')
-  const [policies, setPolicies] = useState(INITIAL_POLICIES)
-  const [branches, setBranches] = useState([])
+  const { isDark } = useTheme();
+  const [tab, setTab] = useState('add');
+  const [policies, setPolicies] = useState([]);
+  const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(false);
 
+  // ─── Load branches ─────────────────────────────────────────────
   useEffect(() => {
     const loadBranches = async () => {
       try {
-        const response = await dashboardService.getBranch()
-        if (response?.data && Array.isArray(response.data)) {
-          setBranches(response.data)
-        } else {
-          setBranches(['MUMBAI-HEAD', 'VASHI', 'PUNE', 'AHMEDABAD', 'NAGPUR', 'BANGALORE', 'HYDERABAD', 'KOLKATA', 'CHENNAI', 'DELHI'])
-        }
+        const response = await dashboardService.getBranch();
+        setBranches(Array.isArray(response?.data) ? response.data : ['MUMBAI-HEAD', 'VASHI', 'PUNE', 'AHMEDABAD', 'NAGPUR', 'BANGALORE', 'HYDERABAD', 'KOLKATA', 'CHENNAI', 'DELHI']);
       } catch (error) {
-        console.error('Failed to load branches:', error)
-        setBranches(['MUMBAI-HEAD', 'VASHI', 'PUNE', 'AHMEDABAD', 'NAGPUR', 'BANGALORE', 'HYDERABAD', 'KOLKATA', 'CHENNAI', 'DELHI'])
+        console.error('Failed to load branches:', error);
+        setBranches(['MUMBAI-HEAD', 'VASHI', 'PUNE', 'AHMEDABAD', 'NAGPUR', 'BANGALORE', 'HYDERABAD', 'KOLKATA', 'CHENNAI', 'DELHI']);
       }
-    }
-    loadBranches()
-  }, [])
+    };
+    loadBranches();
+  }, []);
 
+  // ─── Fetch policies ───────────────────────────────────────────
+  const fetchPolicies = async () => {
+    setLoading(true);
+    try {
+      const response = await dashboardService.getApplicationPolicies();
+      console.log('📦 Raw API response:', response);
+
+      let rawData = null;
+      if (Array.isArray(response)) rawData = response;
+      else if (response?.data && Array.isArray(response.data)) rawData = response.data;
+      else if (response?.policies && Array.isArray(response.policies)) rawData = response.policies;
+      else if (response?.result && Array.isArray(response.result)) rawData = response.result;
+
+      if (Array.isArray(rawData) && rawData.length > 0) {
+        // 🔥 Map fields & convert "learning" → "Learning"
+        const mapped = rawData.map((item, index) => ({
+          id: item.id || index + 1,
+          ipAddress: item.ipAddress || 'N/A',
+          mode: item.stateValue
+            ? item.stateValue.charAt(0).toUpperCase() + item.stateValue.slice(1)
+            : item.mode || 'Unknown',
+          date: item.cdate || item.date || '—',
+        }));
+        setPolicies(mapped);
+      } else {
+        console.warn('No array found in response, using fallback');
+        setPolicies(INITIAL_POLICIES);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load policies:', error);
+      setPolicies(INITIAL_POLICIES);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── Fetch on mount ───────────────────────────────────────────
+  useEffect(() => {
+    fetchPolicies();
+  }, []);
+
+  // ─── Refetch when switching to View tab ──────────────────────
+  useEffect(() => {
+    if (tab === 'view') {
+      fetchPolicies();
+    }
+  }, [tab]);
+
+  // ─── Add new policy (local) ──────────────────────────────────
   const handleAdd = (newPolicy) => {
-    const newId = Math.max(...policies.map(p => p.id), 0) + 1
+    const newId = Math.max(...policies.map(p => p.id), 0) + 1;
     setPolicies(prev => [
       ...prev,
       {
         id: newId,
         ipAddress: newPolicy.ipAddress || '192.168.1.99',
-        branch: newPolicy.branch,
-        pcName: newPolicy.pcName,
-        mode: newPolicy.mode,
+        mode: newPolicy.mode || 'Learning',
+        date: newPolicy.date || new Date().toISOString().slice(0, 10),
       }
-    ])
-    setTab('view') // switch to view tab after adding
-  }
+    ]);
+    setTab('view');
+  };
 
   const handleDelete = (id) => {
-    setPolicies(prev => prev.filter(p => p.id !== id))
-  }
+    setPolicies(prev => prev.filter(p => p.id !== id));
+  };
 
   return (
     <div className="w-full">
       <br />
       <div className="flex items-start justify-between mb-7">
         <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center"
-            style={{
-              background: 'rgba(112,148,255,0.15)',
-              border: '1px solid rgba(112,148,255,0.25)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-            }}
-          >
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(112,148,255,0.15)', border: '1px solid rgba(112,148,255,0.25)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
             <AppWindow size={18} className="text-[#7094ff]" />
           </div>
           <div>
-            <h2 className={`font-display font-bold text-lg leading-tight
-                            ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
-              Application Control
-            </h2>
-            <p className={`text-[11px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-              Manage application access policies across endpoints
-            </p>
+            <h2 className={`font-display font-bold text-lg leading-tight ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>Application Control</h2>
+            <p className={`text-[11px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Manage application access policies across endpoints</p>
           </div>
         </div>
       </div>
 
       <TabBar active={tab} onChange={setTab} />
 
-      {tab === 'add' && (
-        <AddForm
-          branches={branches}
-          onAdd={handleAdd}
-        />
-      )}
-      {tab === 'view' && (
-        <PolicyTable policies={policies} onDelete={handleDelete} />
-      )}
+      {tab === 'add' && <AddForm branches={branches} onAdd={handleAdd} />}
+      {tab === 'view' && <PolicyTable policies={policies} onDelete={handleDelete} loading={loading} />}
     </div>
-  )
+  );
 }
