@@ -22,9 +22,9 @@ const eventTypeColor = (eventType) => {
 
 export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
   // Modal transition states
-  const [isOpen, setIsOpen] = useState(false);          // controls visibility (enter/exit)
-  const [isMounted, setIsMounted] = useState(false);    // whether modal is in DOM
-  const [isClosing, setIsClosing] = useState(false);    // flag for exit animation
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   const [selectedType, setSelectedType] = useState("");
   const [search, setSearch] = useState("");
@@ -32,6 +32,9 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [modalData, setModalData] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Tooltip state
+  const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, content: "" });
 
   // Lock body scroll when modal is visible
   useEffect(() => {
@@ -57,7 +60,7 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
     setSearch("");
     setCurrentPage(1);
     setLoading(true);
-    setIsMounted(true); // mount the DOM
+    setIsMounted(true);
 
     try {
       const response = await dashboardService.getIncidentByFileTypeModal(item.type);
@@ -83,7 +86,6 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
       setModalData([]);
     } finally {
       setLoading(false);
-      // Trigger enter animation after mount (next frame)
       requestAnimationFrame(() => setIsOpen(true));
     }
   };
@@ -92,7 +94,7 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
   const closeModal = () => {
     if (!isOpen) return;
     setIsClosing(true);
-    setIsOpen(false); // triggers exit animation
+    setIsOpen(false);
   };
 
   // After exit animation completes, unmount the modal
@@ -110,6 +112,20 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
       return;
     }
     openModal(item);
+  };
+
+  // Tooltip handlers
+  const handleMouseEnter = (e, item) => {
+    setTooltip({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY - 10,
+      content: `${item.type} – ${item.pct}%`,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setTooltip({ visible: false, x: 0, y: 0, content: "" });
   };
 
   // Safe data and pagination
@@ -151,8 +167,10 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
               {item.type}
             </span>
             <div
-              className="h-1 rounded-full bg-slate-200 dark:bg-[#071538] overflow-hidden cursor-pointer"
+              className="h-1 rounded-full bg-slate-200 dark:bg-[#071538] overflow-hidden cursor-pointer relative"
               onClick={() => handleFileTypeClick(item)}
+              onMouseEnter={(e) => handleMouseEnter(e, item)}
+              onMouseLeave={handleMouseLeave}
             >
               <div
                 className="h-full transition-all duration-500"
@@ -171,6 +189,20 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
           </div>
         ))}
       </div>
+
+      {/* Tooltip */}
+      {tooltip.visible && (
+        <div
+          className="fixed z-[9999] pointer-events-none px-2 py-1 text-xs font-medium rounded-md shadow-lg border border-slate-200 bg-white text-slate-700 dark:border-white/10 dark:bg-[#1e293b] dark:text-white/90 transition-opacity duration-150"
+          style={{
+            left: tooltip.x,
+            top: tooltip.y,
+            transform: "translate(-50%, -100%)",
+          }}
+        >
+          {tooltip.content}
+        </div>
+      )}
 
       {/* Modal with smooth transitions */}
       {isMounted && (

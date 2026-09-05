@@ -20,7 +20,7 @@ export const API_ENDPOINTS = {
     CLIPBOARD_INCIDENT: "/ClipboardControl/7DaysClipboardIncident",
     MAIL_INCIDENT: "/Dashboard/mailIncident",
     PRINTER_INCIDENT: "/PrinterDLP/printerIncidentcount",
-    PREVENTED_APPLICATION: "/Dashboard/preventedApplication",
+PREVENTED_APPLICATIONDATA: "/DashboardModal/PreventedApplication",
     ENDPOINT_TABLE: "/Dashboard/endpointTable",
     FILE_UPLOAD:"/NetworkDLP/getTodaysUploadCount",
     INCIDENT_BY_CHANNEL:"/incidents/by-channel",
@@ -32,6 +32,9 @@ export const API_ENDPOINTS = {
    INCIDENT_BY_FILE_TYPE:"/DashboardModal/ExtensionModalData",
    FILE_UPLOAD_MODAL:"/DashboardModal/FileUploadModalData",
    CLIPBOARD_INCIDENT_MODAL:"/DashboardModal/ClipboardModalData",
+   PRINTER_MODALINCIDENT:"/PrinterDLP/getPrinterIncident",
+   EMAIL_INCIDENT_DATA: "/DashboardModal/EmailModalData",
+   
   },
 
 VIEWDEVICE:{
@@ -49,9 +52,24 @@ PRINTER_CONTROL:{
 },
 
 
+APPLICATION_CONTROL:{
+  APPLICATION_CONTROLDATA:"/application-info/getmodeall",
+  VIEW_APPLICATION_COUNT: "/application-info/GetHostWiseApplicationCount",
+  VIEW_APPLICATION_DETAILS:"/application-info/GetHostWiseApplicationDetail"
+},
+
+// APPLICATION_CONTROL: {
+//   APPLICATION_CONTROLDATA: "/application-info/getapplicationinfoall",
+// },
+
 USB_Policy: {
   USB_Policy: "/UsbProtection/getUsbPolicies",
 },
+
+Drive_Control: {
+  Drive_Policy: "/DrivePolicy/getDrivePolicies",
+},
+
 
 
 REPORTS:{
