@@ -61,7 +61,7 @@ export default function ReportCenter() {
   const [selectedModule, setSelectedModule] = useState();
   const [selectedReport, setSelectedReport] = useState();
   const [branch, setBranch] = useState();
-  const [device, setDevice] = useState();
+  const [device, setDevice] = useState([]);
   const [user, setUser] = useState();
   const [dateRange, setDateRange] = useState();
   const [showReport, setShowReport] = useState(false);
@@ -133,7 +133,7 @@ export default function ReportCenter() {
   const allowedCount = dummyRows.filter(row => row.status === "Success").length;
   const preventedCount = dummyRows.filter(row => row.status === "Blocked").length;
 
-  const handleViewReport = () => {
+  const handleViewReport = async () => {
     
     const requestData = {
       module: selectedModule,
@@ -146,8 +146,9 @@ export default function ReportCenter() {
     };
     alert(JSON.stringify(requestData));
     // alert("User section is :"+branch+" "+ device+" "+selectedModule+" "+selectedReport+" "+dateRange);
-      const ReportFetchedData = dashboardService.GetReports(requestData);
-
+      const ReportFetchedData = await dashboardService.GetReports(requestData);
+      console.log("ReportData : ",ReportFetchedData.data);
+      alert(JSON.stringify(ReportFetchedData));
     setCurrentPage(1); 
     setShowReport(true);
     setTimeout(() => {
@@ -311,6 +312,105 @@ export default function ReportCenter() {
     );
   }
 
+    function MultiSelectDropdown({ values = [], onChange, options = [], placeholder = "Select...", disabled = false }) {
+    const [open, setOpen] = useState(false);
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+      const handleOutsideClick = (event) => {
+        if (containerRef.current && !containerRef.current.contains(event.target)) setOpen(false);
+      };
+      document.addEventListener("mousedown", handleOutsideClick);
+      return () => document.removeEventListener("mousedown", handleOutsideClick);
+    }, []);
+
+    const normalizedOptions = (options || []).map((item) => {
+      if (typeof item === "string") return { value: item, label: item };
+      return {
+        value: item.value ?? item.deviceName ?? item.name,
+        label: item.label ?? item.deviceName ?? item.name,
+      };
+    });
+
+    const allSelected = normalizedOptions.length > 0 && normalizedOptions.every((item) => values.includes(item.value));
+
+    const toggleDevice = (deviceValue) => {
+      if (values.includes(deviceValue)) {
+        onChange(values.filter((v) => v !== deviceValue));
+      } else {
+        onChange([...values, deviceValue]);
+      }
+    };
+
+    const toggleSelectAll = () => {
+      if (allSelected) {
+        onChange([]);
+      } else {
+        onChange(normalizedOptions.map((item) => item.value));
+      }
+    };
+
+    return (
+      <div ref={containerRef} className="relative w-full">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => !disabled && setOpen((prev) => !prev)}
+          className={`
+            w-full min-h-[42px] flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] text-left border transition-all
+            disabled:opacity-40 disabled:cursor-not-allowed
+            ${isDark 
+              ? "bg-[#172439] border-white/[0.10] text-slate-200"   // <-- changed to #172439
+              : "bg-white border-slate-300 text-slate-800"}
+            ${open ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60" : ""}
+          `}
+        >
+          <span className={values.length > 0 ? "" : isDark ? "text-slate-500" : "text-slate-400"}>
+            {values.length > 0 ? `${values.length} device${values.length !== 1 ? "s" : ""} selected` : placeholder}
+          </span>
+          <ChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""} ${isDark ? "text-slate-500" : "text-slate-400"}`} />
+        </button>
+        {open && (
+          <div className={`absolute top-full left-0 right-0 mt-1.5 z-[200] rounded-xl border overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.35)] ${isDark ? "bg-[#172439] border-white/[0.10]" : "bg-white border-slate-200"}`}>
+            <div className={`px-3 py-2.5 border-b ${isDark ? "border-white/[0.06]" : "border-slate-100"}`}>
+              <button type="button" onClick={toggleSelectAll} className={`w-full flex items-center gap-2 text-left text-[12px] ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}>
+                {allSelected ? <><X size={14} className="text-red-400" /> Deselect all</> : <><Check size={14} className="text-[#7094ff]" /> Select all</>}
+              </button>
+            </div>
+            <div className="max-h-52 overflow-y-auto py-1">
+              {normalizedOptions.length === 0 ? (
+                <p className={`px-4 py-3 text-[12px] text-center ${isDark ? "text-slate-600" : "text-slate-400"}`}>No devices available</p>
+              ) : (
+                normalizedOptions.map((option) => {
+                  const selected = values.includes(option.value);
+                  return (
+                    <button
+                      key={String(option.value)}
+                      type="button"
+                      onClick={() => toggleDevice(option.value)}
+                      className={`
+                        w-full text-left px-4 py-2.5 text-[13px] flex items-center justify-between gap-2 transition-colors
+                        ${selected 
+                          ? "text-[#7094ff] bg-[#7094ff]/10" 
+                          : isDark 
+                            ? "text-[#a0aec0] hover:bg-white/[0.06] hover:text-white"
+                            : "text-slate-700 hover:bg-slate-100"}
+                      `}
+                    >
+                      <span>{option.label}</span>
+                      {selected && <Check size={13} className="text-[#7094ff]" />}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+
   const handleReset = () => {
     setSearchTerm("");
     setSelectedModule();
@@ -455,13 +555,21 @@ export default function ReportCenter() {
             </div>
             <div>
               <label className={`block text-xs mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Device</label>
-              <Dropdown
+              {/* <Dropdown
                 value={device}
                 onChange={setDevice}
                 options={deviceOptions}
                 placeholder={branch ? 'Select Device' : 'Select branch first'}
                 disabled={!branch}
-              />
+              /> */}
+
+              <MultiSelectDropdown
+              values={device}
+              onChange={setDevice}
+              options={deviceOptions}
+              placeholder={branch ? 'Select Device' : 'Select branch first'}
+              disabled={!branch}
+            />
             </div>
           </div>
         </div>
