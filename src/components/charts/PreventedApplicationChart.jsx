@@ -22,10 +22,10 @@ import { dashboardService } from "../../services/dashboardService";
 // MODAL COLUMNS
 // ======================================================
 const incidentColumns = [
-  { accessor: "ipAddress", header: "IP ADDRESS" },
+  { accessor: "ipAddress", header: "HOST NAME" },
   { accessor: "username", header: "USERNAME" },
-  { accessor: "eventType", header: "EVENT TYPE" },
-  { accessor: "fileDetails", header: "FILE DETAILS" },
+  { accessor: "eventType", header: "APPLICATION NAME" },
+  { accessor: "fileDetails", header: "APPLICATION DETAILS" },
   { accessor: "timestamp", header: "TIMESTAMP" },
 ];
 

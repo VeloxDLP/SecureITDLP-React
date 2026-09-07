@@ -57,7 +57,7 @@ function Dropdown({ value, onChange, options, placeholder = 'Select…', disable
   };
 
   const glassSurface = isDark
-    ? { background: '#2a2a2a', backdropFilter: 'none', WebkitBackdropFilter: 'none' }
+    ? { background: '#111827', backdropFilter: 'none', WebkitBackdropFilter: 'none' }
     : { background: 'rgba(255,255,255,0.80)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' };
 
   const triggerBorder = error
@@ -90,7 +90,7 @@ function Dropdown({ value, onChange, options, placeholder = 'Select…', disable
         <div
           className={`absolute top-full left-0 right-0 mt-1.5 z-[200] rounded-xl border overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.35)] animate-slide-up ${isDark ? 'border-white/[0.10]' : 'border-slate-200/80'}`}
           style={{
-            background: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.98)',
+            background: isDark ? '#111827' : 'rgba(255,255,255,0.98)',
             backdropFilter: 'blur(32px) saturate(180%)',
             WebkitBackdropFilter: 'blur(32px) saturate(180%)',
           }}
@@ -104,7 +104,7 @@ function Dropdown({ value, onChange, options, placeholder = 'Select…', disable
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Search…"
-                  className={`w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none border transition-all duration-150 ${isDark ? 'bg-[#2a2a2a] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]' : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`}
+                  className={`w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none border transition-all duration-150 ${isDark ? 'bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]' : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`}
                 />
                 {query && (
                   <button onClick={() => setQuery('')} className="absolute right-2 text-slate-400 hover:text-slate-200">
@@ -217,7 +217,7 @@ function GlassButton({ children, onClick, variant = 'default', className = '', d
   );
 }
 
-// ─── Badge (case‑insensitive) ─────────────────────────────────
+// ─── Badge (case-insensitive) ─────────────────────────────────
 function Badge({ mode }) {
   const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border';
   const isAllowed = ['allow', 'learning'].includes(mode?.toLowerCase());
@@ -383,7 +383,7 @@ function PolicyTable({ policies, onDelete, loading = false }) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
-  // 🔥 FIX: case‑insensitive filter
+  // 🔥 FIX: case-insensitive filter
   const filtered = policies.filter(p => {
     const q = search.toLowerCase();
     return (

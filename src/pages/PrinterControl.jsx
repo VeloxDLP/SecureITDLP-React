@@ -55,20 +55,28 @@ function Dropdown({
   )
 
   const filtered = searchable && query
-    ? normalised.filter(o => o.label.toLowerCase().includes(query.toLowerCase()))
+    ? normalised.filter(o =>
+        o.label.toLowerCase().includes(query.toLowerCase())
+      )
     : normalised
 
   const selected = normalised.find(o => o.value === value)
 
   useEffect(() => {
     const handler = e => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target)
+      ) {
         setOpen(false)
         setQuery('')
       }
     }
+
     if (open) document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+
+    return () =>
+      document.removeEventListener('mousedown', handler)
   }, [open])
 
   const handleSelect = val => {
@@ -77,15 +85,26 @@ function Dropdown({
     setQuery('')
   }
 
+  // RGB(17, 24, 39) = #111827
   const glassSurface = isDark
-    ? { background: '#2a2a2a', backdropFilter: 'none', WebkitBackdropFilter: 'none' }
-    : { background: 'rgba(255,255,255,0.80)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }
+    ? {
+        background: '#111827',
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+      }
+    : {
+        background: 'rgba(255,255,255,0.80)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+      }
 
   const triggerBorder = error
     ? 'border-rose-500/60'
     : open
       ? 'border-[#7094ff]/60'
-      : isDark ? 'border-white/[0.10]' : 'border-slate-300/70'
+      : isDark
+        ? 'border-white/[0.10]'
+        : 'border-slate-300/70'
 
   return (
     <div ref={containerRef} className="relative">
@@ -104,14 +123,25 @@ function Dropdown({
         `}
         style={glassSurface}
       >
-        <span className={selected ? '' : isDark ? 'text-slate-500' : 'text-slate-400'}>
+        <span
+          className={
+            selected
+              ? ''
+              : isDark
+                ? 'text-slate-500'
+                : 'text-slate-400'
+          }
+        >
           {selected ? selected.label : placeholder}
         </span>
+
         <ChevronDown
           size={10}
-          className={`flex-shrink-0 transition-transform duration-200
-                      ${open ? 'rotate-180' : ''}
-                      ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+          className={`
+            flex-shrink-0 transition-transform duration-200
+            ${open ? 'rotate-180' : ''}
+            ${isDark ? 'text-slate-500' : 'text-slate-400'}
+          `}
         />
       </button>
 
@@ -122,30 +152,61 @@ function Dropdown({
             rounded-xl border overflow-hidden
             shadow-[0_16px_48px_rgba(0,0,0,0.35)]
             animate-slide-up
-            ${isDark ? 'border-white/[0.10]' : 'border-slate-200/80'}
+            ${isDark
+              ? 'border-white/[0.10]'
+              : 'border-slate-200/80'}
           `}
           style={{
-            background: isDark ? '#2a2a2a' : 'rgba(255,255,255,0.98)',
+            background: isDark
+              ? '#111827'
+              : 'rgba(255,255,255,0.98)',
             backdropFilter: 'blur(32px) saturate(180%)',
             WebkitBackdropFilter: 'blur(32px) saturate(180%)',
           }}
         >
           {searchable && (
-            <div className={`px-3 py-2 border-b ${isDark ? 'border-white/[0.07]' : 'border-slate-100'}`}>
+            <div
+              className={`
+                px-3 py-2 border-b
+                ${isDark
+                  ? 'border-white/[0.07]'
+                  : 'border-slate-100'}
+              `}
+            >
               <div className="relative flex items-center">
-                <Search size={12} className={`absolute left-2.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
+                <Search
+                  size={12}
+                  className={`
+                    absolute left-2.5
+                    ${isDark
+                      ? 'text-slate-500'
+                      : 'text-slate-400'}
+                  `}
+                />
+
                 <input
                   autoFocus
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Search…"
-                  className={`w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none border transition-all duration-150
-                              ${isDark
-                      ? 'bg-[#2a2a2a] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`}
+                  className={`
+                    w-full pl-7 pr-3 py-1.5
+                    text-[12px] rounded-lg outline-none
+                    border transition-all duration-150
+                    ${
+                      isDark
+                        ? 'bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
+                        : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'
+                    }
+                  `}
                 />
+
                 {query && (
-                  <button onClick={() => setQuery('')} className="absolute right-2 text-slate-400 hover:text-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    className="absolute right-2 text-slate-400 hover:text-slate-200"
+                  >
                     <X size={11} />
                   </button>
                 )}
@@ -155,12 +216,20 @@ function Dropdown({
 
           <div className="max-h-52 overflow-y-auto py-1">
             {filtered.length === 0 ? (
-              <p className={`px-4 py-3 text-[12px] text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+              <p
+                className={`
+                  px-4 py-3 text-[12px] text-center
+                  ${isDark
+                    ? 'text-slate-600'
+                    : 'text-slate-400'}
+                `}
+              >
                 No results
               </p>
             ) : (
               filtered.map(o => {
                 const isSelected = o.value === value
+
                 return (
                   <button
                     key={o.value}
@@ -170,15 +239,23 @@ function Dropdown({
                       w-full text-left px-4 py-2.5 text-[13px]
                       flex items-center justify-between gap-2
                       transition-colors duration-100
-                      ${isSelected
-                        ? 'text-[#7094ff] bg-[#7094ff]/10'
-                        : isDark
-                          ? 'text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]'
-                          : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'}
+                      ${
+                        isSelected
+                          ? 'text-[#7094ff] bg-[#7094ff]/10'
+                          : isDark
+                            ? 'text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]'
+                            : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'
+                      }
                     `}
                   >
                     {o.label}
-                    {isSelected && <Check size={13} className="text-[#7094ff] flex-shrink-0" />}
+
+                    {isSelected && (
+                      <Check
+                        size={13}
+                        className="text-[#7094ff] flex-shrink-0"
+                      />
+                    )}
                   </button>
                 )
               })

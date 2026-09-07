@@ -37,6 +37,12 @@ const NAV = [
         icon: Eye,
         path: '/ViewApplication',
       },
+
+          {
+        label: 'Manage Blacklisted',
+        icon: Eye,
+        path: '/ManageBlackListed',
+      },
     ],
   },
 

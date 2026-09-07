@@ -413,6 +413,11 @@ getApplicationDetails: async (hostname) => {
   return data;
 },
 
+getApplicationBlacklisted: async (requestData) => {
+  const { data } = await axiosInstance.get( API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BLACKLISTED,requestData);
+  return data;
+},
+
 
 
 };

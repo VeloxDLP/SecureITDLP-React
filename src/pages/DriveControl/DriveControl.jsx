@@ -55,7 +55,9 @@ function Dropdown({
         )
       : normalised
 
-  const selected = normalised.find((o) => o.value === value)
+  const selected = normalised.find(
+    (o) => o.value === value
+  )
 
   useEffect(() => {
     const handler = (e) => {
@@ -69,11 +71,17 @@ function Dropdown({
     }
 
     if (open) {
-      document.addEventListener('mousedown', handler)
+      document.addEventListener(
+        'mousedown',
+        handler
+      )
     }
 
     return () => {
-      document.removeEventListener('mousedown', handler)
+      document.removeEventListener(
+        'mousedown',
+        handler
+      )
     }
   }, [open])
 
@@ -83,12 +91,12 @@ function Dropdown({
     setQuery('')
   }
 
-  const glassSurface = isDark
-    ? {
-        background: '#171827',
-        backdropFilter: 'none',
-        WebkitBackdropFilter: 'none',
-      }
+ const glassSurface = isDark
+  ? {
+      background: '#111827',
+      backdropFilter: 'none',
+      WebkitBackdropFilter: 'none',
+    }
     : {
         background: 'rgba(255,255,255,0.80)',
         backdropFilter: 'blur(24px)',
@@ -104,11 +112,16 @@ function Dropdown({
         : 'border-slate-300/70'
 
   return (
-    <div ref={containerRef} className="relative">
+    <div
+      ref={containerRef}
+      className="relative"
+    >
       <button
         type="button"
         disabled={disabled}
-        onClick={() => !disabled && setOpen(!open)}
+        onClick={() =>
+          !disabled && setOpen(!open)
+        }
         className={`
           w-full flex items-center justify-between gap-2
           px-3 py-2.5 rounded-xl text-[13px] text-left
@@ -129,7 +142,9 @@ function Dropdown({
                 : 'text-slate-400'
           }
         >
-          {selected ? selected.label : placeholder}
+          {selected
+            ? selected.label
+            : placeholder}
         </span>
 
         <ChevronDown
@@ -137,7 +152,11 @@ function Dropdown({
           className={`
             flex-shrink-0 transition-transform duration-200
             ${open ? 'rotate-180' : ''}
-            ${isDark ? 'text-slate-500' : 'text-slate-400'}
+            ${
+              isDark
+                ? 'text-slate-500'
+                : 'text-slate-400'
+            }
           `}
         />
       </button>
@@ -149,15 +168,18 @@ function Dropdown({
             rounded-xl border overflow-hidden
             shadow-[0_16px_48px_rgba(0,0,0,0.35)]
             animate-slide-up
-            ${isDark
-              ? 'border-white/[0.10]'
-              : 'border-slate-200/80'}
+            ${
+              isDark
+                ? 'border-white/[0.10]'
+                : 'border-slate-200/80'
+            }
           `}
           style={{
-            background: isDark
-              ? '#171827'
-              : 'rgba(255,255,255,0.98)',
-            backdropFilter: 'blur(32px) saturate(180%)',
+ background: isDark
+  ? '#111827'
+  : 'rgba(255,255,255,0.98)',
+            backdropFilter:
+              'blur(32px) saturate(180%)',
             WebkitBackdropFilter:
               'blur(32px) saturate(180%)',
           }}
@@ -198,8 +220,8 @@ function Dropdown({
                     text-[12px] rounded-lg
                     outline-none border transition-all duration-150
                     ${
-                      isDark
-                        ? 'bg-[#171827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
+                     isDark
+  ? 'bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
                         : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'
                     }
                   `}
@@ -208,7 +230,9 @@ function Dropdown({
                 {query && (
                   <button
                     type="button"
-                    onClick={() => setQuery('')}
+                    onClick={() =>
+                      setQuery('')
+                    }
                     className="absolute right-2 text-slate-400 hover:text-slate-200"
                   >
                     <X size={11} />
@@ -234,11 +258,14 @@ function Dropdown({
               </p>
             ) : (
               filtered.map((o, index) => {
-                const isSelected = o.value === value
+                const isSelected =
+                  o.value === value
 
                 return (
                   <button
-                    key={`${String(o.value)}-${index}`}
+                    key={`${String(
+                      o.value
+                    )}-${index}`}
                     type="button"
                     onClick={() =>
                       handleSelect(o.value)
@@ -301,7 +328,8 @@ function GlassButton({
           ? 'rgba(255,255,255,0.06)'
           : 'rgba(255,255,255,0.65)',
         backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        WebkitBackdropFilter:
+          'blur(16px)',
         boxShadow: isDark
           ? 'inset 0 1px 0 rgba(255,255,255,0.06)'
           : '0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
@@ -313,9 +341,11 @@ function GlassButton({
         'text-white border-[#7094ff]/40 hover:border-[#7094ff]/60',
 
       style: {
-        background: 'rgba(112, 148, 255, 0.85)',
+        background:
+          'rgba(112, 148, 255, 0.85)',
         backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        WebkitBackdropFilter:
+          'blur(16px)',
         boxShadow:
           '0 4px 20px rgba(112,148,255,0.35), inset 0 1px 0 rgba(255,255,255,0.18)',
       },
@@ -326,9 +356,11 @@ function GlassButton({
         'text-white border-emerald-500/40',
 
       style: {
-        background: 'rgba(16, 185, 129, 0.85)',
+        background:
+          'rgba(16, 185, 129, 0.85)',
         backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        WebkitBackdropFilter:
+          'blur(16px)',
         boxShadow:
           '0 4px 20px rgba(16,185,129,0.30), inset 0 1px 0 rgba(255,255,255,0.18)',
       },
@@ -339,9 +371,11 @@ function GlassButton({
         'text-white border-[#7094ff]/40',
 
       style: {
-        background: 'rgba(112,148,255,0.82)',
+        background:
+          'rgba(112,148,255,0.82)',
         backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        WebkitBackdropFilter:
+          'blur(20px)',
         boxShadow:
           '0 6px 24px rgba(112,148,255,0.35), inset 0 1px 0 rgba(255,255,255,0.20)',
       },
@@ -368,7 +402,8 @@ function GlassButton({
           ? 'rgba(16,185,129,0.12)'
           : 'rgba(255,255,255,0.72)',
         backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        WebkitBackdropFilter:
+          'blur(12px)',
         boxShadow: isDark
           ? 'none'
           : '0 2px 8px rgba(0,0,0,0.06)',
@@ -385,7 +420,8 @@ function GlassButton({
           ? 'rgba(239,68,68,0.12)'
           : 'rgba(255,255,255,0.72)',
         backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        WebkitBackdropFilter:
+          'blur(12px)',
         boxShadow: isDark
           ? 'none'
           : '0 2px 8px rgba(0,0,0,0.06)',
@@ -394,7 +430,8 @@ function GlassButton({
   }
 
   const v =
-    variants[variant] || variants.default
+    variants[variant] ||
+    variants.default
 
   return (
     <button
@@ -431,7 +468,7 @@ function GlassCard({
       className={`rounded-2xl border ${className}`}
       style={{
         background: isDark
-          ? '#171827'
+          ? '#020617'
           : 'rgba(255,255,255,0.95)',
 
         backdropFilter: isDark
@@ -653,7 +690,6 @@ function AddForm({
       setTimeout(() => {
         setSuccess(false)
       }, 2000)
-
     } catch (error) {
       console.error(
         'Error adding drive policy:',
@@ -682,7 +718,11 @@ function AddForm({
   const labelCls = `
     block text-[11px] font-semibold
     uppercase tracking-wider mb-1.5
-    ${isDark ? 'text-slate-500' : 'text-slate-400'}
+    ${
+      isDark
+        ? 'text-slate-500'
+        : 'text-slate-400'
+    }
   `
 
   return (
@@ -812,9 +852,9 @@ function AddForm({
                       : 'border-slate-300/70'
                 }
                 ${
-                  isDark
-                    ? 'bg-[#171827] text-slate-200 placeholder-slate-500'
-                    : 'bg-white/80 text-slate-800 placeholder-slate-400'
+                 isDark
+  ? 'bg-[#111827] text-slate-200 placeholder-slate-500'
+  : 'bg-white/80 text-slate-800 placeholder-slate-400'
                 }
                 ${
                   submitted &&
@@ -823,15 +863,13 @@ function AddForm({
                     : ''
                 }
               `}
-              style={{
-                background: isDark
-                  ? '#171827'
-                  : 'rgba(255,255,255,0.80)',
-                backdropFilter:
-                  'blur(24px)',
-                WebkitBackdropFilter:
-                  'blur(24px)',
-              }}
+           style={{
+  background: isDark
+    ? '#111827'
+    : 'rgba(255,255,255,0.80)',
+  backdropFilter: 'blur(24px)',
+  WebkitBackdropFilter: 'blur(24px)',
+}}
             />
 
             <Folder
@@ -898,15 +936,27 @@ function AddForm({
    POLICY TABLE
 ───────────────────────────────────────────────────────────── */
 
-function PolicyTable({ policies, onDelete }) {
+function PolicyTable({
+  policies,
+  onDelete,
+}) {
   const { isDark } = useTheme()
 
-  const [search, setSearch] = useState('')
-  const [filterMode, setFilterMode] = useState('')
+  const [search, setSearch] =
+    useState('')
 
-  const safePolicies = Array.isArray(policies) ? policies : []
+  const [filterMode, setFilterMode] =
+    useState('')
 
-  const getValue = (policy, ...keys) => {
+  const safePolicies =
+    Array.isArray(policies)
+      ? policies
+      : []
+
+  const getValue = (
+    policy,
+    ...keys
+  ) => {
     for (const key of keys) {
       if (
         policy?.[key] !== undefined &&
@@ -916,62 +966,57 @@ function PolicyTable({ policies, onDelete }) {
         return policy[key]
       }
     }
+
     return ''
   }
 
-  const filtered = safePolicies.filter((p) => {
-    const q = search.toLowerCase().trim()
+  const filtered =
+    safePolicies.filter((p) => {
+      const q =
+        search.toLowerCase().trim()
 
-    const branch = String(
-      getValue(p, 'branch', 'branchName')
-    ).toLowerCase()
+      const branch =
+        String(
+          getValue(
+            p,
+            'branch',
+            'branchName'
+          )
+        ).toLowerCase()
 
-    const device = String(
-      getValue(
-        p,
-        'device',
-        'deviceName',
-        'computerName',
-        'hostName',
-        'hostname'
-      )
-    ).toLowerCase()
+      const device =
+        String(
+          getValue(
+            p,
+            'device',
+            'deviceName',
+            'computerName',
+            'hostName',
+            'hostname'
+          )
+        ).toLowerCase()
 
-    const ipAddress = String(
-      getValue(
-        p,
-        'ipAddress',
-        'ipaddress',
-        'ip'
-      )
-    ).toLowerCase()
+      const ipAddress =
+        String(
+          getValue(
+            p,
+            'ipAddress',
+            'ipaddress',
+            'ip'
+          )
+        ).toLowerCase()
 
-    const drivePath = String(
-      getValue(
-        p,
-        'drivePath',
-        'drivepath',
-        'path'
-      )
-    ).toLowerCase()
+      const drivePath =
+        String(
+          getValue(
+            p,
+            'drivePath',
+            'drivepath',
+            'path'
+          )
+        ).toLowerCase()
 
-    const func = String(
-      getValue(
-        p,
-        'function',
-        'functions',
-        'FUNCTIONS'
-      )
-    ).toLowerCase()
-
-    return (
-      (!q ||
-        branch.includes(q) ||
-        device.includes(q) ||
-        ipAddress.includes(q) ||
-        drivePath.includes(q) ||
-        func.includes(q)) &&
-      (!filterMode ||
+      const func =
         String(
           getValue(
             p,
@@ -979,9 +1024,27 @@ function PolicyTable({ policies, onDelete }) {
             'functions',
             'FUNCTIONS'
           )
-        ).toUpperCase() === filterMode)
-    )
-  })
+        ).toLowerCase()
+
+      return (
+        (!q ||
+          branch.includes(q) ||
+          device.includes(q) ||
+          ipAddress.includes(q) ||
+          drivePath.includes(q) ||
+          func.includes(q)) &&
+        (!filterMode ||
+          String(
+            getValue(
+              p,
+              'function',
+              'functions',
+              'FUNCTIONS'
+            )
+          ).toUpperCase() ===
+            filterMode)
+      )
+    })
 
   const filterOptions = [
     {
@@ -1010,79 +1073,79 @@ function PolicyTable({ policies, onDelete }) {
     },
   ]
 
-  /*
-   * All functions use the SAME green style
-   * like the Allow button in your screenshot.
-   */
-  const FunctionBadge = ({ value }) => {
-  const functionName = String(value || '').toUpperCase()
+  const FunctionBadge = ({
+    value,
+  }) => {
+    const functionName =
+      String(
+        value || ''
+      ).toUpperCase()
 
-  if (!functionName) {
+    if (!functionName) {
+      return (
+        <span
+          className="
+            inline-flex
+            items-center
+            justify-center
+            px-3
+            py-1
+            rounded-full
+            text-[10px]
+            font-medium
+            bg-slate-500/10
+            text-slate-400
+            border
+            border-slate-500/20
+          "
+        >
+          N/A
+        </span>
+      )
+    }
+
     return (
-      <span
+      <button
+        type="button"
         className="
           inline-flex
           items-center
           justify-center
+          gap-1.5
           px-3
           py-1
           rounded-full
           text-[10px]
           font-medium
-          bg-slate-500/10
-          text-slate-400
+          capitalize
+          bg-emerald-500/[0.08]
+          text-emerald-400
           border
-          border-slate-500/20
+          border-emerald-500/40
+          hover:bg-emerald-500/[0.14]
+          hover:border-emerald-400/60
+          transition-all
+          duration-200
+          cursor-default
         "
       >
-        N/A
-      </span>
+        <Check
+          size={10}
+          strokeWidth={2.5}
+        />
+
+        {functionName.charAt(0) +
+          functionName
+            .slice(1)
+            .toLowerCase()}
+      </button>
     )
   }
 
   return (
-    <button
-      type="button"
-      className="
-        inline-flex
-        items-center
-        justify-center
-        gap-1.5
-        px-3
-        py-1
-        rounded-full
-        text-[10px]
-        font-medium
-        capitalize
-        bg-emerald-500/[0.08]
-        text-emerald-400
-        border
-        border-emerald-500/40
-        hover:bg-emerald-500/[0.14]
-        hover:border-emerald-400/60
-        transition-all
-        duration-200
-        cursor-default
-      "
-    >
-      <Check
-        size={10}
-        strokeWidth={2.5}
-      />
-
-      {functionName.charAt(0) +
-        functionName.slice(1).toLowerCase()}
-    </button>
-  )
-}
-
-  return (
     <GlassCard className="overflow-hidden">
 
-      {/* ─────────────────────────────────────────
-          TOOLBAR
-      ───────────────────────────────────────── */}
-
+      {/* TOOLBAR */}
       <div
         className={`
           flex items-center
@@ -1098,10 +1161,8 @@ function PolicyTable({ policies, onDelete }) {
           }
         `}
       >
-
         {/* LEFT */}
         <div className="flex items-center gap-2">
-
           <ShieldCheck
             size={15}
             className="text-[#7094ff]"
@@ -1137,14 +1198,12 @@ function PolicyTable({ policies, onDelete }) {
           >
             {filtered.length}
           </span>
-
         </div>
 
         {/* RIGHT */}
         <div className="flex items-center gap-2">
 
           {/* SEARCH */}
-
           <div
             className={`
               relative
@@ -1163,11 +1222,12 @@ function PolicyTable({ policies, onDelete }) {
               background: isDark
                 ? 'rgba(255,255,255,0.04)'
                 : 'rgba(255,255,255,0.72)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
+              backdropFilter:
+                'blur(16px)',
+              WebkitBackdropFilter:
+                'blur(16px)',
             }}
           >
-
             <Search
               size={12}
               className={`
@@ -1202,11 +1262,9 @@ function PolicyTable({ policies, onDelete }) {
                 }
               `}
             />
-
           </div>
 
           {/* FILTER */}
-
           <div className="w-36">
             <Dropdown
               value={filterMode}
@@ -1215,16 +1273,11 @@ function PolicyTable({ policies, onDelete }) {
               placeholder="All Functions"
             />
           </div>
-
         </div>
       </div>
 
-      {/* ─────────────────────────────────────────
-          EMPTY STATE
-      ───────────────────────────────────────── */}
-
+      {/* EMPTY STATE */}
       {filtered.length === 0 ? (
-
         <div
           className={`
             py-16
@@ -1239,19 +1292,12 @@ function PolicyTable({ policies, onDelete }) {
         >
           No drive policies found.
         </div>
-
       ) : (
-
-        /* ───────────────────────────────────────
-           TABLE
-        ─────────────────────────────────────── */
-
+        /* TABLE */
         <div className="overflow-x-auto">
-
           <table className="w-full border-collapse">
 
             {/* HEADER */}
-
             <thead>
               <tr
                 className={
@@ -1260,7 +1306,6 @@ function PolicyTable({ policies, onDelete }) {
                     : 'bg-slate-50/70'
                 }
               >
-
                 <th
                   className={`
                     text-left
@@ -1376,19 +1421,13 @@ function PolicyTable({ policies, onDelete }) {
                 >
                   Action
                 </th>
-
               </tr>
             </thead>
 
             {/* BODY */}
-
             <tbody>
-
               {filtered.map((p, i) => {
 
-                /*
-                 * Unique key fix
-                 */
                 const rowId =
                   p.id ??
                   p.policyId ??
@@ -1451,7 +1490,6 @@ function PolicyTable({ policies, onDelete }) {
                   )
 
                 return (
-
                   <tr
                     key={rowId}
                     className={`
@@ -1472,9 +1510,7 @@ function PolicyTable({ policies, onDelete }) {
                       }
                     `}
                   >
-
                     {/* NUMBER */}
-
                     <td
                       className={`
                         px-4
@@ -1491,7 +1527,6 @@ function PolicyTable({ policies, onDelete }) {
                     </td>
 
                     {/* BRANCH */}
-
                     <td
                       className={`
                         px-4
@@ -1509,7 +1544,6 @@ function PolicyTable({ policies, onDelete }) {
                     </td>
 
                     {/* DEVICE */}
-
                     <td
                       className={`
                         px-4
@@ -1527,7 +1561,6 @@ function PolicyTable({ policies, onDelete }) {
                     </td>
 
                     {/* FUNCTION */}
-
                     <td
                       className="
                         px-4
@@ -1542,7 +1575,6 @@ function PolicyTable({ policies, onDelete }) {
                     </td>
 
                     {/* DRIVE PATH */}
-
                     <td
                       className={`
                         px-4
@@ -1556,7 +1588,6 @@ function PolicyTable({ policies, onDelete }) {
                         }
                       `}
                     >
-
                       <div className="flex items-center gap-2">
 
                         <div
@@ -1588,13 +1619,10 @@ function PolicyTable({ policies, onDelete }) {
                             ) ||
                             'N/A'}
                         </span>
-
                       </div>
-
                     </td>
 
                     {/* DELETE */}
-
                     <td
                       className="
                         px-4
@@ -1602,7 +1630,6 @@ function PolicyTable({ policies, onDelete }) {
                         text-right
                       "
                     >
-
                       <button
                         type="button"
                         onClick={() =>
@@ -1626,25 +1653,16 @@ function PolicyTable({ policies, onDelete }) {
                           group-hover:opacity-100
                         "
                       >
-                        <Trash2
-                          size={13}
-                        />
+                        <Trash2 size={13} />
                       </button>
-
                     </td>
-
                   </tr>
-
                 )
               })}
-
             </tbody>
-
           </table>
-
         </div>
       )}
-
     </GlassCard>
   )
 }
@@ -1681,7 +1699,7 @@ function TabBar({
       "
       style={{
         background: isDark
-          ? '#171827'
+          ? '#020617'
           : 'rgba(255,255,255,0.60)',
 
         backdropFilter:
@@ -1749,10 +1767,7 @@ export default function DriveControl() {
   const [error, setError] =
     useState('')
 
-  /* ─────────────────────────────────────────
-     CREATE FRONTEND UNIQUE ID
-  ───────────────────────────────────────── */
-
+  /* CREATE FRONTEND UNIQUE ID */
   const createPolicyId = (
     policy,
     index
@@ -1811,10 +1826,7 @@ export default function DriveControl() {
     ].join('-')
   }
 
-  /* ─────────────────────────────────────────
-     ADD LOCAL POLICY
-  ───────────────────────────────────────── */
-
+  /* ADD LOCAL POLICY */
   const handleAdd = ({
     branch,
     branchName,
@@ -1853,10 +1865,7 @@ export default function DriveControl() {
     ])
   }
 
-  /* ─────────────────────────────────────────
-     LOAD PAGE DATA
-  ───────────────────────────────────────── */
-
+  /* LOAD PAGE DATA */
   const loadPageData = async () => {
     try {
       setLoading(true)
@@ -1880,7 +1889,6 @@ export default function DriveControl() {
         DrivePolicies?.data
       )
 
-      /* Branches */
       const branchData =
         Array.isArray(
           ALLBranch?.data
@@ -1890,7 +1898,6 @@ export default function DriveControl() {
 
       setBranches(branchData)
 
-      /* Policies */
       const policyData =
         Array.isArray(
           DrivePolicies?.data
@@ -1898,17 +1905,10 @@ export default function DriveControl() {
           ? DrivePolicies.data
           : []
 
-      /*
-       * IMPORTANT FIX:
-       *
-       * Add a unique frontend id
-       * if API does not return one.
-       */
       const normalizedPolicies =
         policyData.map(
           (policy, index) => ({
             ...policy,
-
             id: createPolicyId(
               policy,
               index
@@ -1936,22 +1936,17 @@ export default function DriveControl() {
     }
   }
 
-  /* ─────────────────────────────────────────
-     INITIAL LOAD
-  ───────────────────────────────────────── */
-
+  /* INITIAL LOAD */
   useEffect(() => {
     loadPageData()
   }, [])
 
-  /* ─────────────────────────────────────────
-     DELETE
-  ───────────────────────────────────────── */
-
+  /* DELETE */
   const handleDelete = (id) => {
     setPolicies((prev) =>
       prev.filter(
-        (policy) => policy.id !== id
+        (policy) =>
+          policy.id !== id
       )
     )
   }

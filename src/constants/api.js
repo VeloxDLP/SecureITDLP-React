@@ -55,7 +55,8 @@ PRINTER_CONTROL:{
 APPLICATION_CONTROL:{
   APPLICATION_CONTROLDATA:"/application-info/getmodeall",
   VIEW_APPLICATION_COUNT: "/application-info/GetHostWiseApplicationCount",
-  VIEW_APPLICATION_DETAILS:"/application-info/GetHostWiseApplicationDetail"
+  VIEW_APPLICATION_DETAILS:"/application-info/GetHostWiseApplicationDetail",
+  APPLICATION_BLACKLISTED:"/application-info/ApplicationBlacklisted"
 },
 
 // APPLICATION_CONTROL: {

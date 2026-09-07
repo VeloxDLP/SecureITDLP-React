@@ -37,23 +37,17 @@ function Dropdown({
   const containerRef = useRef(null);
 
   const normalised = options.map((o) =>
-    typeof o === "string"
-      ? { value: o, label: o }
-      : o
+    typeof o === "string" ? { value: o, label: o } : o
   );
 
   const filtered =
     searchable && query
       ? normalised.filter((o) =>
-          String(o.label)
-            .toLowerCase()
-            .includes(query.toLowerCase())
+          String(o.label).toLowerCase().includes(query.toLowerCase())
         )
       : normalised;
 
-  const selected = normalised.find(
-    (o) => o.value === value
-  );
+  const selected = normalised.find((o) => o.value === value);
 
   useEffect(() => {
     const handler = (e) => {
@@ -94,9 +88,7 @@ function Dropdown({
       <button
         type="button"
         disabled={disabled}
-        onClick={() =>
-          !disabled && setOpen(!open)
-        }
+        onClick={() => !disabled && setOpen(!open)}
         className={`
           w-full flex items-center justify-between gap-2
           px-3 py-2.5 rounded-xl text-[13px] text-left
@@ -106,7 +98,7 @@ function Dropdown({
           ${open ? "ring-2 ring-[#7094ff]/20" : ""}
           ${
             isDark
-              ? "text-slate-200 bg-[#2a2a2a]"
+              ? "text-slate-200 bg-[#111827]"
               : "text-slate-800 bg-white"
           }
         `}
@@ -120,9 +112,7 @@ function Dropdown({
               : "text-slate-400"
           }
         >
-          {selected
-            ? selected.label
-            : placeholder}
+          {selected ? selected.label : placeholder}
         </span>
 
         <ChevronDown
@@ -153,12 +143,10 @@ function Dropdown({
           `}
           style={{
             background: isDark
-              ? "#2a2a2a"
+              ? "#111827"
               : "rgba(255,255,255,0.98)",
-            backdropFilter:
-              "blur(32px) saturate(180%)",
-            WebkitBackdropFilter:
-              "blur(32px) saturate(180%)",
+            backdropFilter: "blur(32px) saturate(180%)",
+            WebkitBackdropFilter: "blur(32px) saturate(180%)",
           }}
         >
           {searchable && (
@@ -188,9 +176,7 @@ function Dropdown({
                 <input
                   autoFocus
                   value={query}
-                  onChange={(e) =>
-                    setQuery(e.target.value)
-                  }
+                  onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search…"
                   className={`
                     w-full pl-7 pr-3 py-1.5
@@ -198,7 +184,7 @@ function Dropdown({
                     border transition-all duration-150
                     ${
                       isDark
-                        ? "bg-[#2a2a2a] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]"
+                        ? "bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]"
                         : "bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400"
                     }
                   `}
@@ -233,16 +219,13 @@ function Dropdown({
               </p>
             ) : (
               filtered.map((o, index) => {
-                const isSelected =
-                  o.value === value;
+                const isSelected = o.value === value;
 
                 return (
                   <button
                     key={`${o.value}-${index}`}
                     type="button"
-                    onClick={() =>
-                      handleSelect(o.value)
-                    }
+                    onClick={() => handleSelect(o.value)}
                     className={`
                       w-full text-left px-4 py-2.5
                       text-[13px]

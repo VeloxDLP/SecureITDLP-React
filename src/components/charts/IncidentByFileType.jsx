@@ -4,7 +4,7 @@ import { dashboardService } from "../../services/dashboardService";
 
 // Column configuration
 const incidentColumns = [
-  { accessor: "ipAddress", header: "IP ADDRESS" },
+  { accessor: "ipAddress", header: "BRANCH" },
   { accessor: "username", header: "USERNAME" },
   { accessor: "eventType", header: "EVENT TYPE" },
   { accessor: "fileDetails", header: "FILE DETAILS" },
