@@ -1113,18 +1113,17 @@ function EndpointStatusModal({
                               items-center gap-1.5
                               rounded-full px-2.5 py-1
                               text-[10px] font-semibold
-                              ${
-                                row._status === 'UP'
-                                  ? `
+                              ${row._status === 'UP'
+                                ? `
                                     bg-green-500/10
                                     text-green-500
                                   `
-                                  : row._status === 'DOWN'
-                                    ? `
+                                : row._status === 'DOWN'
+                                  ? `
                                       bg-red-500/10
                                       text-red-500
                                     `
-                                    : `
+                                  : `
                                       bg-slate-500/10
                                       text-slate-500
                                     `
@@ -1135,12 +1134,11 @@ function EndpointStatusModal({
                               className={`
                                 h-1.5 w-1.5
                                 rounded-full
-                                ${
-                                  row._status === 'UP'
-                                    ? 'bg-green-500'
-                                    : row._status === 'DOWN'
-                                      ? 'bg-red-500'
-                                      : 'bg-slate-400'
+                                ${row._status === 'UP'
+                                  ? 'bg-green-500'
+                                  : row._status === 'DOWN'
+                                    ? 'bg-red-500'
+                                    : 'bg-slate-400'
                                 }
                               `}
                             />
