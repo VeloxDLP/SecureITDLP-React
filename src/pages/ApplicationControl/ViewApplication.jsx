@@ -15,6 +15,514 @@ import {
 import { dashboardService } from "../../services/dashboardService";
 import { useTheme } from "../../context/ThemeContext";
 
+/* =========================================================
+   MULTI SELECT DROPDOWN
+   IMPORTANT:
+   Keep this OUTSIDE ViewApplication so selecting a device
+   does not remount the component and close the dropdown.
+========================================================= */
+function MultiSelectDropdown({
+  values = [],
+  onChange,
+  options = [],
+  placeholder = "Select...",
+  disabled = false,
+  isDark = false,
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
+    };
+  }, []);
+
+  const normalizedOptions = (options || [])
+    .map((item) => {
+      if (typeof item === "string") {
+        return {
+          value: item,
+          label: item,
+        };
+      }
+
+      const value =
+        item?.value ??
+        item?.deviceName ??
+        item?.device ??
+        item?.pcName ??
+        item?.computerName ??
+        item?.name ??
+        "";
+
+      const label =
+        item?.label ??
+        item?.deviceName ??
+        item?.device ??
+        item?.pcName ??
+        item?.computerName ??
+        item?.name ??
+        value;
+
+      return {
+        value,
+        label,
+      };
+    })
+    .filter((item) => item.value !== "");
+
+  const allSelected =
+    normalizedOptions.length > 0 &&
+    normalizedOptions.every((item) =>
+      values.includes(item.value)
+    );
+
+  const toggleDevice = (deviceValue) => {
+    if (values.includes(deviceValue)) {
+      onChange(
+        values.filter(
+          (value) => value !== deviceValue
+        )
+      );
+    } else {
+      onChange([
+        ...values,
+        deviceValue,
+      ]);
+    }
+
+    // DO NOT CLOSE DROPDOWN HERE
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      onChange([]);
+    } else {
+      onChange(
+        normalizedOptions.map(
+          (item) => item.value
+        )
+      );
+    }
+
+    // DO NOT CLOSE DROPDOWN HERE
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full"
+    >
+      {/* SELECTED VALUE BUTTON */}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) {
+            setOpen((prev) => !prev);
+          }
+        }}
+        className={`
+          w-full min-h-[42px] flex items-center justify-between
+          px-3 py-2.5 rounded-xl text-[13px] text-left
+          border transition-all
+          disabled:opacity-40 disabled:cursor-not-allowed
+          ${
+            isDark
+              ? "bg-[#172439] border-white/[0.10] text-slate-200"
+              : "bg-white border-slate-300 text-slate-800"
+          }
+          ${
+            open
+              ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60"
+              : ""
+          }
+        `}
+      >
+        <span
+          className={
+            values.length > 0
+              ? ""
+              : isDark
+              ? "text-slate-500"
+              : "text-slate-400"
+          }
+        >
+          {values.length > 0
+            ? `${values.length} device${
+                values.length !== 1 ? "s" : ""
+              } selected`
+            : placeholder}
+        </span>
+
+        <ChevronDown
+          size={14}
+          className={`
+            transition-transform
+            ${open ? "rotate-180" : ""}
+            ${
+              isDark
+                ? "text-slate-500"
+                : "text-slate-400"
+            }
+          `}
+        />
+      </button>
+
+      {/* DROPDOWN */}
+      {open && (
+        <div
+          className={`
+            absolute top-full left-0 right-0 mt-1.5 z-[200]
+            rounded-xl border overflow-hidden
+            shadow-[0_16px_48px_rgba(0,0,0,0.35)]
+            ${
+              isDark
+                ? "bg-[#172439] border-white/[0.10]"
+                : "bg-white border-slate-200"
+            }
+          `}
+        >
+          {/* SELECT ALL */}
+          <div
+            className={`
+              px-3 py-2.5 border-b
+              ${
+                isDark
+                  ? "border-white/[0.06]"
+                  : "border-slate-100"
+              }
+            `}
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleSelectAll();
+              }}
+              className={`
+                w-full flex items-center gap-2
+                text-left text-[12px]
+                ${
+                  isDark
+                    ? "text-gray-300 hover:text-white"
+                    : "text-gray-600 hover:text-gray-900"
+                }
+              `}
+            >
+              <span
+                className={`
+                  h-4 w-4 rounded border
+                  flex items-center justify-center
+                  ${
+                    allSelected
+                      ? "bg-[#7094ff] border-[#7094ff]"
+                      : isDark
+                      ? "border-slate-500"
+                      : "border-slate-300"
+                  }
+                `}
+              >
+                {allSelected && (
+                  <Check
+                    size={11}
+                    className="text-white"
+                  />
+                )}
+              </span>
+
+              {allSelected
+                ? "Deselect all"
+                : "Select all"}
+            </button>
+          </div>
+
+          {/* DEVICE LIST */}
+          <div className="max-h-52 overflow-y-auto py-1">
+            {normalizedOptions.length === 0 ? (
+              <p
+                className={`
+                  px-4 py-3 text-[12px] text-center
+                  ${
+                    isDark
+                      ? "text-slate-600"
+                      : "text-slate-400"
+                  }
+                `}
+              >
+                No devices available
+              </p>
+            ) : (
+              normalizedOptions.map((option) => {
+                const selected = values.includes(
+                  option.value
+                );
+
+                return (
+                  <button
+                    key={String(option.value)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleDevice(option.value);
+                    }}
+                    className={`
+                      w-full text-left px-4 py-2.5
+                      text-[13px] flex items-center
+                      justify-between gap-2
+                      transition-colors
+                      ${
+                        selected
+                          ? "text-[#7094ff] bg-[#7094ff]/10"
+                          : isDark
+                          ? "text-[#a0aec0] hover:bg-white/[0.06] hover:text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }
+                    `}
+                  >
+                    <span>
+                      {option.label}
+                    </span>
+
+                    {selected && (
+                      <Check
+                        size={13}
+                        className="text-[#7094ff]"
+                      />
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   SINGLE DROPDOWN
+   Also kept outside parent component.
+========================================================= */
+function Dropdown({
+  value,
+  onChange,
+  options,
+  placeholder = "Select...",
+  disabled = false,
+  isDark = false,
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+
+    return () =>
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
+  }, []);
+
+  const normalizedOptions = (options || [])
+    .map((item) => {
+      if (typeof item === "string") {
+        return {
+          value: item,
+          label: item,
+        };
+      }
+
+      const value =
+        item?.value ??
+        item?.branchName ??
+        item?.deviceName ??
+        item?.name ??
+        "";
+
+      const label =
+        item?.label ??
+        item?.branchName ??
+        item?.deviceName ??
+        item?.name ??
+        value;
+
+      return {
+        value,
+        label,
+      };
+    })
+    .filter((item) => item.value !== "");
+
+  const selected = normalizedOptions.find(
+    (item) => item.value === value
+  );
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full"
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) {
+            setOpen((prev) => !prev);
+          }
+        }}
+        className={`
+          w-full flex items-center justify-between
+          px-3 py-2.5 rounded-xl text-[13px]
+          text-left border transition-all
+          disabled:opacity-40 disabled:cursor-not-allowed
+          ${
+            isDark
+              ? "bg-[#172439] border-white/[0.10] text-slate-200"
+              : "bg-white border-slate-300 text-slate-800"
+          }
+          ${
+            open
+              ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60"
+              : ""
+          }
+        `}
+      >
+        <span
+          className={
+            selected
+              ? ""
+              : isDark
+              ? "text-slate-500"
+              : "text-slate-400"
+          }
+        >
+          {selected
+            ? selected.label
+            : placeholder}
+        </span>
+
+        <ChevronDown
+          size={14}
+          className={`
+            transition-transform
+            ${open ? "rotate-180" : ""}
+            ${
+              isDark
+                ? "text-slate-500"
+                : "text-slate-400"
+            }
+          `}
+        />
+      </button>
+
+      {open && (
+        <div
+          className={`
+            absolute top-full left-0 right-0 mt-1.5
+            z-[200] rounded-xl border overflow-hidden
+            shadow-[0_16px_48px_rgba(0,0,0,0.35)]
+            ${
+              isDark
+                ? "bg-[#172439] border-white/[0.10]"
+                : "bg-white border-slate-200"
+            }
+          `}
+        >
+          <div className="max-h-52 overflow-y-auto py-1">
+            {normalizedOptions.length === 0 ? (
+              <p
+                className={`
+                  px-4 py-3 text-[12px] text-center
+                  ${
+                    isDark
+                      ? "text-slate-600"
+                      : "text-slate-400"
+                  }
+                `}
+              >
+                No options available
+              </p>
+            ) : (
+              normalizedOptions.map((option) => {
+                const selectedOption =
+                  option.value === value;
+
+                return (
+                  <button
+                    key={String(option.value)}
+                    type="button"
+                    onClick={() => {
+                      onChange(option.value);
+                      setOpen(false);
+                    }}
+                    className={`
+                      w-full text-left px-4 py-2.5
+                      text-[13px] flex items-center
+                      justify-between gap-2
+                      transition-colors
+                      ${
+                        selectedOption
+                          ? "text-[#7094ff] bg-[#7094ff]/10"
+                          : isDark
+                          ? "text-[#a0aec0] hover:bg-white/[0.06] hover:text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }
+                    `}
+                  >
+                    {option.label}
+
+                    {selectedOption && (
+                      <Check
+                        size={13}
+                        className="text-[#7094ff]"
+                      />
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   VIEW APPLICATION
+========================================================= */
 export default function ViewApplication() {
   const { isDark } = useTheme();
 
@@ -25,35 +533,60 @@ export default function ViewApplication() {
   const [branches, setBranches] = useState([]);
   const [devices, setDevices] = useState([]);
 
-  const [selectedBranch, setSelectedBranch] = useState("");
-  const [selectedDevices, setSelectedDevices] = useState([]);
+  const [selectedBranch, setSelectedBranch] =
+    useState("");
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDevices, setSelectedDevices] =
+    useState([]);
 
-  const [loading, setLoading] = useState(false);
-  const [deviceLoading, setDeviceLoading] = useState(false);
+  const [searchTerm, setSearchTerm] =
+    useState("");
 
-  const [showResults, setShowResults] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] =
+    useState(false);
+
+  const [deviceLoading, setDeviceLoading] =
+    useState(false);
+
+  const [showResults, setShowResults] =
+    useState(false);
+
+  const [currentPage, setCurrentPage] =
+    useState(1);
 
   // =========================
   // INLINE DETAILS
   // =========================
-  const [viewingHostname, setViewingHostname] = useState(null);
-  const [viewDetails, setViewDetails] = useState([]);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState("");
+  const [viewingHostname, setViewingHostname] =
+    useState(null);
+
+  const [viewDetails, setViewDetails] =
+    useState([]);
+
+  const [detailLoading, setDetailLoading] =
+    useState(false);
+
+  const [detailError, setDetailError] =
+    useState("");
 
   // =========================
-  // DETAILS SEARCH + PAGINATION
+  // DETAILS SEARCH
   // =========================
-  const [detailSearchTerm, setDetailSearchTerm] = useState("");
-  const [detailCurrentPage, setDetailCurrentPage] = useState(1);
+  const [detailSearchTerm, setDetailSearchTerm] =
+    useState("");
+
+  const [
+    detailCurrentPage,
+    setDetailCurrentPage,
+  ] = useState(1);
 
   const itemsPerPage = 10;
 
-  const applicationResultRef = useRef(null);
-  const detailsSectionRef = useRef(null);
+  const applicationResultRef =
+    useRef(null);
+
+  const detailsSectionRef =
+    useRef(null);
 
   // =========================
   // LOAD BRANCHES
@@ -64,10 +597,16 @@ export default function ViewApplication() {
 
   const loadBranches = async () => {
     try {
-      const response = await dashboardService.getBranch();
+      const response =
+        await dashboardService.getBranch();
+
       setBranches(response?.data || []);
     } catch (error) {
-      console.error("Failed to load branches:", error);
+      console.error(
+        "Failed to load branches:",
+        error
+      );
+
       setBranches([]);
     }
   };
@@ -75,10 +614,15 @@ export default function ViewApplication() {
   // =========================
   // BRANCH CHANGE
   // =========================
-  const handleBranchChange = async (branchValue) => {
+  const handleBranchChange = async (
+    branchValue
+  ) => {
     setSelectedBranch(branchValue);
     setSelectedDevices([]);
     setDevices([]);
+
+    setApplications([]);
+    setShowResults(false);
 
     if (!branchValue) return;
 
@@ -86,11 +630,17 @@ export default function ViewApplication() {
       setDeviceLoading(true);
 
       const response =
-        await dashboardService.getDevicesByBranch(branchValue);
+        await dashboardService.getDevicesByBranch(
+          branchValue
+        );
 
       setDevices(response?.data || []);
     } catch (error) {
-      console.error("Failed to load devices:", error);
+      console.error(
+        "Failed to load devices:",
+        error
+      );
+
       setDevices([]);
     } finally {
       setDeviceLoading(false);
@@ -107,6 +657,13 @@ export default function ViewApplication() {
     setDetailSearchTerm("");
     setDetailCurrentPage(1);
 
+    if (
+      !selectedBranch ||
+      selectedDevices.length === 0
+    ) {
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -115,8 +672,20 @@ export default function ViewApplication() {
         device: selectedDevices,
       };
 
+      console.log(
+        "View Application Request:",
+        requestData
+      );
+
       const response =
-        await dashboardService.getApplicationCount(requestData);
+        await dashboardService.getApplicationCount(
+          requestData
+        );
+
+      console.log(
+        "View Application Response:",
+        response
+      );
 
       const responseData = response?.data;
 
@@ -144,7 +713,10 @@ export default function ViewApplication() {
         }
       }, 150);
     } catch (error) {
-      console.error("View Application API Error:", error);
+      console.error(
+        "View Application API Error:",
+        error
+      );
 
       setApplications([]);
       setShowResults(true);
@@ -176,7 +748,10 @@ export default function ViewApplication() {
     setDetailCurrentPage(1);
 
     if (!hostname) {
-      setDetailError("Host name is not available");
+      setDetailError(
+        "Host name is not available"
+      );
+
       setViewDetails([]);
       setViewingHostname(hostname);
 
@@ -199,9 +774,13 @@ export default function ViewApplication() {
 
     try {
       const response =
-        await dashboardService.getApplicationDetails(hostname);
+        await dashboardService.getApplicationDetails(
+          hostname
+        );
 
-      const details = Array.isArray(response?.data)
+      const details = Array.isArray(
+        response?.data
+      )
         ? response.data
         : response?.data
         ? [response.data]
@@ -209,7 +788,10 @@ export default function ViewApplication() {
 
       setViewDetails(details);
     } catch (error) {
-      console.error("Application details error:", error);
+      console.error(
+        "Application details error:",
+        error
+      );
 
       setViewDetails([]);
 
@@ -272,9 +854,10 @@ export default function ViewApplication() {
   // =========================
   // APPLICATION FILTER
   // =========================
-  const filteredApplications = applications.filter(
-    (item) => {
-      const search = searchTerm.toLowerCase();
+  const filteredApplications =
+    applications.filter((item) => {
+      const search =
+        searchTerm.toLowerCase();
 
       return Object.values(item || {}).some(
         (value) =>
@@ -282,18 +865,19 @@ export default function ViewApplication() {
             .toLowerCase()
             .includes(search)
       );
-    }
-  );
+    });
 
   const totalPages = Math.max(
     1,
     Math.ceil(
-      filteredApplications.length / itemsPerPage
+      filteredApplications.length /
+        itemsPerPage
     )
   );
 
   const startIndex =
-    (currentPage - 1) * itemsPerPage;
+    (currentPage - 1) *
+    itemsPerPage;
 
   const paginatedApplications =
     filteredApplications.slice(
@@ -304,10 +888,12 @@ export default function ViewApplication() {
   // =========================
   // DETAILS FILTER
   // =========================
-  const filteredViewDetails = viewDetails.filter(
-    (detail) => {
+  const filteredViewDetails =
+    viewDetails.filter((detail) => {
       const search =
-        detailSearchTerm.toLowerCase().trim();
+        detailSearchTerm
+          .toLowerCase()
+          .trim();
 
       if (!search) return true;
 
@@ -345,18 +931,19 @@ export default function ViewApplication() {
           .toLowerCase()
           .includes(search)
       );
-    }
-  );
+    });
 
   const detailTotalPages = Math.max(
     1,
     Math.ceil(
-      filteredViewDetails.length / itemsPerPage
+      filteredViewDetails.length /
+        itemsPerPage
     )
   );
 
   const detailStartIndex =
-    (detailCurrentPage - 1) * itemsPerPage;
+    (detailCurrentPage - 1) *
+    itemsPerPage;
 
   const paginatedViewDetails =
     filteredViewDetails.slice(
@@ -365,448 +952,7 @@ export default function ViewApplication() {
     );
 
   // =========================
-  // DROPDOWN
-  // =========================
-  function Dropdown({
-    value,
-    onChange,
-    options,
-    placeholder = "Select...",
-    disabled = false,
-  }) {
-    const [open, setOpen] = useState(false);
-    const containerRef = useRef(null);
-
-    useEffect(() => {
-      const handleOutsideClick = (event) => {
-        if (
-          containerRef.current &&
-          !containerRef.current.contains(event.target)
-        ) {
-          setOpen(false);
-        }
-      };
-
-      document.addEventListener(
-        "mousedown",
-        handleOutsideClick
-      );
-
-      return () =>
-        document.removeEventListener(
-          "mousedown",
-          handleOutsideClick
-        );
-    }, []);
-
-    const normalizedOptions = (options || []).map(
-      (item) => {
-        if (typeof item === "string") {
-          return {
-            value: item,
-            label: item,
-          };
-        }
-
-        return {
-          value:
-            item.value ??
-            item.branchName ??
-            item.deviceName ??
-            item.name,
-
-          label:
-            item.label ??
-            item.branchName ??
-            item.deviceName ??
-            item.name,
-        };
-      }
-    );
-
-    const selected = normalizedOptions.find(
-      (item) => item.value === value
-    );
-
-    return (
-      <div
-        ref={containerRef}
-        className="relative w-full"
-      >
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() =>
-            !disabled &&
-            setOpen((prev) => !prev)
-          }
-          className={`
-            w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] text-left border transition-all
-            disabled:opacity-40 disabled:cursor-not-allowed
-            ${
-              isDark
-                ? "bg-[#172439] border-white/[0.10] text-slate-200"
-                : "bg-white border-slate-300 text-slate-800"
-            }
-            ${
-              open
-                ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60"
-                : ""
-            }
-          `}
-        >
-          <span
-            className={
-              selected
-                ? ""
-                : isDark
-                ? "text-slate-500"
-                : "text-slate-400"
-            }
-          >
-            {selected
-              ? selected.label
-              : placeholder}
-          </span>
-
-          <ChevronDown
-            size={14}
-            className={`transition-transform ${
-              open ? "rotate-180" : ""
-            } ${
-              isDark
-                ? "text-slate-500"
-                : "text-slate-400"
-            }`}
-          />
-        </button>
-
-        {open && (
-          <div
-            className={`absolute top-full left-0 right-0 mt-1.5 z-[200] rounded-xl border overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.35)] ${
-              isDark
-                ? "bg-[#172439] border-white/[0.10]"
-                : "bg-white border-slate-200"
-            }`}
-          >
-            <div className="max-h-52 overflow-y-auto py-1">
-              {normalizedOptions.length === 0 ? (
-                <p
-                  className={`px-4 py-3 text-[12px] text-center ${
-                    isDark
-                      ? "text-slate-600"
-                      : "text-slate-400"
-                  }`}
-                >
-                  No options available
-                </p>
-              ) : (
-                normalizedOptions.map(
-                  (option) => {
-                    const selectedOption =
-                      option.value === value;
-
-                    return (
-                      <button
-                        key={String(
-                          option.value
-                        )}
-                        type="button"
-                        onClick={() => {
-                          onChange(
-                            option.value
-                          );
-                          setOpen(false);
-                        }}
-                        className={`
-                          w-full text-left px-4 py-2.5 text-[13px] flex items-center justify-between gap-2 transition-colors
-                          ${
-                            selectedOption
-                              ? "text-[#7094ff] bg-[#7094ff]/10"
-                              : isDark
-                              ? "text-[#a0aec0] hover:bg-white/[0.06] hover:text-white"
-                              : "text-slate-700 hover:bg-slate-100"
-                          }
-                        `}
-                      >
-                        {option.label}
-
-                        {selectedOption && (
-                          <Check
-                            size={13}
-                            className="text-[#7094ff]"
-                          />
-                        )}
-                      </button>
-                    );
-                  }
-                )
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // =========================
-  // MULTI SELECT
-  // =========================
-  function MultiSelectDropdown({
-    values = [],
-    onChange,
-    options = [],
-    placeholder = "Select...",
-    disabled = false,
-  }) {
-    const [open, setOpen] = useState(false);
-    const containerRef = useRef(null);
-
-    useEffect(() => {
-      const handleOutsideClick = (event) => {
-        if (
-          containerRef.current &&
-          !containerRef.current.contains(event.target)
-        ) {
-          setOpen(false);
-        }
-      };
-
-      document.addEventListener(
-        "mousedown",
-        handleOutsideClick
-      );
-
-      return () =>
-        document.removeEventListener(
-          "mousedown",
-          handleOutsideClick
-        );
-    }, []);
-
-    const normalizedOptions = (options || []).map(
-      (item) => {
-        if (typeof item === "string") {
-          return {
-            value: item,
-            label: item,
-          };
-        }
-
-        return {
-          value:
-            item.value ??
-            item.deviceName ??
-            item.name,
-
-          label:
-            item.label ??
-            item.deviceName ??
-            item.name,
-        };
-      }
-    );
-
-    const allSelected =
-      normalizedOptions.length > 0 &&
-      normalizedOptions.every((item) =>
-        values.includes(item.value)
-      );
-
-    const toggleDevice = (deviceValue) => {
-      if (values.includes(deviceValue)) {
-        onChange(
-          values.filter(
-            (v) => v !== deviceValue
-          )
-        );
-      } else {
-        onChange([
-          ...values,
-          deviceValue,
-        ]);
-      }
-    };
-
-    const toggleSelectAll = () => {
-      if (allSelected) {
-        onChange([]);
-      } else {
-        onChange(
-          normalizedOptions.map(
-            (item) => item.value
-          )
-        );
-      }
-    };
-
-    return (
-      <div
-        ref={containerRef}
-        className="relative w-full"
-      >
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() =>
-            !disabled &&
-            setOpen((prev) => !prev)
-          }
-          className={`
-            w-full min-h-[42px] flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] text-left border transition-all
-            disabled:opacity-40 disabled:cursor-not-allowed
-            ${
-              isDark
-                ? "bg-[#172439] border-white/[0.10] text-slate-200"
-                : "bg-white border-slate-300 text-slate-800"
-            }
-            ${
-              open
-                ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60"
-                : ""
-            }
-          `}
-        >
-          <span
-            className={
-              values.length > 0
-                ? ""
-                : isDark
-                ? "text-slate-500"
-                : "text-slate-400"
-            }
-          >
-            {values.length > 0
-              ? `${values.length} device${
-                  values.length !== 1
-                    ? "s"
-                    : ""
-                } selected`
-              : placeholder}
-          </span>
-
-          <ChevronDown
-            size={14}
-            className={`transition-transform ${
-              open ? "rotate-180" : ""
-            } ${
-              isDark
-                ? "text-slate-500"
-                : "text-slate-400"
-            }`}
-          />
-        </button>
-
-        {open && (
-          <div
-            className={`absolute top-full left-0 right-0 mt-1.5 z-[200] rounded-xl border overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.35)] ${
-              isDark
-                ? "bg-[#172439] border-white/[0.10]"
-                : "bg-white border-slate-200"
-            }`}
-          >
-            <div
-              className={`px-3 py-2.5 border-b ${
-                isDark
-                  ? "border-white/[0.06]"
-                  : "border-slate-100"
-              }`}
-            >
-              <button
-                type="button"
-                onClick={toggleSelectAll}
-                className={`w-full flex items-center gap-2 text-left text-[12px] ${
-                  isDark
-                    ? "text-gray-300 hover:text-white"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                {allSelected ? (
-                  <>
-                    <X
-                      size={14}
-                      className="text-red-400"
-                    />
-                    Deselect all
-                  </>
-                ) : (
-                  <>
-                    <Check
-                      size={14}
-                      className="text-[#7094ff]"
-                    />
-                    Select all
-                  </>
-                )}
-              </button>
-            </div>
-
-            <div className="max-h-52 overflow-y-auto py-1">
-              {normalizedOptions.length ===
-              0 ? (
-                <p
-                  className={`px-4 py-3 text-[12px] text-center ${
-                    isDark
-                      ? "text-slate-600"
-                      : "text-slate-400"
-                  }`}
-                >
-                  No devices available
-                </p>
-              ) : (
-                normalizedOptions.map(
-                  (option) => {
-                    const selected =
-                      values.includes(
-                        option.value
-                      );
-
-                    return (
-                      <button
-                        key={String(
-                          option.value
-                        )}
-                        type="button"
-                        onClick={() =>
-                          toggleDevice(
-                            option.value
-                          )
-                        }
-                        className={`
-                          w-full text-left px-4 py-2.5 text-[13px] flex items-center justify-between gap-2 transition-colors
-                          ${
-                            selected
-                              ? "text-[#7094ff] bg-[#7094ff]/10"
-                              : isDark
-                              ? "text-[#a0aec0] hover:bg-white/[0.06] hover:text-white"
-                              : "text-slate-700 hover:bg-slate-100"
-                          }
-                        `}
-                      >
-                        <span>
-                          {option.label}
-                        </span>
-
-                        {selected && (
-                          <Check
-                            size={13}
-                            className="text-[#7094ff]"
-                          />
-                        )}
-                      </button>
-                    );
-                  }
-                )
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // =========================
-  // MAIN RENDER
+  // RENDER
   // =========================
   return (
     <div className="min-h-screen p-6">
@@ -865,6 +1011,7 @@ export default function ViewApplication() {
               onChange={handleBranchChange}
               options={branches}
               placeholder="Select Branch"
+              isDark={isDark}
             />
           </div>
 
@@ -892,6 +1039,7 @@ export default function ViewApplication() {
                 !selectedBranch ||
                 deviceLoading
               }
+              isDark={isDark}
             />
           </div>
 
@@ -900,6 +1048,7 @@ export default function ViewApplication() {
         {/* BUTTONS */}
         <div className="flex justify-end gap-3 mt-5">
 
+          {/* RESET */}
           <button
             type="button"
             onClick={handleReset}
@@ -913,10 +1062,15 @@ export default function ViewApplication() {
             Reset
           </button>
 
+          {/* SUBMIT */}
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={
+              loading ||
+              !selectedBranch ||
+              selectedDevices.length === 0
+            }
             className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#4f56f0] text-white text-sm font-semibold shadow-lg shadow-indigo-900/40 hover:bg-[#5c63f5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
@@ -1164,7 +1318,6 @@ export default function ViewApplication() {
                   )
                 )}
               </tbody>
-
             </table>
           </div>
 
@@ -1180,7 +1333,8 @@ export default function ViewApplication() {
             >
               Showing{" "}
               {paginatedApplications.length} of{" "}
-              {filteredApplications.length} records
+              {filteredApplications.length}{" "}
+              records
             </div>
 
             <div className="flex items-center gap-2">
@@ -1191,7 +1345,10 @@ export default function ViewApplication() {
                 onClick={() =>
                   setCurrentPage(
                     (prev) =>
-                      Math.max(prev - 1, 1)
+                      Math.max(
+                        prev - 1,
+                        1
+                      )
                   )
                 }
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${
@@ -1248,9 +1405,7 @@ export default function ViewApplication() {
         </div>
       )}
 
-      {/* =====================================================
-          INLINE DETAILS SECTION
-      ===================================================== */}
+      {/* INLINE DETAILS */}
       {viewingHostname !== null && (
         <div
           ref={detailsSectionRef}
@@ -1261,10 +1416,9 @@ export default function ViewApplication() {
           }`}
         >
 
-          {/* HEADER + SEARCH + BACK */}
+          {/* HEADER */}
           <div className="flex items-center justify-between mb-5">
 
-            {/* TITLE */}
             <div className="flex items-center gap-3">
               <ClipboardList
                 className={`h-5 w-5 ${
@@ -1298,10 +1452,9 @@ export default function ViewApplication() {
               </div>
             </div>
 
-            {/* RIGHT SIDE */}
             <div className="flex items-center gap-3">
 
-              {/* SEARCH */}
+              {/* DETAIL SEARCH */}
               <div className="relative w-64">
                 <Search
                   size={14}
@@ -1319,6 +1472,7 @@ export default function ViewApplication() {
                     setDetailSearchTerm(
                       e.target.value
                     );
+
                     setDetailCurrentPage(1);
                   }}
                   placeholder="Search application..."
@@ -1336,7 +1490,7 @@ export default function ViewApplication() {
                       setDetailSearchTerm("");
                       setDetailCurrentPage(1);
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                   >
                     <X size={13} />
                   </button>
@@ -1360,11 +1514,12 @@ export default function ViewApplication() {
             </div>
           </div>
 
-          {/* TABLE */}
+          {/* DETAIL TABLE */}
           <div className="overflow-x-auto">
 
             {detailLoading ? (
               <div className="flex flex-col items-center justify-center py-16">
+
                 <RefreshCw
                   size={24}
                   className="animate-spin text-indigo-500 mb-3"
@@ -1558,15 +1713,12 @@ export default function ViewApplication() {
             )}
           </div>
 
-          {/* =================================================
-              DETAILS PAGINATION
-          ================================================= */}
+          {/* DETAILS PAGINATION */}
           {!detailLoading &&
             !detailError &&
             viewDetails.length > 0 && (
               <div className="flex items-center justify-between mt-5 pt-4">
 
-                {/* LEFT */}
                 <div
                   className={`text-xs ${
                     isDark
@@ -1580,10 +1732,8 @@ export default function ViewApplication() {
                   records
                 </div>
 
-                {/* RIGHT */}
                 <div className="flex items-center gap-2">
 
-                  {/* PREVIOUS */}
                   <button
                     type="button"
                     disabled={
@@ -1610,7 +1760,6 @@ export default function ViewApplication() {
                     Previous
                   </button>
 
-                  {/* PAGE */}
                   <span
                     className={`text-xs px-2 ${
                       isDark
@@ -1623,7 +1772,6 @@ export default function ViewApplication() {
                     {detailTotalPages}
                   </span>
 
-                  {/* NEXT */}
                   <button
                     type="button"
                     disabled={

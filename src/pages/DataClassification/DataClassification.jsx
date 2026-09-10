@@ -47,11 +47,11 @@ const fileTypeData = [
 ];
 
 const networkData = [
-  { name: "WEB UPLOAD", value: 120 },
-  { name: "USB TRANSFER", value: 95 },
-  { name: "FTP TRANSFER", value: 15 },
-  { name: "DVD BURN", value: 8 },
-  { name: "NETWORK UPLOAD", value: 5 },
+  { name: "WEB UPLOAD", value: 20 },
+  { name: "USB TRANSFER", value: 65 },
+  { name: "FTP TRANSFER", value: 30 },
+  { name: "DVD BURN", value: 70 },
+  { name: "NETWORK UPLOAD", value: 80 },
 ];
 
 const fileTotal = fileTypeData.reduce((sum, item) => sum + item.value, 0);
@@ -166,6 +166,8 @@ export default function DataClassification() {
       icon: TriangleAlert,
       iconColor: isDark ? "text-red-500" : "text-red-600",
     },
+
+    
   ];
 
   return (
@@ -220,11 +222,12 @@ export default function DataClassification() {
                       data={sensitivityData}
                       margin={{ top: 5, right: 5, left: -18, bottom: 5 }}
                     >
-                      <CartesianGrid
-                        stroke={isDark ? "#1A2136" : "#e5e7eb"}
-                        strokeDasharray="4 4"
-                        vertical={true}
-                      />
+              <CartesianGrid
+  stroke={isDark ? "#1B2438" : "#e5e7eb"}
+  strokeDasharray="4 4"
+  vertical={false}
+  horizontal={false}
+/>
                       <XAxis
                         dataKey="name"
                         axisLine={false}
@@ -255,239 +258,479 @@ export default function DataClassification() {
             </div>
 
             {/* File Type Distribution - Donut Chart */}
-            <div className={`relative rounded-2xl border overflow-hidden ${isDark ? 'border-[#232C46] bg-[#020617]' : 'border-gray-200 bg-white'}`}>
-              <div className="relative px-5 py-4">
-                <h2 className={`text-[10px] font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                  File Type Distribution
-                </h2>
-              </div>
-              <div className="relative flex items-start px-2 pb-5">
-                <div className="relative w-[190px] h-[170px] flex-shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={fileTypeData}
-                        dataKey="value"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={55}
-                        outerRadius={68}
-                        paddingAngle={4}
-                        cornerRadius={7}
-                        stroke="none"
-                      >
-                        {fileTypeData.map((item, index) => (
-                          <Cell key={index} fill={item.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <h2 className={`text-4xl font-bold leading-none ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                      {fileTotal}
-                    </h2>
-                    <p className={isDark ? 'text-[#7E8AA8] text-sm mt-2' : 'text-gray-500 text-sm mt-2'}>
-                      Files
-                    </p>
-                  </div>
-                </div>
-                <div className="flex-1 ml-8 h-[170px]">
-                  <div className="space-y-3">
-                    {fileTypeData.map((item) => (
-                      <div key={item.name} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <span className={`text-sm ${isDark ? 'text-[#D8E1F7]' : 'text-gray-700'}`}>
-                            {item.name}
-                          </span>
-                        </div>
-                        <span className="text-sm font-semibold" style={{ color: item.color }}>
-                          {item.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+         <div
+  className={`relative rounded-2xl border overflow-hidden ${
+    isDark
+      ? "bg-[#020617] border-[#1e293b]"
+      : "bg-white border-gray-200"
+  }`}
+>
+  {/* Header */}
+  <div className="relative px-5 py-4">
+    <h2
+      className={`text-sm font-semibold ${
+        isDark ? "text-white" : "text-gray-900"
+      }`}
+    >
+      File Type Distribution
+    </h2>
+  </div>
+
+  {/* Pie + File Type Names */}
+  <div className="relative flex items-center justify-center gap-40 px-5 pb-5">
+
+    {/* Pie Chart */}
+    <div className="relative h-[190px] w-[190px] shrink-0">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={fileTypeData}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            innerRadius={70}
+            outerRadius={82}
+            paddingAngle={3}
+            cornerRadius={6}
+            stroke="none"
+          >
+            {fileTypeData.map((entry, index) => (
+              <Cell
+                key={`file-type-${index}`}
+                fill={entry.color}
+              />
+            ))}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+
+      {/* Center Total */}
+      <div
+        className={`pointer-events-none absolute left-1/2 top-1/2 flex h-[96px] w-[96px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full ${
+          isDark ? "bg-[#111827]" : "bg-white"
+        }`}
+      >
+        <span
+          className={`text-xl font-bold ${
+            isDark ? "text-white" : "text-gray-900"
+          }`}
+        >
+          {fileTotal}
+        </span>
+
+        <span
+          className={`text-[11px] ${
+            isDark ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
+          Files
+        </span>
+      </div>
+    </div>
+
+    {/* File Type Names */}
+{/* File Type Names */}
+<div className="flex w-[110px] flex-col gap-4">
+  {fileTypeData.map((item, index) => (
+    <div
+      key={`file-type-name-${index}`}
+      className="flex items-center gap-2"
+    >
+      {/* Color Dot */}
+      <span
+        className="h-2.5 w-2.5 shrink-0 rounded-full"
+        style={{ backgroundColor: item.color }}
+      />
+
+      {/* Name */}
+      <span
+        className={`text-xs font-medium ${
+          isDark ? "text-gray-300" : "text-gray-600"
+        }`}
+      >
+        {item.name}
+      </span>
+
+      {/* Count */}
+      <span
+        className={`ml-auto text-xs font-semibold ${
+          isDark ? "text-white" : "text-gray-900"
+        }`}
+      >
+        {item.value}
+      </span>
+    </div>
+  ))}
+</div>
+  </div>
+</div>
 
             {/* Network DLP Events - Area Chart */}
-            <div className={`rounded-2xl overflow-hidden border ${isDark ? 'border-[#1E2942] bg-[#020617]' : 'border-gray-200 bg-white'}`}>
-              <div className="px-5 pt-4">
-                <h2 className={`text-[10px] font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                  Network DLP Events
-                </h2>
-              </div>
-              <div className="h-[180px] px-3 pb-3">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={networkData}
-                    margin={{ top: 15, right: 10, left: -18, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="networkGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#22C55E" stopOpacity={0.25} />
-                        <stop offset="100%" stopColor="#22C55E" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      stroke={isDark ? "#1B2438" : "#e5e7eb"}
-                      strokeDasharray="4 4"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: isDark ? "#5D6B87" : "#6b7280", fontSize: 8 }}
-                    />
-                    <YAxis
-                      domain={[0, 4]}
-                      ticks={[0, 1, 2, 3, 4]}
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={(v) => `${v}%`}
-                      tick={{ fill: isDark ? "#5D6B87" : "#6b7280", fontSize: 11 }}
-                    />
-                    <Tooltip
-                      cursor={false}
-                      contentStyle={{
-                        background: isDark ? "#101827" : "#ffffff",
-                        border: isDark ? "1px solid #1E2942" : "1px solid #e5e7eb",
-                        borderRadius: "8px",
-                        color: isDark ? "#fff" : "#000",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#22C55E"
-                      strokeWidth={3}
-                      fill="url(#networkGradient)"
-                      dot={{ r: 3.5, fill: "#22C55E", stroke: "#FFFFFF", strokeWidth: 2 }}
-                      activeDot={{ r: 5, fill: "#22C55E", stroke: "#FFFFFF", strokeWidth: 2 }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+        <div
+  className={`rounded-2xl overflow-hidden border ${
+    isDark
+      ? "border-[#1E2942] bg-[#020617]"
+      : "border-gray-200 bg-white"
+  }`}
+>
+  {/* Header */}
+  <div className="px-5 pt-4">
+    <h2
+      className={`text-[10px] font-semibold ${
+        isDark ? "text-white" : "text-gray-800"
+      }`}
+    >
+      Network DLP Events
+    </h2>
+  </div>
+
+  {/* FULL SIZE CHART */}
+  <div className="w-full h-[230px] px-2 pb-3">
+    <ResponsiveContainer width="100%" height="100%">
+  <AreaChart
+  data={networkData}
+  margin={{
+    top: 10,
+    right: 8,
+    left: 5,
+    bottom: 5,
+  }}
+>
+  <defs>
+    <linearGradient
+      id="networkGradient"
+      x1="0"
+      y1="0"
+      x2="0"
+      y2="1"
+    >
+      <stop
+        offset="0%"
+        stopColor="#22C55E"
+        stopOpacity={0.25}
+      />
+      <stop
+        offset="100%"
+        stopColor="#22C55E"
+        stopOpacity={0}
+      />
+    </linearGradient>
+  </defs>
+
+  <XAxis
+    dataKey="name"
+    axisLine={false}
+    tickLine={false}
+    padding={{ left: 5, right: 5 }}
+    tick={{
+      fill: isDark ? "#5D6B87" : "#6b7280",
+      fontSize: 8,
+    }}
+  />
+
+  <YAxis
+    domain={[0, 4]}
+    ticks={[0, 1, 2, 3, 4]}
+    axisLine={false}
+    tickLine={false}
+    tickFormatter={(v) => `${v}%`}
+    width={28}
+    tick={{
+      fill: isDark ? "#5D6B87" : "#6b7280",
+      fontSize: 10,
+    }}
+  />
+
+  <Tooltip
+    cursor={false}
+    contentStyle={{
+      background: isDark ? "#101827" : "#ffffff",
+      border: isDark
+        ? "1px solid #1E2942"
+        : "1px solid #e5e7eb",
+      borderRadius: "8px",
+      color: isDark ? "#fff" : "#000",
+    }}
+  />
+
+  <Area
+    type="monotone"
+    dataKey="value"
+    stroke="#22C55E"
+    strokeWidth={3}
+    fill="url(#networkGradient)"
+    dot={{
+      r: 3.5,
+      fill: "#22C55E",
+      stroke: "#FFFFFF",
+      strokeWidth: 2,
+    }}
+    activeDot={{
+      r: 5,
+      fill: "#22C55E",
+      stroke: "#FFFFFF",
+      strokeWidth: 2,
+    }}
+  />
+</AreaChart>
+    </ResponsiveContainer>
+  </div>
+</div>
           </div>
         </div>
 
         {/* ─── Classification Files Table ─── */}
-        <div className="px-2 pb-6">
-          <div className={`rounded-2xl overflow-hidden border ${isDark ? 'border-[#1A2136] bg-[#020617]' : 'border-gray-200 bg-white'}`}>
-            {/* Table Header */}
-            <div className={`flex items-center justify-between px-5 py-2 border-b ${isDark ? 'border-[#1D2B3D]' : 'border-gray-200'}`}>
-              <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                Classification Files
-              </h2>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Search
-                    size={15}
-                    className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className={`w-60 pl-9 pr-3 py-2 rounded-lg border text-xs
-                      ${isDark ? 'bg-[#020617] border-[#243244] text-gray-300 placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-700 placeholder-gray-400'}
-                      focus:outline-none focus:ring-1 focus:ring-blue-500`}
-                  />
-                </div>
-                <button
-                  className={`px-3 py-2 rounded-lg border text-xs transition
-                    ${isDark ? 'border-[#243244] text-gray-300 hover:bg-[#020617]' : 'border-gray-300 text-gray-600 hover:bg-gray-100'}`}
-                >
-                  Export
-                </button>
-              </div>
-            </div>
+    {/* ─── Classification Files Table ─── */}
+<div className="px-2 pb-6">
+  <div
+    className={`rounded-2xl overflow-hidden border ${
+      isDark
+        ? "border-[#1A2136] bg-[#020617]"
+        : "border-gray-200 bg-white"
+    }`}
+  >
+    {/* Table Header */}
+    <div
+      className={`flex items-center justify-between px-5 py-2 border-b ${
+        isDark ? "border-[#1D2B3D]" : "border-gray-200"
+      }`}
+    >
+      <h2
+        className={`text-sm font-semibold ${
+          isDark ? "text-white" : "text-gray-800"
+        }`}
+      >
+        Classification Files
+      </h2>
 
-            {/* Scrollable Table */}
-            <div className="overflow-x-auto">
-              <div className="max-h-[180px] overflow-y-auto">
-                <table className="w-full border-collapse">
-                  <thead className={`sticky top-0 z-10 border-b ${isDark ? 'bg-[#020617] border-[#1D2B3D]' : 'bg-white border-gray-200'}`}>
-                    <tr>
-                      <th className={`px-4 py-2 text-left text-[10px] uppercase tracking-wider font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        SR NO
-                      </th>
-                      <th className={`px-4 py-2 text-left text-[10px] uppercase tracking-wider font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        FILE NAME
-                      </th>
-                      <th className={`px-4 py-2 text-left text-[10px] uppercase tracking-wider font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        FILE PATH
-                      </th>
-                      <th className={`px-4 py-2 text-left text-[10px] uppercase tracking-wider font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        EXTENSION
-                      </th>
-                      <th className={`px-4 py-2 text-left text-[10px] uppercase tracking-wider font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        LABEL
-                      </th>
-                      <th className={`px-4 py-2 text-left text-[10px] uppercase tracking-wider font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        RISK LEVEL
-                      </th>
-                      <th className={`px-4 py-2 text-left text-[10px] uppercase tracking-wider font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        DETECTED ON
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {classificationFiles.map((file) => (
-                      <tr
-                        key={file.srNo}
-                        className={`border-b transition-colors ${isDark ? 'border-[#1D2B3D] hover:bg-[#0d1727]' : 'border-gray-200 hover:bg-gray-50'}`}
-                      >
-                        <td className="px-4 py-2 text-xs font-medium text-blue-400">
-                          {file.srNo}
-                        </td>
-                        <td className={`px-4 py-2 text-xs font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {file.fileName}
-                        </td>
-                        <td
-                          className={`px-4 py-2 text-xs max-w-[280px] truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
-                          title={file.filePath}
-                        >
-                          {file.filePath}
-                        </td>
-                        <td className={`px-4 py-2 text-xs uppercase ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                          {file.extension}
-                        </td>
-                        <td className="px-4 py-2">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${getLabelColor(file.label)}`}
-                          >
-                            {file.label}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2">
-                          <span className={`text-xs font-semibold ${getRiskColor(file.riskLevel)}`}>
-                            {file.riskLevel}
-                          </span>
-                        </td>
-                        <td className={`px-4 py-2 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {file.detectedOn}
-                        </td>
-                      </tr>
-                    ))}
-                    {classificationFiles.length === 0 && (
-                      <tr>
-                        <td colSpan={7} className={`py-8 text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                          No classification files found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+      <div className="flex items-center gap-2">
+        {/* Search */}
+        <div className="relative">
+          <Search
+            size={14}
+            className={`absolute left-3 top-1/2 -translate-y-1/2 ${
+              isDark ? "text-gray-400" : "text-gray-500"
+            }`}
+          />
+
+          <input
+            type="text"
+            placeholder="Search..."
+            className={`w-48 h-7 pl-8 pr-3 rounded-lg border text-[10px]
+              ${
+                isDark
+                  ? "bg-[#020617] border-[#243244] text-gray-300 placeholder-gray-500"
+                  : "bg-gray-50 border-gray-300 text-gray-700 placeholder-gray-400"
+              }
+              focus:outline-none focus:ring-1 focus:ring-blue-500`}
+          />
         </div>
+
+        {/* Export */}
+        <button
+          className={`h-7 px-3 rounded-lg border text-[10px] transition
+            ${
+              isDark
+                ? "border-[#243244] text-gray-300 hover:bg-[#0d1727]"
+                : "border-gray-300 text-gray-600 hover:bg-gray-100"
+            }`}
+        >
+          Export
+        </button>
+      </div>
+    </div>
+
+    {/* Table */}
+    <div className="w-full overflow-x-auto">
+      <div className="h-[220px] overflow-y-auto overflow-x-auto">
+        <table className="w-full min-w-[950px] table-fixed border-collapse">
+          {/* Column Widths */}
+          <colgroup>
+            <col className="w-[6%]" />
+            <col className="w-[17%]" />
+            <col className="w-[31%]" />
+            <col className="w-[10%]" />
+            <col className="w-[10%]" />
+            <col className="w-[10%]" />
+            <col className="w-[16%]" />
+          </colgroup>
+
+          {/* Header */}
+          <thead
+            className={`sticky top-0 z-20 ${
+              isDark
+                ? "bg-[#020617]"
+                : "bg-white"
+            }`}
+          >
+            <tr
+              className={`border-b ${
+                isDark
+                  ? "border-[#1D2B3D]"
+                  : "border-gray-200"
+              }`}
+            >
+              <th
+                className={`px-3 py-2 text-left text-[9px] uppercase tracking-wider font-semibold whitespace-nowrap ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                SR NO
+              </th>
+
+              <th
+                className={`px-3 py-2 text-left text-[9px] uppercase tracking-wider font-semibold whitespace-nowrap ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                FILE NAME
+              </th>
+
+              <th
+                className={`px-3 py-2 text-left text-[9px] uppercase tracking-wider font-semibold whitespace-nowrap ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                FILE PATH
+              </th>
+
+              <th
+                className={`px-3 py-2 text-left text-[9px] uppercase tracking-wider font-semibold whitespace-nowrap ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                EXTENSION
+              </th>
+
+              <th
+                className={`px-3 py-2 text-left text-[9px] uppercase tracking-wider font-semibold whitespace-nowrap ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                LABEL
+              </th>
+
+              <th
+                className={`px-3 py-2 text-left text-[9px] uppercase tracking-wider font-semibold whitespace-nowrap ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                RISK LEVEL
+              </th>
+
+              <th
+                className={`px-3 py-2 text-left text-[9px] uppercase tracking-wider font-semibold whitespace-nowrap ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                DETECTED ON
+              </th>
+            </tr>
+          </thead>
+
+          {/* Body */}
+          <tbody>
+            {classificationFiles.map((file) => (
+              <tr
+                key={file.srNo}
+                className={`h-[34px] border-b transition-colors ${
+                  isDark
+                    ? "border-[#1D2B3D] hover:bg-[#0d1727]"
+                    : "border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {/* SR NO */}
+                <td
+                  className={`px-3 py-2 text-[10px] font-medium ${
+                    isDark ? "text-blue-400" : "text-blue-600"
+                  }`}
+                >
+                  {file.srNo}
+                </td>
+
+                {/* FILE NAME */}
+                <td
+                  className={`px-3 py-2 text-[10px] font-medium truncate ${
+                    isDark ? "text-white" : "text-gray-900"
+                  }`}
+                  title={file.fileName}
+                >
+                  {file.fileName}
+                </td>
+
+                {/* FILE PATH */}
+                <td
+                  className={`px-3 py-2 text-[9px] truncate ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                  title={file.filePath}
+                >
+                  {file.filePath}
+                </td>
+
+                {/* EXTENSION */}
+                <td
+                  className={`px-3 py-2 text-[9px] uppercase font-medium ${
+                    isDark ? "text-gray-300" : "text-gray-600"
+                  }`}
+                >
+                  {file.extension}
+                </td>
+
+                {/* LABEL */}
+                <td className="px-3 py-2">
+                  <span
+                    className={`inline-flex items-center px-2 py-[2px] rounded-full text-[8px] font-semibold whitespace-nowrap ${getLabelColor(
+                      file.label
+                    )}`}
+                  >
+                    {file.label}
+                  </span>
+                </td>
+
+                {/* RISK */}
+                <td className="px-3 py-2">
+                  <span
+                    className={`text-[9px] font-semibold whitespace-nowrap ${getRiskColor(
+                      file.riskLevel
+                    )}`}
+                  >
+                    {file.riskLevel}
+                  </span>
+                </td>
+
+                {/* DETECTED ON */}
+                <td
+                  className={`px-3 py-2 text-[9px] whitespace-nowrap ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  {file.detectedOn}
+                </td>
+              </tr>
+            ))}
+
+            {classificationFiles.length === 0 && (
+              <tr>
+                <td
+                  colSpan={7}
+                  className={`py-10 text-center text-xs ${
+                    isDark
+                      ? "text-gray-400"
+                      : "text-gray-500"
+                  }`}
+                >
+                  No classification files found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
       </div>
     </div>
   );

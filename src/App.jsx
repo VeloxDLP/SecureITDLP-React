@@ -24,6 +24,7 @@ import Setting from './pages/Setting/Setting.jsx'
 import ApplyNetworkPolicy from './pages/NetworkPolicy/ApplyNetworkPolicy.jsx'
 import DriveDetail from './pages/ViewDevice/DeviceDetail.jsx'
 import ManageBlacklisted from './pages/ApplicationControl/ManageBlacklisted.jsx'
+import ManageWhitelisted from './pages/ApplicationControl/ManageWhitelisted.jsx'
 
 // import ViewApplication from "./pages/ViewApplication/ViewApplication.jsx";
 // import DriveControl from './pages/DriveControl.jsx'
@@ -80,6 +81,8 @@ function AppRoutes() {
         <Route path="DataClassification" element={<DataClassification></DataClassification>} />
         <Route path="ApplicationControl" element={<ApplicationControl></ApplicationControl>} />
         <Route path="ManageBlacklisted" element={<ManageBlacklisted></ManageBlacklisted>} />
+
+         <Route path="ManageWhitelisted" element={<ManageWhitelisted></ManageWhitelisted>}/>
         <Route path="ViewApplication" element={<ViewApplication></ViewApplication>} />
        <Route path="DeviceDetails" element={<DriveDetail></DriveDetail>}/>
          <Route path="Reports"         element={<Reports></Reports>}/>
