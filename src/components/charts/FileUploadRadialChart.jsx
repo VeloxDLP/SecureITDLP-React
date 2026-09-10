@@ -251,11 +251,12 @@ export default function FileUploadRadialChart({
   return (
     <>
       {/* Chart + Legend */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col items-center items-center">
+        
         {/* Chart - Clickable */}
         <div
           className="relative flex-shrink-0 cursor-pointer"
-          style={{ width: 140, height: 180 }}
+          style={{ width: 140, height: 185 }}
           onClick={() => openModal(data[0]?.name || "FILE UPLOAD")}
         >
           <ResponsiveContainer width="100%" height="100%">
@@ -324,7 +325,7 @@ export default function FileUploadRadialChart({
         </div>
 
         {/* Legend */}
-        <div className="flex flex-col gap-2 flex-1">
+        {/* <div className="flex flex-col gap-2 flex-1">
           {data.map((item) => (
             <div
               key={item.name}
@@ -348,6 +349,52 @@ export default function FileUploadRadialChart({
               </span>
             </div>
           ))}
+        </div> */}
+        {/* Legend - 2 on top row, 1 centered below */}
+        <div className="flex flex-col items-center gap-2">
+          {/* Row 1 - first 2 legend items */}
+          <div className="flex items-center justify-center gap-4">
+            {data.slice(0, 2).map((item) => (
+              <div
+                key={item.name}
+                className="flex items-center gap-1.5 cursor-pointer rounded-md px-1.5 py-1 transition hover:bg-slate-100 dark:hover:bg-white/[0.05]"
+                onClick={() => openModal(item.name)}
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="text-xs text-slate-600 dark:text-white/70">
+                  {item.name}
+                </span>
+                <span className="text-xs font-semibold" style={{ color: item.color }}>
+                  {item.count}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Row 2 - remaining item(s), centered */}
+          <div className="flex items-center justify-center gap-4">
+            {data.slice(2).map((item) => (
+              <div
+                key={item.name}
+                className="flex items-center gap-1.5 cursor-pointer rounded-md px-1.5 py-1 transition hover:bg-slate-100 dark:hover:bg-white/[0.05]"
+                onClick={() => openModal(item.name)}
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="text-xs text-slate-600 dark:text-white/70">
+                  {item.name}
+                </span>
+                <span className="text-xs font-semibold" style={{ color: item.color }}>
+                  {item.count}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
