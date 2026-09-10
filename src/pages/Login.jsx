@@ -94,7 +94,8 @@ const Login = () => {
           width: 100%;
           max-width: 900px;
           height: auto;
-          background-color: #041432;
+          // background-color: #041432;
+          background-color: #08132e;
           border: 1px solid rgba(74, 144, 217, 0.1);
           border-radius: 14px;
           overflow: hidden;
