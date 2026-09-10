@@ -37,7 +37,7 @@ const reportsData = {
   "Application Control": ["View Whitelisted","View Blacklisted","View Blocked"],
   "USB Protection": ["USB Connection Status","USB Data Transfer"],
   "Website Control": ["Prevented Websites"],
-  "Printer Control": ["Printer Logs"],
+  "Printer Control": ["Printer Incidents"],
   "Drive Control": ["Drive Report"],
   "Network Policy": ["Peripheral Transfer","Web Upload","Network Transfer","FTP Transfer","Clipboard Event"],
   "Data Classification": ["Classified Files", "Policy Violations"],
@@ -49,8 +49,8 @@ const reportsData = {
 
 const dateRangeOptions = [
   "Today",
-  "This Week",
-  "Last Month",
+  "Last 7 Days",
+  "Last 30 Days",
   "Last 3 Months",
   "Last 6 Months",
 ];
@@ -144,11 +144,11 @@ export default function ReportCenter() {
       fromDate:fromDate,
       toDate:toDate
     };
-    alert(JSON.stringify(requestData));
+    // alert(JSON.stringify(requestData));
     // alert("User section is :"+branch+" "+ device+" "+selectedModule+" "+selectedReport+" "+dateRange);
       const ReportFetchedData = await dashboardService.GetReports(requestData);
       console.log("ReportData : ",ReportFetchedData.data);
-      alert(JSON.stringify(ReportFetchedData));
+      // alert(JSON.stringify(ReportFetchedData));
     setCurrentPage(1); 
     setShowReport(true);
     setTimeout(() => {
