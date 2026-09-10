@@ -1565,6 +1565,20 @@ export default function Dashboard() {
       fileDetails: 'firmware.bin',
       timestamp: '2024-01-15 15:20:00',
     },
+        {
+      ipAddress: '192.168.0.46',
+      username: 'VELOX',
+      eventType: 'NETWORK DOWNLOAD',
+      fileDetails: 'firmware.bin',
+      timestamp: '2024-01-15 15:20:00',
+    },
+        {
+      ipAddress: '192.168.0.46',
+      username: 'VELOX',
+      eventType: 'NETWORK DOWNLOAD',
+      fileDetails: 'firmware.bin',
+      timestamp: '2024-01-15 15:20:00',
+    },
     {
       ipAddress: '192.168.0.47',
       username: 'User2',

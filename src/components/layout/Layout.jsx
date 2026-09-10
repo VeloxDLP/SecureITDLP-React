@@ -90,7 +90,7 @@ export default function Layout() {
             <div
               className={`
                 absolute
-                left-[60%]
+                left-[80%]
                 top-1/2
                 -translate-x-1/2
                 -translate-y-1/2
