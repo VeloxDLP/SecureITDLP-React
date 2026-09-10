@@ -28,7 +28,7 @@ const NAV = [
     scope: '/app-control',
     children: [
       {
-        label: 'Manage Control',
+        label: ' Manage Mode',
         icon: AppWindow,
         path: '/ApplicationControl',
       },
@@ -42,6 +42,12 @@ const NAV = [
         label: 'Manage Blacklisted',
         icon: Eye,
         path: '/ManageBlackListed',
+      },
+
+               {
+        label: 'Manage Whitelisted',
+        icon: Eye,
+        path: '/ManageWhitelisted',
       },
     ],
   },

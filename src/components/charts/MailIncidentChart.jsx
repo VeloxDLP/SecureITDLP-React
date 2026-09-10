@@ -289,65 +289,83 @@ export default function MailIncidentChart({
       {/* ==================================================
           MAIL INCIDENT CARD
       ================================================== */}
-      <div className="flex h-[80px] items-center justify-between">
-        <div>
-          <p className="text-lg text-slate-700 dark:text-white">Total Incidents</p>
-          <h1 className="text-2xl font-light text-slate-800 dark:text-white">
-            {totalIncidents}
-          </h1>
-     
-        </div>
+    {/* ==================================================
+    MAIL INCIDENT CARD CONTENT
+================================================== */}
+<div className="flex w-full min-w-0 items-center gap-4">
 
-        <div className="h-[120px] w-[280px]">
-          <ResponsiveContainer width="100%" height="85%">
-            <BarChart
-              data={chartData}
-              margin={{ top: 5, right: 5, left: 5, bottom: 0 }}
-            >
-              <CartesianGrid
-                vertical={false}
-                stroke={
-                  isDark
-                    ? "rgba(255,255,255,0.06)"
-                    : "rgba(15,23,42,0.08)"
-                }
-              />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(value) => formatDisplayDate(value).slice(0, 5)}
-                tick={{
-                  fontSize: 9,
-                  fill: isDark
-                    ? "rgba(255,255,255,0.45)"
-                    : "rgba(15,23,42,0.55)",
-                }}
-                axisLine={false}
-                tickLine={false}
-              />
-              {/* Custom Tooltip with theme support */}
-              <Tooltip
-                content={<CustomTooltip isDark={isDark} />}
-                cursor={{
-                  fill: isDark
-                    ? "rgba(255,255,255,0.04)"
-                    : "rgba(112,148,255,0.05)",
-                }}
-              />
-              <Bar
-                dataKey="v"
-                fill="#7586ff"
-                radius={[8, 8, 0, 0]}
-                barSize={14}
-                className="cursor-pointer"
-                onClick={handleBarClick}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-          {/* <div className="text-right text-xs text-cyan-400">
-            {growth} vs Last Week
-          </div> */}
-        </div>
-      </div>
+  {/* TOTAL INCIDENTS */}
+<div className="w-auto shrink-0 flex flex-col">
+  <p className="text-lg leading-6 text-slate-700 dark:text-white">
+    Total Incidents
+  </p>
+
+  <h1 className="text-2xl font-light leading-7 text-slate-800 dark:text-white">
+    {totalIncidents}
+  </h1>
+</div>
+
+  {/* RESPONSIVE CHART */}
+  <div className="h-[100px] min-w-0 flex-1">
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        data={chartData}
+        width={undefined}
+        height={undefined}
+        margin={{
+          top: 8,
+          right: 8,
+          left: 0,
+          bottom: 0,
+        }}
+      >
+        <CartesianGrid
+          vertical={false}
+          stroke={
+            isDark
+              ? "rgba(255,255,255,0.06)"
+              : "rgba(15,23,42,0.08)"
+          }
+        />
+
+        <XAxis
+          dataKey="date"
+          tickFormatter={(value) =>
+            formatDisplayDate(value).slice(0, 5)
+          }
+          tick={{
+            fontSize: 9,
+            fill: isDark
+              ? "rgba(255,255,255,0.45)"
+              : "rgba(15,23,42,0.55)",
+          }}
+          axisLine={false}
+          tickLine={false}
+          interval="preserveStartEnd"
+          padding={{ left: 2, right: 2 }}
+        />
+
+        <Tooltip
+          content={<CustomTooltip isDark={isDark} />}
+          cursor={{
+            fill: isDark
+              ? "rgba(255,255,255,0.04)"
+              : "rgba(112,148,255,0.05)",
+          }}
+        />
+
+        <Bar
+          dataKey="v"
+          fill="#7586ff"
+          radius={[8, 8, 0, 0]}
+          barSize={14}
+          className="cursor-pointer"
+          onClick={handleBarClick}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+</div>
 
       {/* ==================================================
           MODAL – with smooth transitions

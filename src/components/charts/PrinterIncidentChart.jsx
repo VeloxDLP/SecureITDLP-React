@@ -367,9 +367,9 @@ export default function PrinterIncidentChart({
 
           <div className="col-span-2">
 
-            <p className="whitespace-nowrap text-sm italic text-slate-500 dark:text-white/60">
+            {/* <p className="whitespace-nowrap text-sm italic text-slate-500 dark:text-white/60">
               Last update yesterday
-            </p>
+            </p> */}
 
           </div>
 

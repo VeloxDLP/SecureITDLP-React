@@ -78,11 +78,11 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
         setModalData(transformedData);
       } else {
         setModalData([]);
-        if (response && response.message) alert(response.message);
+        // if (response && response.message) alert(response.message);
       }
     } catch (error) {
       console.error("Error fetching file type data:", error);
-      alert(`Error loading data for ${item.type}`);
+      // alert(`Error loading data for ${item.type}`);
       setModalData([]);
     } finally {
       setLoading(false);
@@ -108,7 +108,7 @@ export default function IncidentByFileType({ data = [], fileTypeData = [] }) {
 
   const handleFileTypeClick = (item) => {
     if (item.pct === 0) {
-      alert(`No incidents in ${item.type} file type`);
+      // alert(`No incidents in ${item.type} file type`);
       return;
     }
     openModal(item);

@@ -888,10 +888,10 @@ function EndpointStatusModal({
               </span>
             </h2>
 
-            <p className="mt-0.5 text-[10px] text-slate-400 dark:text-white/30">
+            {/* <p className="mt-0.5 text-[10px] text-slate-400 dark:text-white/30">
               Showing {filteredRows.length} device
               {filteredRows.length !== 1 ? 's' : ''}
-            </p>
+            </p> */}
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -1201,7 +1201,7 @@ function EndpointStatusModal({
                   dark:text-white/40
                 "
               >
-                Showing {startRecord}-{endRecord} of{' '}
+                 {startRecord}-{endRecord} of{' '}
                 {filteredRows.length}
               </span>
 
@@ -1559,41 +1559,7 @@ export default function Dashboard() {
   ───────────────────────────────────────────────────────── */
 
   const networkIncidentData = [
-    {
-      ipAddress: '192.168.0.41',
-      username: 'VELOX',
-      eventType: 'NETWORK UPLOAD',
-      fileDetails: 'data_packet_01.bin',
-      timestamp: '2024-01-15 10:30:00',
-    },
-    {
-      ipAddress: '192.168.0.42',
-      username: 'Admin',
-      eventType: 'NETWORK UPLOAD',
-      fileDetails: 'config_backup.bin',
-      timestamp: '2024-01-15 11:15:00',
-    },
-    {
-      ipAddress: '192.168.0.43',
-      username: 'User1',
-      eventType: 'NETWORK DOWNLOAD',
-      fileDetails: 'system_update.bin',
-      timestamp: '2024-01-15 12:00:00',
-    },
-    {
-      ipAddress: '192.168.0.44',
-      username: 'VELOX',
-      eventType: 'NETWORK UPLOAD',
-      fileDetails: 'log_data.bin',
-      timestamp: '2024-01-15 13:30:00',
-    },
-    {
-      ipAddress: '192.168.0.45',
-      username: 'Kiran_Tester',
-      eventType: 'NETWORK UPLOAD',
-      fileDetails: 'test_packet.bin',
-      timestamp: '2024-01-15 14:45:00',
-    },
+   
     {
       ipAddress: '192.168.0.46',
       username: 'VELOX',
@@ -1637,76 +1603,76 @@ export default function Dashboard() {
   ───────────────────────────────────────────────────────── */
 
   const mailIncidentData = [
-    {
-      ipAddress: '192.168.0.41',
-      username: 'VELOX',
-      eventType: 'MAIL SENT',
-      fileDetails: 'Invoice_2024.pdf',
-      timestamp: '2024-01-15 10:30:00',
-    },
-    {
-      ipAddress: '192.168.0.42',
-      username: 'Admin',
-      eventType: 'MAIL RECEIVED',
-      fileDetails: 'Report.docx',
-      timestamp: '2024-01-15 11:15:00',
-    },
-    {
-      ipAddress: '192.168.0.43',
-      username: 'User1',
-      eventType: 'MAIL SENT',
-      fileDetails: 'Presentation.pptx',
-      timestamp: '2024-01-15 12:00:00',
-    },
-    {
-      ipAddress: '192.168.0.44',
-      username: 'VELOX',
-      eventType: 'MAIL RECEIVED',
-      fileDetails: 'Contract.pdf',
-      timestamp: '2024-01-15 13:30:00',
-    },
-    {
-      ipAddress: '192.168.0.45',
-      username: 'Kiran_Tester',
-      eventType: 'MAIL SENT',
-      fileDetails: 'Data_Export.xlsx',
-      timestamp: '2024-01-15 14:45:00',
-    },
-    {
-      ipAddress: '192.168.0.46',
-      username: 'VELOX',
-      eventType: 'MAIL RECEIVED',
-      fileDetails: 'Meeting_Notes.txt',
-      timestamp: '2024-01-15 15:20:00',
-    },
-    {
-      ipAddress: '192.168.0.47',
-      username: 'User2',
-      eventType: 'MAIL SENT',
-      fileDetails: 'Image_01.png',
-      timestamp: '2024-01-15 16:10:00',
-    },
-    {
-      ipAddress: '192.168.0.48',
-      username: 'VELOX',
-      eventType: 'MAIL RECEIVED',
-      fileDetails: 'Report_2024.pdf',
-      timestamp: '2024-01-15 17:00:00',
-    },
-    {
-      ipAddress: '192.168.0.49',
-      username: 'Kira_Tester',
-      eventType: 'MAIL SENT',
-      fileDetails: 'Backup.zip',
-      timestamp: '2024-01-15 18:30:00',
-    },
-    {
-      ipAddress: '192.168.0.50',
-      username: 'VELOX',
-      eventType: 'MAIL RECEIVED',
-      fileDetails: 'Source_Code.js',
-      timestamp: '2024-01-15 19:45:00',
-    },
+    // {
+    //   ipAddress: '192.168.0.41',
+    //   username: 'VELOX',
+    //   eventType: 'MAIL SENT',
+    //   fileDetails: 'Invoice_2024.pdf',
+    //   timestamp: '2024-01-15 10:30:00',
+    // },
+    // {
+    //   ipAddress: '192.168.0.42',
+    //   username: 'Admin',
+    //   eventType: 'MAIL RECEIVED',
+    //   fileDetails: 'Report.docx',
+    //   timestamp: '2024-01-15 11:15:00',
+    // },
+    // {
+    //   ipAddress: '192.168.0.43',
+    //   username: 'User1',
+    //   eventType: 'MAIL SENT',
+    //   fileDetails: 'Presentation.pptx',
+    //   timestamp: '2024-01-15 12:00:00',
+    // },
+    // {
+    //   ipAddress: '192.168.0.44',
+    //   username: 'VELOX',
+    //   eventType: 'MAIL RECEIVED',
+    //   fileDetails: 'Contract.pdf',
+    //   timestamp: '2024-01-15 13:30:00',
+    // },
+    // {
+    //   ipAddress: '192.168.0.45',
+    //   username: 'Kiran_Tester',
+    //   eventType: 'MAIL SENT',
+    //   fileDetails: 'Data_Export.xlsx',
+    //   timestamp: '2024-01-15 14:45:00',
+    // },
+    // {
+    //   ipAddress: '192.168.0.46',
+    //   username: 'VELOX',
+    //   eventType: 'MAIL RECEIVED',
+    //   fileDetails: 'Meeting_Notes.txt',
+    //   timestamp: '2024-01-15 15:20:00',
+    // },
+    // {
+    //   ipAddress: '192.168.0.47',
+    //   username: 'User2',
+    //   eventType: 'MAIL SENT',
+    //   fileDetails: 'Image_01.png',
+    //   timestamp: '2024-01-15 16:10:00',
+    // },
+    // {
+    //   ipAddress: '192.168.0.48',
+    //   username: 'VELOX',
+    //   eventType: 'MAIL RECEIVED',
+    //   fileDetails: 'Report_2024.pdf',
+    //   timestamp: '2024-01-15 17:00:00',
+    // },
+    // {
+    //   ipAddress: '192.168.0.49',
+    //   username: 'Kira_Tester',
+    //   eventType: 'MAIL SENT',
+    //   fileDetails: 'Backup.zip',
+    //   timestamp: '2024-01-15 18:30:00',
+    // },
+    // {
+    //   ipAddress: '192.168.0.50',
+    //   username: 'VELOX',
+    //   eventType: 'MAIL RECEIVED',
+    //   fileDetails: 'Source_Code.js',
+    //   timestamp: '2024-01-15 19:45:00',
+    // },
   ]
 
 
@@ -1715,34 +1681,7 @@ export default function Dashboard() {
   ───────────────────────────────────────────────────────── */
 
   const peripheralIncidentData = [
-    {
-      ipAddress: '192.168.0.41',
-      username: 'VELOX',
-      eventType: 'USB TRANSFER',
-      fileDetails: 'usb_data_01.bin',
-      timestamp: '2024-01-15 10:30:00',
-    },
-    {
-      ipAddress: '192.168.0.42',
-      username: 'Admin',
-      eventType: 'DVD BURN',
-      fileDetails: 'dvd_backup.iso',
-      timestamp: '2024-01-15 11:15:00',
-    },
-    {
-      ipAddress: '192.168.0.43',
-      username: 'User1',
-      eventType: 'USB TRANSFER',
-      fileDetails: 'external_drive_data.zip',
-      timestamp: '2024-01-15 12:00:00',
-    },
-    {
-      ipAddress: '192.168.0.44',
-      username: 'VELOX',
-      eventType: 'DVD BURN',
-      fileDetails: 'project_backup.iso',
-      timestamp: '2024-01-15 13:30:00',
-    },
+  
     {
       ipAddress: '192.168.0.45',
       username: 'Kiran_Tester',
