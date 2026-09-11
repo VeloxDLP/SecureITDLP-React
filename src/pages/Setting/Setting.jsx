@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+
 import {
   UserRound,
   Users,
@@ -6,21 +7,18 @@ import {
   Phone,
   ChevronDown,
   Lock,
-  Building,
-  Shield,
   X,
   Search,
-  Edit,
-  Trash2,
   Check,
 } from "lucide-react";
+
 import { dashboardService } from "../../services/dashboardService";
 import { alert as showAlert } from "../../components/ui/AlertModal";
-import { useTheme } from "../../context/ThemeContext"; // <-- import
+import { useTheme } from "../../context/ThemeContext";
 
 // ─── GlassButton ────────────────────────────────────────────────
 const GlassButton = ({ children, onClick, variant, className = "" }) => {
-  const { isDark } = useTheme(); // <-- use theme
+  const { isDark } = useTheme();
 
   const baseClasses =
     "flex items-center gap-2 rounded-xl px-5 py-2.5 font-semibold transition-all duration-200 border";
@@ -30,6 +28,7 @@ const GlassButton = ({ children, onClick, variant, className = "" }) => {
       className: isDark
         ? "text-slate-300 hover:text-white border-white/[0.10] hover:border-white/[0.20]"
         : "text-slate-700 hover:text-slate-900 border-slate-300/50 hover:border-slate-400",
+
       style: isDark
         ? {
             background: "rgba(255,255,255,0.06)",
@@ -44,47 +43,58 @@ const GlassButton = ({ children, onClick, variant, className = "" }) => {
             boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8)",
           },
     },
+
     primary: {
-      className: isDark
-        ? "text-white border-[#7094ff]/40 hover:border-[#7094ff]/60"
-        : "text-white border-[#7094ff]/30 hover:border-[#7094ff]/50",
+      className:
+        "text-white border-[#7094ff]/40 hover:border-[#7094ff]/60",
+
       style: isDark
         ? {
             background: "rgba(112, 148, 255, 0.85)",
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
-            boxShadow: "0 4px 20px rgba(112,148,255,0.35), inset 0 1px 0 rgba(255,255,255,0.18)",
+            boxShadow:
+              "0 4px 20px rgba(112,148,255,0.35), inset 0 1px 0 rgba(255,255,255,0.18)",
           }
         : {
             background: "rgba(112, 148, 255, 0.90)",
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
-            boxShadow: "0 4px 20px rgba(112,148,255,0.25), inset 0 1px 0 rgba(255,255,255,0.25)",
+            boxShadow:
+              "0 4px 20px rgba(112,148,255,0.25), inset 0 1px 0 rgba(255,255,255,0.25)",
           },
     },
+
     tab_active: {
-      className: isDark
-        ? "text-white border-[#7094ff]/40 hover:border-[#7094ff]/60"
-        : "text-white border-[#7094ff]/40 hover:border-[#7094ff]/60",
+      className:
+        "text-white border-[#7094ff]/40 hover:border-[#7094ff]/60",
+
       style: isDark
         ? {
             background: "rgba(112, 148, 255, 0.82)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            boxShadow: "0 6px 24px rgba(112,148,255,0.35), inset 0 1px 0 rgba(255,255,255,0.20)",
+            boxShadow:
+              "0 6px 24px rgba(112,148,255,0.35), inset 0 1px 0 rgba(255,255,255,0.20)",
           }
         : {
             background: "rgba(112, 148, 255, 0.90)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            boxShadow: "0 6px 24px rgba(112,148,255,0.30), inset 0 1px 0 rgba(255,255,255,0.25)",
+            boxShadow:
+              "0 6px 24px rgba(112,148,255,0.30), inset 0 1px 0 rgba(255,255,255,0.25)",
           },
     },
+
     tab_inactive: {
       className: isDark
         ? "text-slate-400 hover:text-slate-100 border-transparent hover:border-white/[0.08]"
         : "text-slate-500 hover:text-slate-800 border-transparent hover:border-slate-300/50",
-      style: { background: "transparent", backdropFilter: "none" },
+
+      style: {
+        background: "transparent",
+        backdropFilter: "none",
+      },
     },
   };
 
@@ -92,6 +102,7 @@ const GlassButton = ({ children, onClick, variant, className = "" }) => {
 
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`${baseClasses} ${v.className} ${className}`}
       style={v.style}
@@ -101,7 +112,7 @@ const GlassButton = ({ children, onClick, variant, className = "" }) => {
   );
 };
 
-// ─── Custom Dropdown ──────────────────────────────────────────
+// ─── Custom Dropdown ───────────────────────────────────────────
 function Dropdown({
   value,
   onChange,
@@ -111,30 +122,46 @@ function Dropdown({
   error = false,
   multiple = false,
 }) {
-  const { isDark } = useTheme(); // <-- use theme
+  const { isDark } = useTheme();
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
 
   const normalised = options.map((o) =>
     typeof o === "string" ? { value: o, label: o } : o
   );
+
   const selected = normalised.find((o) => o.value === value);
 
   useEffect(() => {
     const handler = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target)
+      ) {
         setOpen(false);
       }
     };
-    if (open) document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+
+    if (open) {
+      document.addEventListener("mousedown", handler);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handler);
+    };
   }, [open]);
 
   const handleSelect = (val) => {
     if (multiple) {
-      const currentValues = value ? value.split(",").filter(Boolean) : [];
+      const currentValues = value
+        ? value.split(",").filter(Boolean)
+        : [];
+
       if (currentValues.includes(val)) {
-        const updatedValues = currentValues.filter((item) => item !== val);
+        const updatedValues = currentValues.filter(
+          (item) => item !== val
+        );
+
         onChange(updatedValues.join(","));
       } else {
         onChange([...currentValues, val].join(","));
@@ -169,7 +196,7 @@ function Dropdown({
           ${isDark ? "text-slate-200 bg-[#111827]" : "text-slate-800 bg-white"}
         `}
       >
-        <span className={isDark ? "text-slate-200" : "text-slate-800"}>
+        <span>
           {multiple
             ? value
               ? normalised
@@ -181,11 +208,14 @@ function Dropdown({
             ? selected.label
             : placeholder}
         </span>
+
         <ChevronDown
           size={14}
-          className={`flex-shrink-0 transition-transform duration-200
-                      ${open ? "rotate-180" : ""}
-                      ${isDark ? "text-slate-500" : "text-slate-400"}`}
+          className={`
+            flex-shrink-0 transition-transform duration-200
+            ${open ? "rotate-180" : ""}
+            ${isDark ? "text-slate-500" : "text-slate-400"}
+          `}
         />
       </button>
 
@@ -194,7 +224,7 @@ function Dropdown({
           className={`
             absolute top-full left-0 right-0 mt-1.5 z-[200]
             rounded-xl border overflow-hidden
-            shadow-[0_16px_48px_rgba(0,0,0,0.35)] animate-slide-up
+            shadow-[0_16px_48px_rgba(0,0,0,0.35)]
             ${isDark ? "border-slate-700 bg-[#111827]" : "border-slate-200 bg-white"}
           `}
         >
@@ -203,6 +233,7 @@ function Dropdown({
               const isSelected = multiple
                 ? value?.split(",").filter(Boolean).includes(o.value)
                 : o.value === value;
+
               return (
                 <button
                   key={o.value}
@@ -212,15 +243,23 @@ function Dropdown({
                     w-full text-left px-4 py-2.5 text-[13px]
                     flex items-center justify-between gap-2
                     transition-colors duration-100
-                    ${isSelected
-                      ? "text-[#7094ff] bg-[#7094ff]/10"
-                      : isDark
+                    ${
+                      isSelected
+                        ? "text-[#7094ff] bg-[#7094ff]/10"
+                        : isDark
                         ? "text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    }
                   `}
                 >
                   {o.label}
-                  {isSelected && <Check size={13} className="text-[#7094ff] flex-shrink-0" />}
+
+                  {isSelected && (
+                    <Check
+                      size={13}
+                      className="text-[#7094ff] flex-shrink-0"
+                    />
+                  )}
                 </button>
               );
             })}
@@ -233,11 +272,9 @@ function Dropdown({
 
 // ─── Main Setting Component ────────────────────────────────────
 function Setting() {
-  const { isDark } = useTheme(); // <-- use theme
+  const { isDark } = useTheme();
 
   const [view, setView] = useState("create");
-  const [showScopeModal, setShowScopeModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -260,6 +297,7 @@ function Setting() {
         assignTask: false,
       },
     },
+
     atmInventory: {
       checked: false,
       children: {
@@ -269,34 +307,48 @@ function Setting() {
     },
   });
 
+  // ─────────────────────────────────────────────
+  // USER DATA
+  // Replace this with API data when available
+  // ─────────────────────────────────────────────
   const usersData = [
     {
       id: 1,
       username: "pratham",
       firstName: "Pratham",
       lastName: "User",
-      type: "Admin",
-      contact: "9876543210",
-      email: "pratham@example.com",
+      account_status: "ACTIVE",
+      role: "ADMIN",
     },
     {
       id: 2,
       username: "prathamesh",
       firstName: "Prathamesh",
       lastName: "User",
-      type: "Admin",
-      contact: "9876543211",
-      email: "prathamesh@example.com",
+      account_status: "ACTIVE",
+      role: "SUPERADMIN",
     },
   ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
+  // ─────────────────────────────────────────────
+  // CREATE USER
+  // ─────────────────────────────────────────────
   const handleCreateUser = async () => {
-    const { userName, password, confirmPassword } = formData;
+    const {
+      userName,
+      password,
+      confirmPassword,
+    } = formData;
+
     if (!userName || !password || !confirmPassword) {
       showAlert({
         icon: "error",
@@ -304,10 +356,12 @@ function Setting() {
         text: "All fields are required",
         confirmButtonText: "Cancel",
       });
+
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (!emailRegex.test(formData.email)) {
       showAlert({
         icon: "error",
@@ -315,10 +369,12 @@ function Setting() {
         text: "Please enter a valid email address",
         confirmButtonText: "Cancel",
       });
+
       return;
     }
 
     const phoneRegex = /^[6-9]\d{9}$/;
+
     if (!phoneRegex.test(formData.contactNumber)) {
       showAlert({
         icon: "error",
@@ -326,6 +382,7 @@ function Setting() {
         text: "Please enter a valid 10-digit mobile number",
         confirmButtonText: "Cancel",
       });
+
       return;
     }
 
@@ -336,6 +393,7 @@ function Setting() {
         text: "Password is not matching",
         confirmButtonText: "Cancel",
       });
+
       return;
     }
 
@@ -352,7 +410,8 @@ function Setting() {
     };
 
     try {
-      const response = await dashboardService.CreateApplicationUser(requestData);
+      await dashboardService.CreateApplicationUser(requestData);
+
       await showAlert({
         icon: "success",
         title: "User Saved",
@@ -361,6 +420,7 @@ function Setting() {
         timerProgressBar: true,
         showConfirmButton: true,
       });
+
       setFormData({
         firstName: "",
         lastName: "",
@@ -374,35 +434,56 @@ function Setting() {
       });
     } catch (err) {
       console.log("API ERROR:", err);
+
       showAlert({
         icon: "error",
         title: "Username Unavailable",
-        text: err.response?.data?.message || err.message || "User already exists",
+        text:
+          err.response?.data?.message ||
+          err.message ||
+          "User already exists",
         confirmButtonText: "Cancel",
       });
     }
   };
 
-  // ── Scope logic (unchanged) ──
+  // ─────────────────────────────────────────────
+  // SCOPE LOGIC
+  // ─────────────────────────────────────────────
   const countSelected = () => {
     let total = 0;
+
     Object.values(scopes).forEach((mod) => {
       Object.values(mod.children).forEach((val) => {
         if (val) total++;
       });
     });
+
     return total;
   };
 
   const toggleChild = (moduleKey, childKey) => {
     setScopes((prev) => {
       const newScopes = { ...prev };
+
       const mod = newScopes[moduleKey];
+
       mod.children[childKey] = !mod.children[childKey];
-      const allChecked = Object.values(mod.children).every((v) => v);
-      const anyChecked = Object.values(mod.children).some((v) => v);
+
+      const allChecked = Object.values(mod.children).every(
+        (v) => v
+      );
+
+      const anyChecked = Object.values(mod.children).some(
+        (v) => v
+      );
+
       mod.checked = allChecked;
-      if (!anyChecked) mod.checked = false;
+
+      if (!anyChecked) {
+        mod.checked = false;
+      }
+
       return newScopes;
     });
   };
@@ -410,12 +491,17 @@ function Setting() {
   const toggleModule = (moduleKey) => {
     setScopes((prev) => {
       const newScopes = { ...prev };
+
       const mod = newScopes[moduleKey];
+
       const newChecked = !mod.checked;
+
       mod.checked = newChecked;
+
       Object.keys(mod.children).forEach((key) => {
         mod.children[key] = newChecked;
       });
+
       return newScopes;
     });
   };
@@ -425,78 +511,134 @@ function Setting() {
       (acc, mod) => acc + Object.keys(mod.children).length,
       0
     );
+
     const selected = countSelected();
+
     const allSelected = selected === totalChildren;
+
     setScopes((prev) => {
       const newScopes = { ...prev };
+
       const newValue = !allSelected;
+
       Object.keys(newScopes).forEach((modKey) => {
         const mod = newScopes[modKey];
+
         mod.checked = newValue;
+
         Object.keys(mod.children).forEach((childKey) => {
           mod.children[childKey] = newValue;
         });
       });
+
       return newScopes;
     });
   };
 
-  const selectedCount = countSelected();
-
-  // ── Tabs ──
-  const tabs = [
-    { id: "create", label: "Create User", icon: <UserRound size={16} /> },
-    { id: "list", label: "View User", icon: <Users size={16} /> },
-  ];
-
-  // ── Dropdown options ──
+  // ─────────────────────────────────────────────
+  // OPTIONS
+  // ─────────────────────────────────────────────
   const userTypeOptions = [
-    { value: "ADMIN", label: "ADMIN" },
-    { value: "SUPERADMIN", label: "SUPERADMIN" },
-    { value: "USER", label: "USER" },
+    {
+      value: "ADMIN",
+      label: "ADMIN",
+    },
+    {
+      value: "SUPERADMIN",
+      label: "SUPERADMIN",
+    },
+    {
+      value: "USER",
+      label: "USER",
+    },
   ];
 
   const ScopeValue = [
-    { value: "/app-control", label: "Application Control" },
-    { value: "/DriveControl", label: "Drive Control" },
-    { value: "/DataClassification", label: "Data Classification" },
-    { value: "/NetworkPolicy", label: "Network Control" },
-    { value: "/PrinterControl", label: "Printer Control" },
-    { value: "/usb", label: "USB Control" },
-    { value: "/devices", label: "View Device" },
-    { value: "/web", label: "Website Control" },
-    { value: "/Reports", label: "Reports" },
-    { value: "/Setting", label: "Setting" },
+    {
+      value: "/app-control",
+      label: "Application Control",
+    },
+    {
+      value: "/DriveControl",
+      label: "Drive Control",
+    },
+    {
+      value: "/DataClassification",
+      label: "Data Classification",
+    },
+    {
+      value: "/NetworkPolicy",
+      label: "Network Control",
+    },
+    {
+      value: "/PrinterControl",
+      label: "Printer Control",
+    },
+    {
+      value: "/usb",
+      label: "USB Control",
+    },
+    {
+      value: "/devices",
+      label: "View Device",
+    },
+    {
+      value: "/web",
+      label: "Website Control",
+    },
+    {
+      value: "/Reports",
+      label: "Reports",
+    },
+    {
+      value: "/Setting",
+      label: "Setting",
+    },
   ];
 
-  // ── Common input styles with theme condition ──
+  // ─────────────────────────────────────────────
+  // INPUT STYLES
+  // ─────────────────────────────────────────────
   const inputClass = `
     w-full h-11 px-4 py-2.5 rounded-xl text-[13px]
     border outline-none transition-all duration-200
-    ${isDark
-      ? "text-slate-200 border-slate-700 bg-[#111827] placeholder:text-slate-500 focus:border-[#7094ff]/60 focus:ring-2 focus:ring-[#7094ff]/20"
-      : "text-slate-800 border-slate-300 bg-white placeholder:text-slate-400 focus:border-[#7094ff]/60 focus:ring-2 focus:ring-[#7094ff]/20"}
+    ${
+      isDark
+        ? "text-slate-200 border-slate-700 bg-[#111827] placeholder:text-slate-500 focus:border-[#7094ff]/60 focus:ring-2 focus:ring-[#7094ff]/20"
+        : "text-slate-800 border-slate-300 bg-white placeholder:text-slate-400 focus:border-[#7094ff]/60 focus:ring-2 focus:ring-[#7094ff]/20"
+    }
   `;
-  const inputWithIconClass = `${inputClass} pl-10`;
-  const labelClass = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5 ${
-    isDark ? "text-slate-500" : "text-slate-600"
-  }`;
 
+  const inputWithIconClass = `${inputClass} pl-10`;
+
+  const labelClass = `
+    block text-[11px] font-semibold uppercase tracking-wider mb-1.5
+    ${isDark ? "text-slate-500" : "text-slate-600"}
+  `;
+
+  // ─────────────────────────────────────────────
+  // PASSWORD STRENGTH
+  // ─────────────────────────────────────────────
   const getPasswordStrength = (password) => {
     if (!password) {
       return {
         label: "",
         width: "w-0",
         color: isDark ? "bg-slate-700" : "bg-slate-300",
-        textColor: isDark ? "text-slate-500" : "text-slate-400",
+        textColor: isDark
+          ? "text-slate-500"
+          : "text-slate-400",
       };
     }
+
     let score = 0;
+
     if (password.length >= 8) score++;
     if (/[a-z]/.test(password)) score++;
     if (/[A-Z]/.test(password)) score++;
     if (/[0-9]/.test(password)) score++;
     if (/[^A-Za-z0-9]/.test(password)) score++;
+
     if (score <= 2) {
       return {
         label: "Weak",
@@ -505,6 +647,7 @@ function Setting() {
         textColor: "text-red-400",
       };
     }
+
     if (score <= 4) {
       return {
         label: "Medium",
@@ -513,6 +656,7 @@ function Setting() {
         textColor: "text-yellow-400",
       };
     }
+
     return {
       label: "Strong",
       width: "w-full",
@@ -521,22 +665,50 @@ function Setting() {
     };
   };
 
-  const passwordStrength = getPasswordStrength(formData.password);
+  const passwordStrength = getPasswordStrength(
+    formData.password
+  );
+
+  // ─────────────────────────────────────────────
+  // TABS
+  // ─────────────────────────────────────────────
+  const tabs = [
+    {
+      id: "create",
+      label: "Create User",
+      icon: <UserRound size={16} />,
+    },
+    {
+      id: "list",
+      label: "View User",
+      icon: <Users size={16} />,
+    },
+  ];
 
   return (
-    <div className={`min-h-screen p-6`}>
-      {/* Top Buttons */}
+    <div className="min-h-screen p-6">
+
+      {/* ───────────────── TOP BUTTONS ───────────────── */}
       <div
-        className={`mb-6 rounded-2xl border p-4 ${
-          isDark ? "border-slate-700 bg-[#020617]" : "border-slate-200 bg-white"
-        }`}
+        className={`
+          mb-6 rounded-2xl border p-4
+          ${
+            isDark
+              ? "border-slate-700 bg-[#020617]"
+              : "border-slate-200 bg-white"
+          }
+        `}
       >
         <div className="flex flex-wrap gap-3">
           {tabs.map((t) => (
             <GlassButton
               key={t.id}
               onClick={() => setView(t.id)}
-              variant={view === t.id ? "tab_active" : "tab_inactive"}
+              variant={
+                view === t.id
+                  ? "tab_active"
+                  : "tab_inactive"
+              }
             >
               {t.icon}
               {t.label}
@@ -545,25 +717,41 @@ function Setting() {
         </div>
       </div>
 
-      {/* Conditional Content */}
+      {/* ───────────────── CREATE USER ───────────────── */}
       {view === "create" ? (
-        // ─── CREATE FORM ──────────────────────────────────────
         <div
-          className={`rounded-2xl border p-6 ${
-            isDark ? "border-slate-700 bg-[#020617]" : "border-slate-200 bg-white"
-          }`}
+          className={`
+            rounded-2xl border p-6
+            ${
+              isDark
+                ? "border-slate-700 bg-[#020617]"
+                : "border-slate-200 bg-white"
+            }
+          `}
         >
-          {/* Row 1: First Name & Last Name */}
+
+          {/* ROW 1 */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+
             <div>
-              <label className={labelClass}>First Name</label>
+              <label className={labelClass}>
+                First Name
+              </label>
+
               <div className="relative">
                 <UserRound
                   size={18}
-                  className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${
-                    isDark ? "text-slate-500" : "text-slate-400"
-                  }`}
+                  className={`
+                    absolute left-3.5 top-1/2
+                    -translate-y-1/2
+                    ${
+                      isDark
+                        ? "text-slate-500"
+                        : "text-slate-400"
+                    }
+                  `}
                 />
+
                 <input
                   type="text"
                   name="firstName"
@@ -574,15 +762,26 @@ function Setting() {
                 />
               </div>
             </div>
+
             <div>
-              <label className={labelClass}>Last Name</label>
+              <label className={labelClass}>
+                Last Name
+              </label>
+
               <div className="relative">
                 <UserRound
                   size={18}
-                  className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${
-                    isDark ? "text-slate-500" : "text-slate-400"
-                  }`}
+                  className={`
+                    absolute left-3.5 top-1/2
+                    -translate-y-1/2
+                    ${
+                      isDark
+                        ? "text-slate-500"
+                        : "text-slate-400"
+                    }
+                  `}
                 />
+
                 <input
                   type="text"
                   name="lastName"
@@ -595,17 +794,28 @@ function Setting() {
             </div>
           </div>
 
-          {/* Row 2: Email, Username, Contact, User Type */}
+          {/* ROW 2 */}
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+
             <div>
-              <label className={labelClass}>Email Address</label>
+              <label className={labelClass}>
+                Email Address
+              </label>
+
               <div className="relative">
                 <Mail
                   size={18}
-                  className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${
-                    isDark ? "text-slate-500" : "text-slate-400"
-                  }`}
+                  className={`
+                    absolute left-3.5 top-1/2
+                    -translate-y-1/2
+                    ${
+                      isDark
+                        ? "text-slate-500"
+                        : "text-slate-400"
+                    }
+                  `}
                 />
+
                 <input
                   type="email"
                   name="email"
@@ -616,15 +826,26 @@ function Setting() {
                 />
               </div>
             </div>
+
             <div>
-              <label className={labelClass}>User Name</label>
+              <label className={labelClass}>
+                User Name
+              </label>
+
               <div className="relative">
                 <UserRound
                   size={18}
-                  className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${
-                    isDark ? "text-slate-500" : "text-slate-400"
-                  }`}
+                  className={`
+                    absolute left-3.5 top-1/2
+                    -translate-y-1/2
+                    ${
+                      isDark
+                        ? "text-slate-500"
+                        : "text-slate-400"
+                    }
+                  `}
                 />
+
                 <input
                   type="text"
                   name="userName"
@@ -635,15 +856,26 @@ function Setting() {
                 />
               </div>
             </div>
+
             <div>
-              <label className={labelClass}>Contact Number</label>
+              <label className={labelClass}>
+                Contact Number
+              </label>
+
               <div className="relative">
                 <Phone
                   size={18}
-                  className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${
-                    isDark ? "text-slate-500" : "text-slate-400"
-                  }`}
+                  className={`
+                    absolute left-3.5 top-1/2
+                    -translate-y-1/2
+                    ${
+                      isDark
+                        ? "text-slate-500"
+                        : "text-slate-400"
+                    }
+                  `}
                 />
+
                 <input
                   type="tel"
                   name="contactNumber"
@@ -654,28 +886,48 @@ function Setting() {
                 />
               </div>
             </div>
+
             <div>
-              <label className={labelClass}>User Type</label>
+              <label className={labelClass}>
+                User Type
+              </label>
+
               <Dropdown
                 value={formData.userType}
-                onChange={(val) => setFormData((prev) => ({ ...prev, userType: val }))}
+                onChange={(val) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    userType: val,
+                  }))
+                }
                 options={userTypeOptions}
                 placeholder="Select user type"
               />
             </div>
           </div>
 
-          {/* Row 3: Password, Confirm Password */}
+          {/* ROW 3 */}
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+
             <div>
-              <label className={labelClass}>Password</label>
+              <label className={labelClass}>
+                Password
+              </label>
+
               <div className="relative">
                 <Lock
                   size={18}
-                  className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${
-                    isDark ? "text-slate-500" : "text-slate-400"
-                  }`}
+                  className={`
+                    absolute left-3.5 top-1/2
+                    -translate-y-1/2
+                    ${
+                      isDark
+                        ? "text-slate-500"
+                        : "text-slate-400"
+                    }
+                  `}
                 />
+
                 <input
                   type="password"
                   name="password"
@@ -685,33 +937,70 @@ function Setting() {
                   className={inputWithIconClass}
                 />
               </div>
+
               <div className="mt-2 flex items-center gap-2">
-                <span className={`text-[11px] ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+
+                <span
+                  className={`
+                    text-[11px]
+                    ${
+                      isDark
+                        ? "text-slate-500"
+                        : "text-slate-400"
+                    }
+                  `}
+                >
                   Password strength:
                 </span>
+
                 <div
-                  className={`flex-1 h-1.5 rounded-full overflow-hidden ${
-                    isDark ? "bg-slate-700" : "bg-slate-200"
-                  }`}
+                  className={`
+                    flex-1 h-1.5 rounded-full
+                    overflow-hidden
+                    ${
+                      isDark
+                        ? "bg-slate-700"
+                        : "bg-slate-200"
+                    }
+                  `}
                 >
                   <div
-                    className={`h-full rounded-full transition-all duration-300 ${passwordStrength.width} ${passwordStrength.color}`}
+                    className={`
+                      h-full rounded-full
+                      transition-all duration-300
+                      ${passwordStrength.width}
+                      ${passwordStrength.color}
+                    `}
                   />
                 </div>
-                <span className={`text-[11px] ${passwordStrength.textColor}`}>
+
+                <span
+                  className={`text-[11px] ${passwordStrength.textColor}`}
+                >
                   {passwordStrength.label}
                 </span>
               </div>
             </div>
+
             <div>
-              <label className={labelClass}>Confirm Password</label>
+              <label className={labelClass}>
+                Confirm Password
+              </label>
+
               <div className="relative">
                 <Lock
                   size={18}
-                  className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${
-                    isDark ? "text-slate-500" : "text-slate-400"
-                  }`}
+                  className={`
+                    absolute left-3.5 top-1/2
+                    -translate-y-1/2
+                    ${
+                      isDark
+                        ? "text-slate-500"
+                        : "text-slate-400"
+                    }
+                  `}
                 />
+
                 <input
                   type="password"
                   name="confirmPassword"
@@ -724,10 +1013,14 @@ function Setting() {
             </div>
           </div>
 
-          {/* Row 4: Scope */}
+          {/* ROW 4 */}
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+
             <div>
-              <label className={labelClass}>Scope</label>
+              <label className={labelClass}>
+                Scope
+              </label>
+
               <Dropdown
                 value={formData.scopedata}
                 onChange={(val) =>
@@ -743,10 +1036,17 @@ function Setting() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* ACTION BUTTONS */}
           <div
-            className={`mt-6 flex flex-wrap items-center justify-end gap-3 ${
-              isDark ? "border-slate-700" : "border-slate-200"}`}
+            className={`
+              mt-6 flex flex-wrap
+              items-center justify-end gap-3
+              ${
+                isDark
+                  ? "border-slate-700"
+                  : "border-slate-200"
+              }
+            `}
           >
             <GlassButton
               onClick={() => {
@@ -778,169 +1078,251 @@ function Setting() {
           </div>
         </div>
       ) : (
-        // ─── USER LIST PAGE – TABLE ──
+
+        /* ───────────────── VIEW USER ───────────────── */
         <div
-          className={`rounded-2xl border p-6 ${
-            isDark ? "border-slate-700 bg-[#020617]" : "border-slate-200 bg-white"
-          }`}
+          className={`
+            rounded-2xl border p-6
+            ${
+              isDark
+                ? "border-slate-700 bg-[#020617]"
+                : "border-slate-200 bg-white"
+            }
+          `}
         >
-          {/* Header */}
+
+          {/* HEADER */}
           <div className="flex flex-wrap items-center justify-between gap-4">
+
             <div>
-              <h2 className={`text-xl font-semibold ${isDark ? "text-white" : "text-gray-800"}`}>
+              <h2
+                className={`
+                  text-xl font-semibold
+                  ${
+                    isDark
+                      ? "text-white"
+                      : "text-gray-800"
+                  }
+                `}
+              >
                 Application Users
               </h2>
-              <p className={`text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                Manage enterprise application users and permissions.
-              </p>
+
+ 
             </div>
+
             <div className="flex items-center gap-4">
+
+              {/* SEARCH */}
               <div className="relative">
+
                 <Search
                   size={18}
-                  className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${
-                    isDark ? "text-slate-500" : "text-slate-400"
-                  }`}
+                  className={`
+                    absolute left-3.5 top-1/2
+                    -translate-y-1/2
+                    ${
+                      isDark
+                        ? "text-slate-500"
+                        : "text-slate-400"
+                    }
+                  `}
                 />
+
                 <input
                   type="text"
                   placeholder="Search user..."
                   className={inputWithIconClass}
                 />
               </div>
-              <span className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-700"}`}>
+
+              <span
+                className={`
+                  text-sm font-medium
+                  ${
+                    isDark
+                      ? "text-white"
+                      : "text-gray-700"
+                  }
+                `}
+              >
                 {usersData.length} Users
               </span>
             </div>
           </div>
 
-          {/* Table */}
+          {/* ───────────────── TABLE ───────────────── */}
           <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[700px]">
-              <thead>
-                <tr
-                  className={`border-b text-left text-[11px] font-semibold uppercase tracking-wider ${
-                    isDark ? "border-slate-700 text-slate-400" : "border-slate-200 text-slate-500"
-                  }`}
-                >
-                  <th className="px-2.5 py-1.5">SR NO</th>
-                  <th className="px-2.5 py-1.5">USERNAME</th>
-                  <th className="px-2.5 py-1.5">FIRST NAME</th>
-                  <th className="px-2.5 py-1.5">LAST NAME</th>
-                  <th className="px-2.5 py-1.5">TYPE</th>
-                  <th className="px-2.5 py-1.5">CONTACT</th>
-                  <th className="px-2.5 py-1.5">EMAIL</th>
-                  <th className="px-2.5 py-1.5 text-center">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usersData.map((user, index) => (
-                  <tr
-                    key={user.id}
-                    className={`border-b transition-colors ${
-                      isDark
-                        ? "border-slate-700/40 hover:bg-slate-800/30"
-                        : "border-slate-200/60 hover:bg-slate-50"
-                    }`}
-                  >
-                    <td
-                      className={`px-2.5 py-1.5 text-[11px] ${
-                        isDark ? "text-slate-500" : "text-slate-400"
-                      }`}
-                    >
-                      {index + 1}
-                    </td>
-                    <td className={`px-2.5 py-1.5 text-[11px] ${isDark ? "text-slate-300" : "text-slate-700"}`}>
-                      {user.username}
-                    </td>
-                    <td className={`px-2.5 py-1.5 text-[11px] ${isDark ? "text-slate-300" : "text-slate-700"}`}>
-                      {user.firstName}
-                    </td>
-                    <td className={`px-2.5 py-1.5 text-[11px] ${isDark ? "text-slate-300" : "text-slate-700"}`}>
-                      {user.lastName}
-                    </td>
-                    <td className={`px-2.5 py-1.5 text-[11px] ${isDark ? "text-slate-300" : "text-slate-700"}`}>
-                      {user.type}
-                    </td>
-                    <td className={`px-2.5 py-1.5 text-[11px] ${isDark ? "text-slate-300" : "text-slate-700"}`}>
-                      {user.contact}
-                    </td>
-                    <td className={`px-2.5 py-1.5 text-[11px] ${isDark ? "text-slate-300" : "text-slate-700"}`}>
-                      {user.email}
-                    </td>
-                    <td className="px-2.5 py-1.5 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          className={`rounded p-1 transition ${
-                            isDark
-                              ? "text-blue-400 hover:bg-blue-500/20"
-                              : "text-blue-600 hover:bg-blue-100"
-                          }`}
-                        >
-                          <Edit size={13} />
-                        </button>
-                        <button
-                          className={`rounded p-1 transition ${
-                            isDark
-                              ? "text-red-400 hover:bg-red-500/20"
-                              : "text-red-600 hover:bg-red-100"
-                          }`}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+         <table className="w-full border-collapse">
+  <thead>
+    <tr className="border-b border-white/10">
+      <th className="px-8 py-3 text-left whitespace-nowrap">
+        SR NO
+      </th>
+      <th className="px-8 py-3 text-left whitespace-nowrap">
+        ACCOUNT_STATUS
+      </th>
+      <th className="px-8 py-3 text-left whitespace-nowrap">
+        USERNAME
+      </th>
+      <th className="px-8 py-3 text-left whitespace-nowrap">
+        FIRST NAME
+      </th>
+      <th className="px-8 py-3 text-left whitespace-nowrap">
+        LAST NAME
+      </th>
+      <th className="px-8 py-3 text-left whitespace-nowrap">
+        ROLE
+      </th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {usersData.map((user, index) => (
+      <tr
+        key={user.id}
+        className="border-b border-white/5 hover:bg-white/[0.02]"
+      >
+        <td className="px-8 py-4 whitespace-nowrap">
+          {index + 1}
+        </td>
+
+        <td className="px-8 py-4 whitespace-nowrap">
+          <span className="px-3 py-1 rounded-md bg-green-500/10 text-green-400">
+            {user.account_status}
+          </span>
+        </td>
+
+        <td className="px-8 py-4 whitespace-nowrap">
+          {user.username}
+        </td>
+
+        <td className="px-8 py-4 whitespace-nowrap">
+          {user.firstName}
+        </td>
+
+        <td className="px-8 py-4 whitespace-nowrap">
+          {user.lastName}
+        </td>
+
+        <td className="px-8 py-4 whitespace-nowrap">
+          {user.role}
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
           </div>
 
-          {/* Pagination */}
+          {/* ───────────────── PAGINATION ───────────────── */}
           <div
-            className={`mt-6 flex flex-wrap items-center justify-between gap-4 border-t pt-4 text-sm ${
-              isDark ? "border-slate-700 text-slate-400" : "border-slate-200 text-slate-500"
-            }`}
+            className={`
+              mt-6 flex flex-wrap
+              items-center justify-between
+              gap-4 border-t pt-4 text-sm
+              ${
+                isDark
+                  ? "border-slate-700 text-slate-400"
+                  : "border-slate-200 text-slate-500"
+              }
+            `}
           >
+
+            {/* ROWS PER PAGE */}
             <div className="flex items-center gap-2">
-              <span>Rows per page</span>
+
+              <span>
+                Rows per page
+              </span>
+
               <select
-                className={`rounded-lg border px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#7094ff]/20 ${
-                  isDark
-                    ? "border-slate-700 bg-[#111827] text-white focus:border-[#7094ff]/60"
-                    : "border-slate-300 bg-white text-slate-800 focus:border-[#7094ff]/60"
-                }`}
+                className={`
+                  rounded-lg border
+                  px-2 py-1
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-[#7094ff]/20
+                  ${
+                    isDark
+                      ? "border-slate-700 bg-[#111827] text-white focus:border-[#7094ff]/60"
+                      : "border-slate-300 bg-white text-slate-800 focus:border-[#7094ff]/60"
+                  }
+                `}
               >
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
+                <option value="10">
+                  10
+                </option>
+
+                <option value="25">
+                  25
+                </option>
+
+                <option value="50">
+                  50
+                </option>
               </select>
             </div>
+
+            {/* SHOWING */}
             <div>
-              Showing 1 to {usersData.length} of {usersData.length}
+              Showing 1 to {usersData.length} of{" "}
+              {usersData.length}
             </div>
+
+            {/* PAGINATION BUTTONS */}
             <div className="flex items-center gap-2">
+
               <button
-                className={`rounded-lg border px-3 py-1 transition disabled:opacity-50 ${
-                  isDark
-                    ? "border-slate-700 text-white hover:bg-slate-700"
-                    : "border-slate-300 text-slate-700 hover:bg-slate-100"
-                }`}
+                type="button"
+                disabled
+                className={`
+                  rounded-lg border
+                  px-3 py-1 transition
+                  disabled:opacity-50
+                  ${
+                    isDark
+                      ? "border-slate-700 text-white hover:bg-slate-700"
+                      : "border-slate-300 text-slate-700 hover:bg-slate-100"
+                  }
+                `}
               >
                 Prev
               </button>
-              <span className={`px-2 py-1 ${isDark ? "text-white" : "text-slate-800"}`}>1/1</span>
+
+              <span
+                className={`
+                  px-2 py-1
+                  ${
+                    isDark
+                      ? "text-white"
+                      : "text-slate-800"
+                  }
+                `}
+              >
+                1/1
+              </span>
+
               <button
-                className={`rounded-lg border px-3 py-1 transition disabled:opacity-50 ${
-                  isDark
-                    ? "border-slate-700 text-white hover:bg-slate-700"
-                    : "border-slate-300 text-slate-700 hover:bg-slate-100"
-                }`}
+                type="button"
+                disabled
+                className={`
+                  rounded-lg border
+                  px-3 py-1 transition
+                  disabled:opacity-50
+                  ${
+                    isDark
+                      ? "border-slate-700 text-white hover:bg-slate-700"
+                      : "border-slate-300 text-slate-700 hover:bg-slate-100"
+                  }
+                `}
               >
                 Next
               </button>
+
             </div>
           </div>
+
         </div>
       )}
     </div>

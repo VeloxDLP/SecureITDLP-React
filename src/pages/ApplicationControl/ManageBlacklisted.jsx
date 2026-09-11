@@ -489,7 +489,7 @@ function ManageBlacklisted() {
       ====================================================== */}
       <div className="w-full rounded-xl border border-[#27355f] bg-[#020617] px-4 py-4 min-h-[148px]">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-[830px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-[830px]">
 
           {/* ==================================================
               BRANCH NAME

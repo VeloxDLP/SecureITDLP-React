@@ -995,7 +995,7 @@ export default function ViewApplication() {
             : "bg-white border-slate-200"
         }`}
       >
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-4 gap-5">
 
           {/* BRANCH */}
           <div>

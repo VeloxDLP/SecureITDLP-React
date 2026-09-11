@@ -6,6 +6,11 @@ import {
   Check,
   ChevronDown,
   RefreshCw,
+  Eye,
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { dashboardService } from "../../services/dashboardService";
@@ -17,22 +22,49 @@ function ManageWhitelisted() {
   // STATES
   // ============================================================
 
-  const [applicationName, setApplicationName] = useState("");
+  // MULTIPLE APPLICATIONS
+  const [selectedApplications, setSelectedApplications] = useState([]);
+
   const [branch, setBranch] = useState("");
 
   const [branches, setBranches] = useState([]);
   const [devices, setDevices] = useState([]);
+
+  // MULTIPLE DEVICES
   const [selectedDevices, setSelectedDevices] = useState([]);
+
+  // Applications loaded from selected devices
+  const [applications, setApplications] = useState([]);
+
+  // Whitelist table data
+  const [whitelistedApplications, setWhitelistedApplications] =
+    useState([]);
 
   const [branchOpen, setBranchOpen] = useState(false);
   const [deviceOpen, setDeviceOpen] = useState(false);
+  const [applicationOpen, setApplicationOpen] = useState(false);
 
   const [deviceLoading, setDeviceLoading] = useState(false);
+  const [applicationLoading, setApplicationLoading] =
+    useState(false);
+
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // Table
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Selected table rows
+  const [selectedTableRows, setSelectedTableRows] = useState([]);
+
   const branchRef = useRef(null);
   const deviceRef = useRef(null);
+  const applicationRef = useRef(null);
+  const tableRef = useRef(null);
+
+  // ONLY 5 DATA PER PAGE
+  const rowsPerPage = 5;
 
   // ============================================================
   // LOAD BRANCHES
@@ -98,19 +130,47 @@ function ManageWhitelisted() {
   };
 
   // ============================================================
+  // GET APPLICATION VALUE
+  // ============================================================
+
+  const getApplicationValue = (item) => {
+    if (typeof item === "string") {
+      return item;
+    }
+
+    return (
+      item?.applicationName ??
+      item?.application ??
+      item?.name ??
+      item?.value ??
+      ""
+    );
+  };
+
+  // ============================================================
   // BRANCH CHANGE
   // ============================================================
 
   const handleBranchChange = async (branchValue) => {
     setBranch(branchValue);
 
-    // Clear previous device selection
+    // Clear previous devices
     setSelectedDevices([]);
     setDevices([]);
 
-    // Close dropdowns
+    // Clear applications
+    setSelectedApplications([]);
+    setApplications([]);
+
+    // Clear table
+    setWhitelistedApplications([]);
+    setSelectedTableRows([]);
+    setSearchTerm("");
+    setCurrentPage(1);
+
     setBranchOpen(false);
     setDeviceOpen(false);
+    setApplicationOpen(false);
 
     if (!branchValue) {
       return;
@@ -138,21 +198,120 @@ function ManageWhitelisted() {
   };
 
   // ============================================================
+  // LOAD APPLICATIONS FOR DEVICES
+  // ============================================================
+
+  const loadApplicationsByDevices = async (deviceList) => {
+    if (!deviceList || deviceList.length === 0) {
+      setApplications([]);
+      setSelectedApplications([]);
+      return;
+    }
+
+    try {
+      setApplicationLoading(true);
+
+      console.log(
+        "Get applications for devices:",
+        deviceList
+      );
+
+      const response =
+        await dashboardService.getApplicationsByHost(
+          deviceList
+        );
+
+      console.log(
+        "Application By Host API Response:",
+        response
+      );
+
+      let applicationList = [];
+
+      if (
+        Array.isArray(
+          response?.data?.applicationName
+        )
+      ) {
+        applicationList =
+          response.data.applicationName;
+      } else if (
+        Array.isArray(response?.data)
+      ) {
+        applicationList = response.data;
+      } else if (
+        Array.isArray(
+          response?.applicationName
+        )
+      ) {
+        applicationList =
+          response.applicationName;
+      }
+
+      applicationList = [
+        ...new Set(
+          applicationList
+            .map(getApplicationValue)
+            .filter(Boolean)
+        ),
+      ];
+
+      console.log(
+        "Applications for selected devices:",
+        applicationList
+      );
+
+      setApplications(applicationList);
+
+      // Clear old application selection
+      setSelectedApplications([]);
+    } catch (error) {
+      console.error(
+        "Failed to load applications:",
+        error
+      );
+
+      setApplications([]);
+      setSelectedApplications([]);
+    } finally {
+      setApplicationLoading(false);
+    }
+  };
+
+  // ============================================================
   // DEVICE MULTI SELECT
   // ============================================================
 
   const handleDeviceChange = (deviceValue) => {
     setSelectedDevices((prev) => {
-      // Remove device if already selected
+      let updatedDevices;
+
       if (prev.includes(deviceValue)) {
-        return prev.filter(
+        updatedDevices = prev.filter(
           (device) => device !== deviceValue
         );
+      } else {
+        updatedDevices = [
+          ...prev,
+          deviceValue,
+        ];
       }
 
-      // Add device
-      return [...prev, deviceValue];
+      // Load applications based on selected devices
+      loadApplicationsByDevices(
+        updatedDevices
+      );
+
+      return updatedDevices;
     });
+
+    setApplicationOpen(false);
+
+    // Clear old table
+    setWhitelistedApplications([]);
+    setSelectedTableRows([]);
+    setSearchTerm("");
+    setCurrentPage(1);
   };
 
   // ============================================================
@@ -164,7 +323,7 @@ function ManageWhitelisted() {
     .filter(Boolean);
 
   // ============================================================
-  // SELECT ALL
+  // SELECT ALL DEVICES
   // ============================================================
 
   const allDevicesSelected =
@@ -178,23 +337,114 @@ function ManageWhitelisted() {
       return;
     }
 
+    let updatedDevices = [];
+
     if (allDevicesSelected) {
-      // Remove all devices
-      setSelectedDevices((prev) =>
-        prev.filter(
+      updatedDevices =
+        selectedDevices.filter(
           (device) =>
             !filteredDevices.includes(device)
-        )
-      );
+        );
     } else {
-      // Select all devices
-      setSelectedDevices((prev) => [
+      updatedDevices = [
         ...new Set([
-          ...prev,
+          ...selectedDevices,
           ...filteredDevices,
         ]),
+      ];
+    }
+
+    setSelectedDevices(updatedDevices);
+
+    loadApplicationsByDevices(
+      updatedDevices
+    );
+
+    setSelectedApplications([]);
+    setApplicationOpen(false);
+  };
+
+  // ============================================================
+  // APPLICATION MULTI SELECT
+  // ============================================================
+
+  const handleApplicationChange = (
+    application
+  ) => {
+    setSelectedApplications((prev) => {
+      if (prev.includes(application)) {
+        return prev.filter(
+          (item) => item !== application
+        );
+      }
+
+      return [
+        ...prev,
+        application,
+      ];
+    });
+  };
+
+  // ============================================================
+  // SELECT ALL APPLICATIONS
+  // ============================================================
+
+  const applicationValues = applications
+    .map((item) =>
+      getApplicationValue(item)
+    )
+    .filter(Boolean);
+
+  const allApplicationsSelected =
+    applicationValues.length > 0 &&
+    applicationValues.every((application) =>
+      selectedApplications.includes(
+        application
+      )
+    );
+
+  const handleSelectAllApplications = () => {
+    if (applicationValues.length === 0) {
+      return;
+    }
+
+    if (allApplicationsSelected) {
+      setSelectedApplications([]);
+    } else {
+      setSelectedApplications([
+        ...applicationValues,
       ]);
     }
+  };
+
+  // ============================================================
+  // APPLICATION DISPLAY TEXT
+  // ============================================================
+
+  const getApplicationDisplayText = () => {
+    if (
+      selectedDevices.length === 0
+    ) {
+      return "Select device first";
+    }
+
+    if (applicationLoading) {
+      return "Loading applications...";
+    }
+
+    if (
+      selectedApplications.length === 0
+    ) {
+      return "Select Application";
+    }
+
+    if (
+      selectedApplications.length === 1
+    ) {
+      return selectedApplications[0];
+    }
+
+    return `${selectedApplications.length} applications selected`;
   };
 
   // ============================================================
@@ -202,15 +452,29 @@ function ManageWhitelisted() {
   // ============================================================
 
   const handleReset = () => {
-    setApplicationName("");
+    setSelectedApplications([]);
     setBranch("");
+
     setSelectedDevices([]);
     setDevices([]);
+    setApplications([]);
+
+    setWhitelistedApplications([]);
+    setSelectedTableRows([]);
+
+    setSearchTerm("");
+    setCurrentPage(1);
 
     setBranchOpen(false);
     setDeviceOpen(false);
+    setApplicationOpen(false);
 
     setSubmitted(false);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   // ============================================================
@@ -221,7 +485,7 @@ function ManageWhitelisted() {
     setSubmitted(true);
 
     if (
-      !applicationName.trim() ||
+      selectedApplications.length === 0 ||
       !branch ||
       selectedDevices.length === 0
     ) {
@@ -231,8 +495,17 @@ function ManageWhitelisted() {
     try {
       setLoading(true);
 
+      setSearchTerm("");
+      setCurrentPage(1);
+      setSelectedTableRows([]);
+
+      // ========================================================
+      // REQUEST DATA
+      // ========================================================
+
       const requestData = {
-        applicationName: applicationName.trim(),
+        applicationName:
+          selectedApplications,
         branch: branch,
         device: selectedDevices,
       };
@@ -242,56 +515,81 @@ function ManageWhitelisted() {
         requestData
       );
 
-      // ======================================================
-      // ADD YOUR API HERE
-      // ======================================================
-      //
-      // const response =
-      //   await dashboardService.addApplicationWhitelist(
-      //     requestData
-      //   );
-      //
-      // console.log("Whitelist API Response:", response);
+      // ========================================================
+      // GET CURRENT WHITELIST DATA
+      // ========================================================
+
+      const response =
+        await dashboardService.getApplicationWhitelisted();
 
       console.log(
-        "Application Whitelist Data:",
-        requestData
+        "Application Whitelisted Response:",
+        response
       );
 
-      // Temporary delay
-      await new Promise((resolve) =>
-        setTimeout(resolve, 500)
-      );
+      const result = Array.isArray(
+        response?.data
+      )
+        ? response.data
+        : [];
 
-      setSubmitted(false);
+      setWhitelistedApplications(result);
+
+      // ========================================================
+      // SCROLL TO TABLE
+      // ========================================================
+
+      setTimeout(() => {
+        if (tableRef.current) {
+          tableRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      }, 150);
     } catch (error) {
       console.error(
-        "Application whitelist error:",
+        "Application whitelist API error:",
         error
       );
+
+      setWhitelistedApplications([]);
     } finally {
       setLoading(false);
     }
   };
 
   // ============================================================
-  // CLOSE DROPDOWN ON OUTSIDE CLICK
+  // OUTSIDE CLICK
   // ============================================================
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         branchRef.current &&
-        !branchRef.current.contains(event.target)
+        !branchRef.current.contains(
+          event.target
+        )
       ) {
         setBranchOpen(false);
       }
 
       if (
         deviceRef.current &&
-        !deviceRef.current.contains(event.target)
+        !deviceRef.current.contains(
+          event.target
+        )
       ) {
         setDeviceOpen(false);
+      }
+
+      if (
+        applicationRef.current &&
+        !applicationRef.current.contains(
+          event.target
+        )
+      ) {
+        setApplicationOpen(false);
       }
     };
 
@@ -309,7 +607,7 @@ function ManageWhitelisted() {
   }, []);
 
   // ============================================================
-  // COMMON CARD STYLE
+  // CARD STYLE
   // ============================================================
 
   const cardStyle = {
@@ -377,23 +675,205 @@ function ManageWhitelisted() {
   `;
 
   // ============================================================
+  // TABLE SEARCH
+  // ============================================================
+
+  const filteredApplications =
+    whitelistedApplications.filter(
+      (item) => {
+        const search =
+          searchTerm.toLowerCase();
+
+        return (
+          String(
+            item?.applicationHash || ""
+          )
+            .toLowerCase()
+            .includes(search) ||
+          String(
+            item?.applicationName || ""
+          )
+            .toLowerCase()
+            .includes(search) ||
+          String(
+            item?.applicationPath || ""
+          )
+            .toLowerCase()
+            .includes(search) ||
+          String(
+            item?.branchName || ""
+          )
+            .toLowerCase()
+            .includes(search) ||
+          String(
+            item?.ipAddress || ""
+          )
+            .toLowerCase()
+            .includes(search)
+        );
+      }
+    );
+
+  // ============================================================
+  // TABLE UNIQUE KEY
+  // ============================================================
+
+  const getApplicationKey = (item) => {
+    return (
+      String(
+        item?.applicationHash || ""
+      ) ||
+      `${item?.applicationName || ""}-${
+        item?.ipAddress || ""
+      }-${item?.branchName || ""}`
+    );
+  };
+
+  // ============================================================
+  // SELECT TABLE ROW
+  // ============================================================
+
+  const handleSelectTableRow = (item) => {
+    const key = getApplicationKey(item);
+
+    setSelectedTableRows((prev) => {
+      if (prev.includes(key)) {
+        return prev.filter(
+          (itemKey) =>
+            itemKey !== key
+        );
+      }
+
+      return [
+        ...prev,
+        key,
+      ];
+    });
+  };
+
+  // ============================================================
+  // SELECT ALL TABLE ROWS
+  // ============================================================
+
+  const allFilteredSelected =
+    filteredApplications.length > 0 &&
+    filteredApplications.every((item) =>
+      selectedTableRows.includes(
+        getApplicationKey(item)
+      )
+    );
+
+  const handleSelectAllTableRows = () => {
+    const allKeys =
+      filteredApplications.map(
+        (item) =>
+          getApplicationKey(item)
+      );
+
+    if (allKeys.length === 0) {
+      return;
+    }
+
+    if (allFilteredSelected) {
+      setSelectedTableRows((prev) =>
+        prev.filter(
+          (key) =>
+            !allKeys.includes(key)
+        )
+      );
+    } else {
+      setSelectedTableRows((prev) => [
+        ...new Set([
+          ...prev,
+          ...allKeys,
+        ]),
+      ]);
+    }
+  };
+
+  // ============================================================
+  // ADD TO BLACKLISTED
+  // ============================================================
+
+  const handleAddToBlacklisted = () => {
+    const selectedRows =
+      whitelistedApplications.filter(
+        (item) =>
+          selectedTableRows.includes(
+            getApplicationKey(item)
+          )
+      );
+
+    console.log(
+      "Selected applications for blacklist:",
+      selectedRows
+    );
+
+    // Add blacklist API here
+  };
+
+  // ============================================================
+  // PAGINATION
+  // ONLY 5 ROWS
+  // ============================================================
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(
+      filteredApplications.length /
+        rowsPerPage
+    )
+  );
+
+  const startIndex =
+    (currentPage - 1) *
+    rowsPerPage;
+
+  const paginatedApplications =
+    filteredApplications.slice(
+      startIndex,
+      startIndex + rowsPerPage
+    );
+
+  useEffect(() => {
+    if (
+      currentPage > totalPages
+    ) {
+      setCurrentPage(totalPages);
+    }
+  }, [
+    currentPage,
+    totalPages,
+  ]);
+
+  const displayStart =
+    filteredApplications.length === 0
+      ? 0
+      : startIndex + 1;
+
+  const displayEnd = Math.min(
+    startIndex +
+      paginatedApplications.length,
+    filteredApplications.length
+  );
+
+  // ============================================================
   // JSX
   // ============================================================
 
   return (
     <div className="w-full">
 
+      <br />
+
       {/* ======================================================
           HEADING
       ====================================================== */}
-
-      <br />
 
       <div className="flex items-start justify-between mb-7">
 
         <div className="flex items-center gap-3">
 
-          {/* ICON */}
           <div
             className="w-10 h-10 rounded-2xl flex items-center justify-center"
             style={{
@@ -401,8 +881,7 @@ function ManageWhitelisted() {
                 "rgba(112,148,255,0.15)",
               border:
                 "1px solid rgba(112,148,255,0.25)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter:
+              backdropFilter:
                 "blur(12px)",
             }}
           >
@@ -412,9 +891,7 @@ function ManageWhitelisted() {
             />
           </div>
 
-          {/* TITLE */}
           <div>
-
             <h2
               className={`font-display font-bold text-lg leading-tight ${
                 isDark
@@ -432,9 +909,9 @@ function ManageWhitelisted() {
                   : "text-slate-400"
               }`}
             >
-              Manage whitelisted applications across endpoints
+              Manage whitelisted applications
+              across endpoints
             </p>
-
           </div>
 
         </div>
@@ -449,17 +926,17 @@ function ManageWhitelisted() {
         style={cardStyle}
       >
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
 
           {/* ==================================================
               BRANCH NAME
+              DO NOT CHANGE
           ================================================== */}
 
           <div
             ref={branchRef}
             className="relative"
           >
-
             <label className={labelClass}>
               Branch Name{" "}
               <span className="text-rose-500">
@@ -467,7 +944,6 @@ function ManageWhitelisted() {
               </span>
             </label>
 
-            {/* BRANCH BUTTON */}
             <button
               type="button"
               onClick={() => {
@@ -476,6 +952,7 @@ function ManageWhitelisted() {
                 );
 
                 setDeviceOpen(false);
+                setApplicationOpen(false);
               }}
               className={`
                 ${inputClass}
@@ -495,7 +972,6 @@ function ManageWhitelisted() {
                 }
               `}
             >
-
               <span
                 className={
                   branch
@@ -507,7 +983,8 @@ function ManageWhitelisted() {
                     : "text-slate-400"
                 }
               >
-                {branch || "Select Branch"}
+                {branch ||
+                  "Select Branch"}
               </span>
 
               <ChevronDown
@@ -526,10 +1003,8 @@ function ManageWhitelisted() {
                   }
                 `}
               />
-
             </button>
 
-            {/* BRANCH DROPDOWN */}
             {branchOpen && (
               <div
                 className={`
@@ -550,11 +1025,9 @@ function ManageWhitelisted() {
                   }
                 `}
               >
-
                 <div className="max-h-52 overflow-y-auto py-1">
 
                   {branches.length === 0 ? (
-
                     <div
                       className={`px-4 py-3 text-[12px] text-center ${
                         isDark
@@ -564,14 +1037,13 @@ function ManageWhitelisted() {
                     >
                       No branches found
                     </div>
-
                   ) : (
-
                     branches.map(
                       (item, index) => {
-
                         const value =
-                          getBranchValue(item);
+                          getBranchValue(
+                            item
+                          );
 
                         return (
                           <button
@@ -601,18 +1073,17 @@ function ManageWhitelisted() {
                               }
                             `}
                           >
-
                             <span>
                               {value}
                             </span>
 
-                            {branch === value && (
+                            {branch ===
+                              value && (
                               <Check
                                 size={13}
                                 className="text-[#7094ff]"
                               />
                             )}
-
                           </button>
                         );
                       }
@@ -623,35 +1094,29 @@ function ManageWhitelisted() {
               </div>
             )}
 
-            {/* BRANCH VALIDATION */}
-            {submitted && !branch && (
-              <p className="text-[10px] text-rose-500 mt-1">
-                Required
-              </p>
-            )}
-
+            {submitted &&
+              !branch && (
+                <p className="text-[10px] text-rose-500 mt-1">
+                  Required
+                </p>
+              )}
           </div>
 
           {/* ==================================================
               DEVICE NAME
+              DO NOT CHANGE
           ================================================== */}
 
           <div
             ref={deviceRef}
             className="relative"
           >
-
-            {/* DEVICE LABEL */}
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-[rgb(100,116,139)]">
               DEVICE NAME{" "}
               <span className="text-rose-500 normal-case tracking-normal">
                 *
               </span>
             </label>
-
-            {/* ==================================================
-                DEVICE SELECT BUTTON
-            ================================================== */}
 
             <button
               type="button"
@@ -660,7 +1125,6 @@ function ManageWhitelisted() {
                 deviceLoading
               }
               onClick={() => {
-
                 if (
                   !branch ||
                   deviceLoading
@@ -673,6 +1137,7 @@ function ManageWhitelisted() {
                 );
 
                 setBranchOpen(false);
+                setApplicationOpen(false);
               }}
               className={`
                 w-full
@@ -701,8 +1166,6 @@ function ManageWhitelisted() {
                 }
               `}
             >
-
-              {/* SELECTED COUNT */}
               <span
                 className={
                   selectedDevices.length > 0
@@ -719,16 +1182,12 @@ function ManageWhitelisted() {
                   : "Select Device"}
               </span>
 
-              {/* ARROW / LOADER */}
               {deviceLoading ? (
-
                 <RefreshCw
                   size={14}
                   className="text-slate-500 animate-spin"
                 />
-
               ) : (
-
                 <ChevronDown
                   size={14}
                   className={`
@@ -741,19 +1200,12 @@ function ManageWhitelisted() {
                     }
                   `}
                 />
-
               )}
-
             </button>
-
-            {/* ==================================================
-                DEVICE DROPDOWN
-            ================================================== */}
 
             {deviceOpen &&
               branch &&
               !deviceLoading && (
-
                 <div
                   className="
                     absolute
@@ -770,31 +1222,17 @@ function ManageWhitelisted() {
                     overflow-hidden
                   "
                 >
-
-                  {/* ==================================================
-                      SCROLL AREA
-                  ================================================== */}
-
                   <div className="max-h-[187px] overflow-y-auto py-1">
 
-                    {/* ==================================================
-                        NO DEVICES
-                    ================================================== */}
-
-                    {filteredDevices.length === 0 ? (
-
+                    {filteredDevices.length ===
+                    0 ? (
                       <div className="px-3 py-3 text-[12px] text-slate-500">
                         No devices found
                       </div>
-
                     ) : (
-
                       <>
 
-                        {/* ==================================================
-                            SELECT ALL
-                        ================================================== */}
-
+                        {/* SELECT ALL */}
                         <button
                           type="button"
                           onClick={
@@ -819,9 +1257,6 @@ function ManageWhitelisted() {
                             }
                           `}
                         >
-
-                          {/* SELECT ALL CHECKBOX */}
-
                           <span
                             className={`
                               w-[14px]
@@ -839,36 +1274,28 @@ function ManageWhitelisted() {
                               }
                             `}
                           >
-
                             {allDevicesSelected && (
                               <Check
                                 size={11}
                                 className="text-white"
                               />
                             )}
-
                           </span>
 
                           <span>
                             Select all
                           </span>
-
                         </button>
 
-                        {/* ==================================================
-                            DEVICE LIST
-                        ================================================== */}
-
+                        {/* DEVICE LIST */}
                         {filteredDevices.map(
                           (value, index) => {
-
                             const isSelected =
                               selectedDevices.includes(
                                 value
                               );
 
                             return (
-
                               <button
                                 key={`${value}-${index}`}
                                 type="button"
@@ -894,14 +1321,9 @@ function ManageWhitelisted() {
                                   }
                                 `}
                               >
-
-                                {/* DEVICE NAME */}
-
                                 <span className="truncate">
                                   {value}
                                 </span>
-
-                                {/* SELECTED CHECK - RIGHT SIDE */}
 
                                 {isSelected && (
                                   <Check
@@ -909,9 +1331,7 @@ function ManageWhitelisted() {
                                     className="text-[#7094ff] flex-shrink-0"
                                   />
                                 )}
-
                               </button>
-
                             );
                           }
                         )}
@@ -920,27 +1340,26 @@ function ManageWhitelisted() {
                     )}
 
                   </div>
-
                 </div>
               )}
 
-            {/* DEVICE VALIDATION */}
-
             {submitted &&
-              selectedDevices.length === 0 && (
+              selectedDevices.length ===
+                0 && (
                 <p className="text-[10px] text-rose-500 mt-1">
                   Required
                 </p>
               )}
-
           </div>
 
           {/* ==================================================
-              APPLICATION NAME
+              APPLICATION NAME - MULTI SELECT
           ================================================== */}
 
-          <div>
-
+          <div
+            ref={applicationRef}
+            className="relative"
+          >
             <label className={labelClass}>
               Application Name{" "}
               <span className="text-rose-500">
@@ -948,30 +1367,250 @@ function ManageWhitelisted() {
               </span>
             </label>
 
-            <input
-              type="text"
-              value={applicationName}
-              onChange={(e) =>
-                setApplicationName(
-                  e.target.value
-                )
+            <button
+              type="button"
+              disabled={
+                selectedDevices.length ===
+                  0 ||
+                applicationLoading
               }
-              placeholder="Enter Application Name"
-              className={
-                submitted &&
-                !applicationName.trim()
-                  ? `${inputClass} border-rose-500/60`
-                  : inputClass
-              }
-            />
+              onClick={() => {
+                if (
+                  selectedDevices.length ===
+                    0 ||
+                  applicationLoading
+                ) {
+                  return;
+                }
+
+                setApplicationOpen(
+                  (prev) => !prev
+                );
+
+                setBranchOpen(false);
+                setDeviceOpen(false);
+              }}
+              className={`
+                ${inputClass}
+                flex
+                items-center
+                justify-between
+                text-left
+                ${
+                  selectedDevices.length ===
+                    0 ||
+                  applicationLoading
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }
+                ${
+                  applicationOpen
+                    ? "border-[#7094ff]/60 ring-2 ring-[#7094ff]/15"
+                    : ""
+                }
+                ${
+                  submitted &&
+                  selectedApplications.length ===
+                    0
+                    ? "border-rose-500/60"
+                    : ""
+                }
+              `}
+            >
+              <span
+                className={
+                  selectedApplications.length >
+                  0
+                    ? "text-slate-200 truncate"
+                    : "text-slate-600"
+                }
+              >
+                {getApplicationDisplayText()}
+              </span>
+
+              {applicationLoading ? (
+                <RefreshCw
+                  size={14}
+                  className="text-slate-500 animate-spin flex-shrink-0"
+                />
+              ) : (
+                <ChevronDown
+                  size={14}
+                  className={`
+                    flex-shrink-0
+                    text-slate-500
+                    transition-transform
+                    ${
+                      applicationOpen
+                        ? "rotate-180"
+                        : ""
+                    }
+                  `}
+                />
+              )}
+            </button>
+
+            {/* ==================================================
+                APPLICATION DROPDOWN
+            ================================================== */}
+
+            {applicationOpen &&
+              selectedDevices.length > 0 &&
+              !applicationLoading && (
+                <div
+                  className="
+                    absolute
+                    top-full
+                    left-0
+                    right-0
+                    mt-1.5
+                    z-[200]
+                    rounded-xl
+                    border
+                    border-white/[0.10]
+                    bg-[#111827]
+                    shadow-[0_16px_48px_rgba(0,0,0,0.35)]
+                    overflow-hidden
+                  "
+                >
+
+                  <div className="max-h-[187px] overflow-y-auto py-1">
+
+                    {applicationValues.length ===
+                    0 ? (
+                      <div className="px-4 py-3 text-[12px] text-slate-500 text-center">
+                        No applications found
+                      </div>
+                    ) : (
+                      <>
+
+                        {/* ==================================================
+                            SELECT ALL APPLICATIONS
+                        ================================================== */}
+
+                        <button
+                          type="button"
+                          onClick={
+                            handleSelectAllApplications
+                          }
+                          className={`
+                            w-full
+                            px-3
+                            py-2.5
+                            text-left
+                            text-[12px]
+                            flex
+                            items-center
+                            gap-2
+                            border-b
+                            border-[#27355f]
+                            transition-colors
+                            ${
+                              allApplicationsSelected
+                                ? "bg-[#1e293b] text-[#7094ff]"
+                                : "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                            }
+                          `}
+                        >
+                          <span
+                            className={`
+                              w-[14px]
+                              h-[14px]
+                              rounded
+                              border
+                              flex
+                              items-center
+                              justify-center
+                              flex-shrink-0
+                              ${
+                                allApplicationsSelected
+                                  ? "bg-[#7094ff] border-[#7094ff]"
+                                  : "border-white/[0.25]"
+                              }
+                            `}
+                          >
+                            {allApplicationsSelected && (
+                              <Check
+                                size={11}
+                                className="text-white"
+                              />
+                            )}
+                          </span>
+
+                          <span>
+                            Select all
+                          </span>
+                        </button>
+
+                        {/* ==================================================
+                            APPLICATION LIST
+                        ================================================== */}
+
+                        {applicationValues.map(
+                          (
+                            application,
+                            index
+                          ) => {
+                            const isSelected =
+                              selectedApplications.includes(
+                                application
+                              );
+
+                            return (
+                              <button
+                                key={`${application}-${index}`}
+                                type="button"
+                                onClick={() =>
+                                  handleApplicationChange(
+                                    application
+                                  )
+                                }
+                                className={`
+                                  w-full
+                                  px-3
+                                  py-2.5
+                                  text-left
+                                  text-[12px]
+                                  flex
+                                  items-center
+                                  justify-between
+                                  transition-colors
+                                  ${
+                                    isSelected
+                                      ? "bg-[#25395f] text-[#7094ff]"
+                                      : "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                                  }
+                                `}
+                              >
+                                <span className="truncate">
+                                  {application}
+                                </span>
+
+                                {isSelected && (
+                                  <Check
+                                    size={14}
+                                    className="text-[#7094ff] flex-shrink-0"
+                                  />
+                                )}
+                              </button>
+                            );
+                          }
+                        )}
+
+                      </>
+                    )}
+
+                  </div>
+                </div>
+              )}
 
             {submitted &&
-              !applicationName.trim() && (
+              selectedApplications.length ===
+                0 && (
                 <p className="text-[10px] text-rose-500 mt-1">
                   Required
                 </p>
               )}
-
           </div>
 
         </div>
@@ -1009,11 +1648,8 @@ function ManageWhitelisted() {
               }
             `}
           >
-
             <RotateCcw size={13} />
-
             Reset
-
           </button>
 
           {/* SUBMIT */}
@@ -1043,44 +1679,438 @@ function ManageWhitelisted() {
             style={{
               background:
                 "rgba(112, 148, 255, 0.85)",
-
               backdropFilter:
                 "blur(16px)",
-
               WebkitBackdropFilter:
                 "blur(16px)",
-
               boxShadow:
                 "0 4px 20px rgba(112,148,255,0.35), inset 0 1px 0 rgba(255,255,255,0.18)",
             }}
           >
-
             {loading ? (
-
               <>
                 <RefreshCw
                   size={13}
                   className="animate-spin"
                 />
-
-                Submitting...
+                Loading...
               </>
-
             ) : (
-
               <>
                 <Plus size={13} />
-
                 Submit
               </>
-
             )}
-
           </button>
 
         </div>
-
       </div>
+
+      {/* ======================================================
+          WHITELISTED APPLICATION TABLE
+      ====================================================== */}
+
+      {submitted && (
+        <div
+          ref={tableRef}
+          className="w-full rounded-xl border border-[#27355f] bg-[#020617] p-6 mt-4 scroll-mt-6"
+        >
+
+          {/* ==================================================
+              TABLE HEADER
+          ================================================== */}
+
+          <div className="flex items-center justify-between mb-5">
+
+            <div>
+              <h3 className="text-[14px] font-semibold text-white">
+                Whitelisted Applications
+              </h3>
+
+              <p className="mt-1 text-[11px] text-slate-500">
+                Device:{" "}
+                {selectedDevices.length ===
+                1
+                  ? selectedDevices[0]
+                  : `${selectedDevices.length} Devices`}
+              </p>
+            </div>
+
+            {/* SEARCH */}
+
+            <div className="relative w-[250px]">
+
+              <Search
+                size={13}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+              />
+
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(
+                    e.target.value
+                  );
+                  setCurrentPage(1);
+                }}
+                placeholder="Search..."
+                className="w-full h-[34px] rounded-lg border border-[#334155] bg-[#111827] pl-9 pr-8 text-[11px] text-slate-300 placeholder:text-slate-600 outline-none focus:border-[#4f56f0] focus:ring-1 focus:ring-[#4f56f0]/30"
+              />
+
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setCurrentPage(1);
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                >
+                  <X size={13} />
+                </button>
+              )}
+
+            </div>
+          </div>
+
+          {/* ==================================================
+              TABLE
+          ================================================== */}
+
+          <div className="overflow-x-auto max-h-[430px] overflow-y-auto custom-scrollbar">
+
+            <table className="w-full text-left">
+
+              <thead className="sticky top-0 z-10 bg-[#020617]">
+
+                <tr className="border-b border-[#27355f]">
+
+                  {/* CHECKBOX */}
+
+                  <th className="w-[55px] px-2 py-3 text-center">
+
+                    <input
+                      type="checkbox"
+                      checked={
+                        allFilteredSelected
+                      }
+                      onChange={
+                        handleSelectAllTableRows
+                      }
+                      className="h-3 w-3 cursor-pointer accent-[#4f56f0]"
+                    />
+
+                  </th>
+
+                  {/* SR NO */}
+
+                  <th className="w-[55px] px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Sr
+                    <br />
+                    No
+                  </th>
+
+                  {/* APPLICATION HASH */}
+
+                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Application Hash
+                  </th>
+
+                  {/* APPLICATION NAME */}
+
+                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Application Name
+                  </th>
+
+                  {/* APPLICATION PATH */}
+
+                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Application Path
+                  </th>
+
+                  {/* BRANCH */}
+
+                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    Branch Name
+                  </th>
+
+                  {/* IP */}
+
+                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    IP Address
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                {paginatedApplications.length ===
+                0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-10 text-center text-[11px] text-slate-500"
+                    >
+                      No whitelisted applications found.
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedApplications.map(
+                    (item, index) => {
+                      const applicationKey =
+                        getApplicationKey(
+                          item
+                        );
+
+                      const isSelected =
+                        selectedTableRows.includes(
+                          applicationKey
+                        );
+
+                      return (
+                        <tr
+                          key={`${applicationKey}-${index}`}
+                          className="border-b border-[#27355f]/60 hover:bg-[#0f172a] transition-colors"
+                        >
+
+                          {/* CHECKBOX */}
+
+                          <td className="w-[55px] px-2 py-3 text-center">
+
+                            <input
+                              type="checkbox"
+                              checked={
+                                isSelected
+                              }
+                              onChange={() =>
+                                handleSelectTableRow(
+                                  item
+                                )
+                              }
+                              className="h-3 w-3 cursor-pointer accent-[#4f56f0]"
+                            />
+
+                          </td>
+
+                          {/* SR NO */}
+
+                          <td className="w-[55px] px-2 py-3 text-center text-[11px] text-slate-500">
+                            {startIndex +
+                              index +
+                              1}
+                          </td>
+
+                          {/* APPLICATION HASH */}
+
+                          <td className="px-4 py-3 text-[11px] text-slate-300 break-all max-w-[300px]">
+                            {item?.applicationHash ||
+                              "-"}
+                          </td>
+
+                          {/* APPLICATION NAME */}
+
+                          <td className="px-4 py-3 text-[11px] text-slate-300 break-all max-w-[350px]">
+                            {item?.applicationName ||
+                              "-"}
+                          </td>
+
+                          {/* APPLICATION PATH */}
+
+                          <td className="px-4 py-3 text-[11px] text-slate-300 break-all max-w-[400px]">
+                            {item?.applicationPath ||
+                              "-"}
+                          </td>
+
+                          {/* BRANCH */}
+
+                          <td className="px-4 py-3 text-[11px] text-slate-300 whitespace-nowrap">
+                            {item?.branchName ||
+                              "-"}
+                          </td>
+
+                          {/* IP */}
+
+                          <td className="px-4 py-3 text-[11px] text-slate-300 whitespace-nowrap">
+                            {item?.ipAddress ||
+                              "-"}
+                          </td>
+
+                        </tr>
+                      );
+                    }
+                  )
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+          {/* ==================================================
+              PAGINATION
+          ================================================== */}
+
+          <div className="flex items-center justify-between mt-5 pt-4">
+
+            <div className="text-[11px] text-slate-500">
+              Showing{" "}
+              {displayStart}{" "}
+              to{" "}
+              {displayEnd}{" "}
+              of{" "}
+              {filteredApplications.length}{" "}
+              entries
+            </div>
+
+            <div className="flex items-center gap-1">
+
+              {/* PREVIOUS */}
+
+              <button
+                type="button"
+                disabled={
+                  currentPage === 1
+                }
+                onClick={() =>
+                  setCurrentPage(
+                    (prev) =>
+                      Math.max(
+                        prev - 1,
+                        1
+                      )
+                  )
+                }
+                className={`
+                  h-[32px]
+                  px-3
+                  border
+                  text-[11px]
+                  flex
+                  items-center
+                  gap-1
+                  transition-colors
+                  ${
+                    currentPage === 1
+                      ? "border-[#27355f] text-slate-700 cursor-not-allowed"
+                      : "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
+                  }
+                `}
+              >
+                <ChevronLeft size={13} />
+                Previous
+              </button>
+
+              {/* PAGE NUMBERS */}
+
+              {Array.from(
+                {
+                  length: totalPages,
+                },
+                (_, index) =>
+                  index + 1
+              ).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage(page)
+                  }
+                  className={`
+                    h-[32px]
+                    min-w-[32px]
+                    px-2
+                    border
+                    text-[11px]
+                    transition-colors
+                    ${
+                      currentPage === page
+                        ? "border-[#4f56f0] bg-[#4f56f0] text-white"
+                        : "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
+                    }
+                  `}
+                >
+                  {page}
+                </button>
+              ))}
+
+              {/* NEXT */}
+
+              <button
+                type="button"
+                disabled={
+                  currentPage ===
+                  totalPages
+                }
+                onClick={() =>
+                  setCurrentPage(
+                    (prev) =>
+                      Math.min(
+                        prev + 1,
+                        totalPages
+                      )
+                  )
+                }
+                className={`
+                  h-[32px]
+                  px-3
+                  border
+                  text-[11px]
+                  flex
+                  items-center
+                  gap-1
+                  transition-colors
+                  ${
+                    currentPage ===
+                    totalPages
+                      ? "border-[#27355f] text-slate-700 cursor-not-allowed"
+                      : "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
+                  }
+                `}
+              >
+                Next
+                <ChevronRight size={13} />
+              </button>
+
+            </div>
+
+          </div>
+
+          {/* ==================================================
+              BOTTOM BUTTONS
+          ================================================== */}
+
+          <div className="flex justify-center items-center gap-1 mt-2 pt-1">
+
+            {/* ADD TO BLACKLISTED */}
+
+            <button
+              type="button"
+              onClick={
+                handleAddToBlacklisted
+              }
+              className="h-[36px] px-4 rounded-none bg-[#4f56f0] text-[11px] font-semibold text-white border border-[#4f56f0] hover:bg-[#5d64f5] transition-colors"
+            >
+              Add To Blacklisted
+            </button>
+
+            {/* RESET */}
+
+            <button
+              type="button"
+              onClick={handleReset}
+              className="h-[36px] px-4 rounded-none bg-[#4f56f0] text-[11px] font-semibold text-white border border-[#4f56f0] hover:bg-[#5d64f5] transition-colors"
+            >
+              Reset
+            </button>
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   );

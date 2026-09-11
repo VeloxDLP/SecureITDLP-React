@@ -418,8 +418,23 @@ getApplicationBlacklisted: async (requestData) => {
   return data;
 },
 
+getApplicationsByHost: async (devices) => {
+  const { data } = await axiosInstance.post(
+    API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BY_HOST,
+    {
+      device: devices,
+    }
+  );
 
+  return data;
+},
 
+getApplicationWhitelisted: async () => {
+  const { data } = await axiosInstance.get(
+    API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_WHITELISTED
+  );
+  return data;
+},
 };
 
 
