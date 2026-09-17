@@ -331,6 +331,13 @@ getDrivePolicies: async () => {
   );
   return data;
 },
+
+GetApplicationUser: async () => {
+  const { data } = await axiosInstance.get(
+    API_ENDPOINTS.AUTH.APPLICATIONUSERS
+  );
+  return data;
+},
     GetReports: async (UserData) => {
   const { data } = await axiosInstance.post(
     API_ENDPOINTS.REPORTS.GET_REPORTS,UserData);
@@ -429,12 +436,16 @@ getApplicationsByHost: async (devices) => {
   return data;
 },
 
+
+
 getApplicationWhitelisted: async () => {
   const { data } = await axiosInstance.get(
     API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_WHITELISTED
   );
   return data;
 },
+
+
 };
 
 

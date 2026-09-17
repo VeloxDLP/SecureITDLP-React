@@ -10,6 +10,8 @@ import {
   X,
   Search,
   Check,
+  Edit,
+  Trash2,
 } from "lucide-react";
 
 import { dashboardService } from "../../services/dashboardService";
@@ -308,27 +310,83 @@ function Setting() {
   });
 
   // ─────────────────────────────────────────────
-  // USER DATA
-  // Replace this with API data when available
+  // USERS STATE (DYNAMIC FROM API)
   // ─────────────────────────────────────────────
-  const usersData = [
-    {
-      id: 1,
-      username: "pratham",
-      firstName: "Pratham",
-      lastName: "User",
-      account_status: "ACTIVE",
-      role: "ADMIN",
-    },
-    {
-      id: 2,
-      username: "prathamesh",
-      firstName: "Prathamesh",
-      lastName: "User",
-      account_status: "ACTIVE",
-      role: "SUPERADMIN",
-    },
-  ];
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // ─────────────────────────────────────────────
+  // FETCH USERS FROM API
+  // ─────────────────────────────────────────────
+  useEffect(() => {
+    if (view !== "list") return;
+
+    let isCancelled = false;
+
+    const fetchUsers = async () => {
+      setLoadingUsers(true);
+
+      try {
+        const res = await dashboardService.GetApplicationUser();
+
+        console.log("=== GetApplicationUser RAW ===");
+        console.log(res);
+
+        let data = [];
+
+        if (Array.isArray(res)) {
+          data = res;
+        } else if (Array.isArray(res?.data)) {
+          data = res.data;
+        } else if (Array.isArray(res?.data?.data)) {
+          data = res.data.data;
+        } else if (Array.isArray(res?.data?.users)) {
+          data = res.data.users;
+        } else if (Array.isArray(res?.data?.result)) {
+          data = res.data.result;
+        } else if (Array.isArray(res?.users)) {
+          data = res.users;
+        } else if (Array.isArray(res?.result)) {
+          data = res.result;
+        }
+
+        console.log("=== PARSED USERS ===", data);
+
+        if (!isCancelled) {
+          setUsers(data);
+        }
+      } catch (err) {
+        console.log("=== FETCH USERS ERROR ===", err);
+        console.log("URL attempted:", err?.config?.url);
+        console.log("Full URL:", err?.config?.baseURL, err?.config?.url);
+        console.log("Status:", err?.response?.status);
+        console.log("Response body:", err?.response?.data);
+
+        if (!isCancelled) {
+          showAlert({
+            icon: "error",
+            title: "Failed to load users",
+            text:
+              err.response?.data?.message ||
+              err.message ||
+              "Something went wrong",
+            confirmButtonText: "OK",
+          });
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoadingUsers(false);
+        }
+      }
+    };
+
+    fetchUsers();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [view]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -343,11 +401,7 @@ function Setting() {
   // CREATE USER
   // ─────────────────────────────────────────────
   const handleCreateUser = async () => {
-    const {
-      userName,
-      password,
-      confirmPassword,
-    } = formData;
+    const { userName, password, confirmPassword } = formData;
 
     if (!userName || !password || !confirmPassword) {
       showAlert({
@@ -443,6 +497,54 @@ function Setting() {
           err.message ||
           "User already exists",
         confirmButtonText: "Cancel",
+      });
+    }
+  };
+
+  // ─────────────────────────────────────────────
+  // EDIT USER
+  // ─────────────────────────────────────────────
+  const handleEditUser = (user) => {
+    console.log("EDIT USER:", user);
+    showAlert({
+      icon: "info",
+      title: "Edit User",
+      text: `Editing: ${user.username || user.name || "user"}`,
+      confirmButtonText: "Close",
+    });
+  };
+
+  // ─────────────────────────────────────────────
+  // DELETE USER
+  // ─────────────────────────────────────────────
+  const handleDeleteUser = async (user) => {
+    const confirmed = window.confirm(
+      `Delete user "${user.username || user.name || ""}"?`
+    );
+    if (!confirmed) return;
+
+    try {
+      // Uncomment when backend endpoint is ready:
+      // await dashboardService.DeleteApplicationUser(user.id);
+
+      setUsers((prev) =>
+        prev.filter((u) => (u.id ?? u._id) !== (user.id ?? user._id))
+      );
+
+      await showAlert({
+        icon: "success",
+        title: "User Deleted",
+        text: "User removed successfully",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+    } catch (err) {
+      console.log("DELETE ERROR:", err);
+      showAlert({
+        icon: "error",
+        title: "Delete Failed",
+        text: err.message || "Could not delete user",
+        confirmButtonText: "OK",
       });
     }
   };
@@ -668,6 +770,28 @@ function Setting() {
   const passwordStrength = getPasswordStrength(
     formData.password
   );
+
+  // ─────────────────────────────────────────────
+  // FILTERED USERS (SEARCH)
+  // ─────────────────────────────────────────────
+  const filteredUsers = users.filter((u) => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return true;
+
+    return (
+      String(u.username || "").toLowerCase().includes(q) ||
+      String(u.firstName || u.first_name || u.name || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(u.lastName || u.last_name || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(u.role || "").toLowerCase().includes(q) ||
+      String(u.account_status || u.status || "")
+        .toLowerCase()
+        .includes(q)
+    );
+  });
 
   // ─────────────────────────────────────────────
   // TABS
@@ -1107,8 +1231,6 @@ function Setting() {
               >
                 Application Users
               </h2>
-
- 
             </div>
 
             <div className="flex items-center gap-4">
@@ -1132,87 +1254,182 @@ function Setting() {
                 <input
                   type="text"
                   placeholder="Search user..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className={inputWithIconClass}
                 />
               </div>
 
-              <span
-                className={`
-                  text-sm font-medium
-                  ${
-                    isDark
-                      ? "text-white"
-                      : "text-gray-700"
-                  }
-                `}
-              >
-                {usersData.length} Users
-              </span>
+            
             </div>
           </div>
 
           {/* ───────────────── TABLE ───────────────── */}
-          <div className="mt-6 overflow-x-auto">
+          <div
+            className="mt-6 overflow-hidden "
+            style={{
+              borderColor: isDark
+                ? "rgba(255,255,255,0.06)"
+                : "#e2e8f0",
+            }}
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr
+                    className={
+                      isDark
+                        ? "border-b border-white/[0.06]"
+                        : "border-b border-slate-100"
+                    }
+                  >
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                      SR NO
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                      ACCOUNT STATUS
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                      USERNAME
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                      FIRST NAME
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                      LAST NAME
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                      ROLE
+                    </th>
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                      ACTIONS
+                    </th>
+                  </tr>
+                </thead>
 
-         <table className="w-full border-collapse">
-  <thead>
-    <tr className="border-b border-white/10">
-      <th className="px-8 py-3 text-left whitespace-nowrap">
-        SR NO
-      </th>
-      <th className="px-8 py-3 text-left whitespace-nowrap">
-        ACCOUNT_STATUS
-      </th>
-      <th className="px-8 py-3 text-left whitespace-nowrap">
-        USERNAME
-      </th>
-      <th className="px-8 py-3 text-left whitespace-nowrap">
-        FIRST NAME
-      </th>
-      <th className="px-8 py-3 text-left whitespace-nowrap">
-        LAST NAME
-      </th>
-      <th className="px-8 py-3 text-left whitespace-nowrap">
-        ROLE
-      </th>
-    </tr>
-  </thead>
+                <tbody>
+                  {loadingUsers ? (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className={`px-4 py-6 text-center text-[13px] ${
+                          isDark ? "text-slate-400" : "text-slate-500"
+                        }`}
+                      >
+                        Loading users…
+                      </td>
+                    </tr>
+                  ) : filteredUsers.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className={`px-4 py-6 text-center text-[13px] ${
+                          isDark ? "text-slate-400" : "text-slate-500"
+                        }`}
+                      >
+                        No users found
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((user, index) => (
+                      <tr
+                        key={user.id ?? user._id ?? index}
+                        className={`border-b last:border-b-0 transition-colors duration-150 ${
+                          isDark
+                            ? "border-white/[0.04] hover:bg-[#2e2e2e]"
+                            : "border-slate-50 hover:bg-slate-50/60"
+                        }`}
+                      >
+                        <td
+                          className={`px-4 py-3 text-[11px] whitespace-nowrap ${
+                            isDark ? "text-slate-600" : "text-slate-400"
+                          }`}
+                        >
+                          {index + 1}
+                        </td>
 
-  <tbody>
-    {usersData.map((user, index) => (
-      <tr
-        key={user.id}
-        className="border-b border-white/5 hover:bg-white/[0.02]"
-      >
-        <td className="px-8 py-4 whitespace-nowrap">
-          {index + 1}
-        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                              String(
+                                user.account_status || user.status || ""
+                              ).toUpperCase() === "ACTIVE"
+                                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                : "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                            }`}
+                          >
+                            {user.account_status || user.status}
+                          </span>
+                        </td>
 
-        <td className="px-8 py-4 whitespace-nowrap">
-          <span className="px-3 py-1 rounded-md bg-green-500/10 text-green-400">
-            {user.account_status}
-          </span>
-        </td>
+                        <td
+                          className={`px-4 py-3 text-[11px] font-mono whitespace-nowrap ${
+                            isDark ? "text-slate-400" : "text-slate-500"
+                          }`}
+                        >
+                          {user.username}
+                        </td>
 
-        <td className="px-8 py-4 whitespace-nowrap">
-          {user.username}
-        </td>
+                        <td
+                          className={`px-4 py-3 text-[12px] whitespace-nowrap ${
+                            isDark ? "text-slate-300" : "text-slate-700"
+                          }`}
+                        >
+                          {user.firstName ||
+                            user.first_name ||
+                            user.name}
+                        </td>
 
-        <td className="px-8 py-4 whitespace-nowrap">
-          {user.firstName}
-        </td>
+                        <td
+                          className={`px-4 py-3 text-[12px] whitespace-nowrap ${
+                            isDark ? "text-slate-300" : "text-slate-700"
+                          }`}
+                        >
+                          {user.lastName || user.last_name}
+                        </td>
 
-        <td className="px-8 py-4 whitespace-nowrap">
-          {user.lastName}
-        </td>
+                        <td
+                          className={`px-4 py-3 text-[12px] whitespace-nowrap ${
+                            isDark ? "text-slate-300" : "text-slate-700"
+                          }`}
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            <UserRound size={12} className="text-[#7094ff]" />
+                            {user.role}
+                          </span>
+                        </td>
 
-        <td className="px-8 py-4 whitespace-nowrap">
-          {user.role}
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
+                        <td className="px-4 py-3 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleEditUser(user)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center
+                                         text-slate-400 hover:text-[#7094ff] hover:bg-[#7094ff]/10
+                                         transition-all duration-150"
+                              title="Edit"
+                            >
+                              <Edit size={13} />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUser(user)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center
+                                         text-slate-400 hover:text-rose-500 hover:bg-rose-500/10
+                                         transition-all duration-150"
+                              title="Delete"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* ───────────────── PAGINATION ───────────────── */}
@@ -1220,7 +1437,7 @@ function Setting() {
             className={`
               mt-6 flex flex-wrap
               items-center justify-between
-              gap-4 border-t pt-4 text-sm
+              gap-4 
               ${
                 isDark
                   ? "border-slate-700 text-slate-400"
@@ -1228,97 +1445,7 @@ function Setting() {
               }
             `}
           >
-
-            {/* ROWS PER PAGE */}
             <div className="flex items-center gap-2">
-
-              <span>
-                Rows per page
-              </span>
-
-              <select
-                className={`
-                  rounded-lg border
-                  px-2 py-1
-                  focus:outline-none
-                  focus:ring-2
-                  focus:ring-[#7094ff]/20
-                  ${
-                    isDark
-                      ? "border-slate-700 bg-[#111827] text-white focus:border-[#7094ff]/60"
-                      : "border-slate-300 bg-white text-slate-800 focus:border-[#7094ff]/60"
-                  }
-                `}
-              >
-                <option value="10">
-                  10
-                </option>
-
-                <option value="25">
-                  25
-                </option>
-
-                <option value="50">
-                  50
-                </option>
-              </select>
-            </div>
-
-            {/* SHOWING */}
-            <div>
-              Showing 1 to {usersData.length} of{" "}
-              {usersData.length}
-            </div>
-
-            {/* PAGINATION BUTTONS */}
-            <div className="flex items-center gap-2">
-
-              <button
-                type="button"
-                disabled
-                className={`
-                  rounded-lg border
-                  px-3 py-1 transition
-                  disabled:opacity-50
-                  ${
-                    isDark
-                      ? "border-slate-700 text-white hover:bg-slate-700"
-                      : "border-slate-300 text-slate-700 hover:bg-slate-100"
-                  }
-                `}
-              >
-                Prev
-              </button>
-
-              <span
-                className={`
-                  px-2 py-1
-                  ${
-                    isDark
-                      ? "text-white"
-                      : "text-slate-800"
-                  }
-                `}
-              >
-                1/1
-              </span>
-
-              <button
-                type="button"
-                disabled
-                className={`
-                  rounded-lg border
-                  px-3 py-1 transition
-                  disabled:opacity-50
-                  ${
-                    isDark
-                      ? "border-slate-700 text-white hover:bg-slate-700"
-                      : "border-slate-300 text-slate-700 hover:bg-slate-100"
-                  }
-                `}
-              >
-                Next
-              </button>
 
             </div>
           </div>
