@@ -96,9 +96,9 @@ function Dropdown({
   }
 
   // Shared glass surface styles
-  const glassSurface = isDark
-    ? { background: '#2a2a2a', backdropFilter: 'none', WebkitBackdropFilter: 'none' }
-    : { background: 'rgba(255, 255, 255, 0.80)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }
+const glassSurface = isDark
+  ? { background: '#111827', backdropFilter: 'none', WebkitBackdropFilter: 'none' }
+  : { background: 'rgba(255, 255, 255, 0.80)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }
 
   const triggerBorder = error
     ? 'border-rose-500/60'
@@ -148,8 +148,8 @@ function Dropdown({
           `}
           style={{
             background: isDark
-              ? '#2a2a2a'
-              : 'rgba(255, 255, 255, 0.98)',
+    ? '#111827'
+    : 'rgba(255, 255, 255, 0.98)',
             backdropFilter: 'blur(32px) saturate(180%)',
             WebkitBackdropFilter: 'blur(32px) saturate(180%)',
           }}
@@ -166,11 +166,11 @@ function Dropdown({
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Search…"
-                  className={`w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none
-                              border transition-all duration-150
-                              ${isDark
-                                ? 'bg-[#2a2a2a] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
-                                : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`}
+          className={`w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none
+            border transition-all duration-150
+            ${isDark
+              ? 'bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
+              : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`}
                 />
                 {query && (
                   <button onClick={() => setQuery('')}
@@ -350,13 +350,13 @@ function MultiSelectDropdown({
           ${
             isDark
               ? `
-                bg-[#2a2a2a]
-                text-[#d0d0d0]
+               bg-[#111827]
+    text-[#d0d0d0]
               `
               : `
-                bg-white/80
-                text-slate-700
-                backdrop-blur-xl
+                  bg-white/80
+    text-slate-700
+    backdrop-blur-xl
               `
           }
         `}
@@ -454,18 +454,16 @@ function MultiSelectDropdown({
 
             shadow-[0_16px_48px_rgba(0,0,0,0.35)]
 
-            ${
-              isDark
-                ? `
-                  bg-[#2a2a2a]
-                  border-white/[0.08]
-                `
-                : `
-                  bg-white/95
-                  border-slate-200
-                  backdrop-blur-2xl
-                `
-            }
+        ${isDark
+  ? `
+    bg-[#111827]
+    border-white/[0.08]
+  `
+  : `
+    bg-white/95
+    border-slate-200
+    backdrop-blur-2xl
+  `}
           `}
         >
 
@@ -513,21 +511,19 @@ function MultiSelectDropdown({
                     rounded-lg outline-none
                     text-[12px] border
 
-                    ${
-                      isDark
-                        ? `
-                          bg-[#242424]
-                          border-white/[0.07]
-                          text-[#d0d0d0]
-                          placeholder-[#555]
-                        `
-                        : `
-                          bg-slate-50
-                          border-slate-200
-                          text-slate-700
-                          placeholder-slate-400
-                        `
-                    }
+                 ${isDark
+  ? `
+    bg-[#111827]
+    border-white/[0.07]
+    text-[#d0d0d0]
+    placeholder-[#555]
+  `
+  : `
+    bg-slate-50
+    border-slate-200
+    text-slate-700
+    placeholder-slate-400
+  `}
                   `}
                 />
               </div>
@@ -742,7 +738,7 @@ function GlassCard({ children, className = '' }) {
     <div
       className={`rounded-2xl border ${className}`}
       style={{
-        background: isDark ? '#242424' : 'rgba(255,255,255,0.95)',
+         background: isDark ? '#020617' : 'rgba(255,255,255,0.95)',
         backdropFilter: isDark ? 'none' : 'blur(24px)',
         WebkitBackdropFilter: isDark ? 'none' : 'blur(24px)',
         borderColor: isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0',
@@ -1059,7 +1055,7 @@ function TabBar({ active, onChange }) {
     <div
       className={`inline-flex items-center gap-1.5 rounded-2xl p-1.5 mb-6 border`}
       style={{
-        background: isDark ? '#1f1f1f' : 'rgba(255,255,255,0.60)',
+    background: isDark ? '#020617' : 'rgba(255,255,255,0.95)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(203,213,225,0.70)',

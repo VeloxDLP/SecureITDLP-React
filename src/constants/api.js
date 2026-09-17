@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
     SIGNUP: "/auth/SignUp", // update if your backend has a logout route
     REFRESH: "/user/refresh", // update if your backend has a refresh route
     ME: "/user/me", // update if your backend has a /me route
+  APPLICATIONUSERS: "/auth/GetApplicationUser",
   },
 
   DASHBOARD: {
