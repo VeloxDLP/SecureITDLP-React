@@ -4,10 +4,9 @@ import { useAuth } from "../context/AuthContext";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import secure from "../assets/DLP-Logo.png";
 // import hub from "../assets/security_hub_superfast.html";
-import LoginBackground from "../assets/DashboardBackground.png";
+import DashboardBackground from "../assets/DashboardBackground.png";
 import feature from "../assets/Network-Protection.gif";
 import Footer from "../assets/Footer.png";
-import DashboardBackground from "../assets/DashboardBackground.png";
 import SecurityAnimation from "./SecurityAnimation";
 // import { loginApi } from "../api/authApi";
 
@@ -20,7 +19,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAuth();  // Get login directly
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -34,14 +33,12 @@ const Login = () => {
       const result = await login(username, password);
       console.log(" Login result:", result);
 
-      // Check if login was successful
       if (result.success) {
         console.log(" Login successful, navigating to dashboard");
         navigate("/dashboard/mainDashboard", { replace: true });
       } else {
         console.log(" Login failed:", result.message);
         setError(result.message || "Invalid username or password");
-        // Only clear on error
         setUsername("");
         setPassword("");
       }
@@ -66,6 +63,57 @@ const Login = () => {
           to { transform: rotate(360deg); }
         }
 
+        /* ─── Continuous border flow (inputs) ─── */
+        @keyframes borderFlow {
+          0% {
+            background-position: 0% 50%;
+          }
+          100% {
+            background-position: 200% 50%;
+          }
+        }
+
+        /* ─── Thin pulsing glow (outer login box) ─── */
+        @keyframes boxPulse {
+          0% {
+            border-color: rgba(41, 121, 255, 0.30);
+            box-shadow:
+              0 0 0 1px rgba(41, 121, 255, 0.15),
+              0 0 14px rgba(41, 121, 255, 0.18),
+              0 0 28px rgba(41, 121, 255, 0.10),
+              0 20px 60px rgba(0, 0, 0, 0.9);
+          }
+          50% {
+            border-color: rgba(41, 121, 255, 0.85);
+            box-shadow:
+              0 0 0 1px rgba(41, 121, 255, 0.40),
+              0 0 22px rgba(41, 121, 255, 0.40),
+              0 0 44px rgba(41, 121, 255, 0.20),
+              0 20px 60px rgba(0, 0, 0, 0.9);
+          }
+          100% {
+            border-color: rgba(41, 121, 255, 0.30);
+            box-shadow:
+              0 0 0 1px rgba(41, 121, 255, 0.15),
+              0 0 14px rgba(41, 121, 255, 0.18),
+              0 0 28px rgba(41, 121, 255, 0.10),
+              0 20px 60px rgba(0, 0, 0, 0.9);
+          }
+        }
+
+        /* ─── Hide native browser password reveal ─── */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+          display: none;
+        }
+        input[type="password"]::-webkit-credentials-auto-fill-button,
+        input[type="password"]::-webkit-textfield-decoration-container,
+        input[type="password"]::-webkit-caps-lock-indicator {
+          display: none !important;
+          visibility: hidden;
+          pointer-events: none;
+        }
+
        
 .login-wrapper {
   height: 100vh;
@@ -76,7 +124,7 @@ const Login = () => {
       rgba(2, 14, 36, 0.85),
       rgba(2, 14, 36, 0.85)
     ),
-    url(${LoginBackground}) center center / cover no-repeat;
+    url(${DashboardBackground}) center center / cover no-repeat;
 
   display: flex;
   flex-direction: column;
@@ -88,18 +136,18 @@ const Login = () => {
   overflow: hidden;
 }
 
+        /* ─── Login box — thin pulsing highlighter border ─── */
         .login-container {
           display: flex;
           flex-direction: column;
           width: 100%;
           max-width: 900px;
           height: auto;
-          // background-color: #041432;
           background-color: #08132e;
-          border: 1px solid rgba(74, 144, 217, 0.1);
+          border: 1px solid rgba(41, 121, 255, 0.30);
           border-radius: 14px;
           overflow: hidden;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+          animation: boxPulse 3s ease-in-out infinite;
         }
 
         .login-card {
@@ -115,7 +163,6 @@ const Login = () => {
           display: flex;
           flex-direction: column;
           justify-content: center;
-          // border-right: 1px solid rgba(74, 144, 217, 0.08);
           overflow: hidden;
         }
 
@@ -154,21 +201,54 @@ const Login = () => {
           letter-spacing: 0.3px;
         }
 
+        /* ─── Input wrapper with thin animated border (UNCHANGED) ─── */
+        .input-highlight {
+          position: relative;
+          width: 100%;
+          border-radius: 6px;
+          padding: 1px;
+          background: linear-gradient(
+            90deg,
+            #2878c7,
+            #3d91d8,
+            #5ba3f0,
+            #7dc0ff,
+            #5ba3f0,
+            #3d91d8,
+            #2878c7
+          );
+          background-size: 300% 100%;
+          animation: borderFlow 3s linear infinite;
+          transition: box-shadow 0.3s ease;
+        }
+
+        .input-highlight:hover {
+          box-shadow:
+            0 0 0 1px rgba(61, 123, 196, 0.18),
+            0 0 8px rgba(61, 123, 196, 0.28);
+        }
+
+        .input-highlight:focus-within {
+          animation-duration: 1.6s;
+          box-shadow:
+            0 0 0 2px rgba(61, 123, 196, 0.25),
+            0 0 16px rgba(61, 123, 196, 0.55);
+        }
+
         .login-input {
           width: 100%;
           padding: 9px 13px;
           background-color: #051320;
-          border: 1px solid #1a3f5f;
-          border-radius: 6px;
+          border: none;
+          border-radius: 5px;
           color: #e0ecff;
           font-size: 12px;
           outline: none;
-          transition: border-color 0.2s, box-shadow 0.2s;
+          transition: background-color 0.2s;
         }
 
-        .login-input:focus {
-          border-color: #3d7bc4;
-          box-shadow: 0 0 0 2px rgba(61, 123, 196, 0.15);
+        .input-highlight:focus-within .login-input {
+          background-color: #061a2c;
         }
 
         .login-input::placeholder {
@@ -191,6 +271,7 @@ const Login = () => {
           padding: 0;
           display: flex;
           align-items: center;
+          z-index: 2;
         }
 
         .forgot-link {
@@ -238,8 +319,6 @@ const Login = () => {
           opacity: 0.65;
           cursor: not-allowed;
         }
-
-        
 
         @media (max-width: 768px) {
           .login-wrapper {
@@ -299,7 +378,6 @@ const Login = () => {
               box-shadow 0.2s ease;
 }
 
-/* Continuous moving shine */
 .sign-btn::before {
   content: "";
   position: absolute;
@@ -325,7 +403,6 @@ const Login = () => {
   pointer-events: none;
 }
 
-/* Continuous animation */
 @keyframes signInShine {
   0% {
     left: -100%;
@@ -336,25 +413,23 @@ const Login = () => {
   }
 }
 
-/* Subtle hover */
 .sign-btn:hover {
   transform: translateY(-1px);
   box-shadow:
     0 8px 24px rgba(40, 120, 199, 0.42);
 }
 
-/* Click */
 .sign-btn:active {
   transform: scale(0.98);
 }
 
 .login-right-panel {
-  flex: 1.4;          /* makes right side bigger */
+  flex: 1.4;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  background: transparent; /* removes square background */
+  background: transparent;
 }
 
 .login-right-image {
@@ -398,8 +473,6 @@ const Login = () => {
           .login-right-panel {
             display: none;
           }
-       
-          
         }
         .login-footer {
   background-color: #191818;
@@ -434,53 +507,55 @@ const Login = () => {
               <form onSubmit={handleSubmit} className="login-form">
                 <div className="form-group">
                   <label className="form-label">User</label>
-                  <input
-                    className="login-input"
-                    type="text"
-                    placeholder="username@gmail.com"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
+                  <div className="input-highlight">
+                    <input
+                      className="login-input"
+                      type="text"
+                      placeholder="username@gmail.com"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div className="form-group">
                   <label className="form-label">Password</label>
-                  <div className="password-wrapper">
-                    <input
-                      className="login-input"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      style={{ paddingRight: "42px" }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="password-toggle-btn"
-                    >
-                      {showPassword
-                        ? <Eye size={15} color="#5a80a8" />
-                        : <EyeOff size={15} color="#5a80a8" />}
-                    </button>
-
-                   
+                  <div className="input-highlight">
+                    <div className="password-wrapper">
+                      <input
+                        className="login-input"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        style={{ paddingRight: "42px" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="password-toggle-btn"
+                      >
+                        {showPassword
+                          ? <Eye size={15} color="#5a80a8" />
+                          : <EyeOff size={15} color="#5a80a8" />}
+                      </button>
+                    </div>
                   </div>
                         
-                        <a href="#" className="forgot-link">Forgot Password?</a>
-                        <br></br>
-                        <br></br>
+                  <a href="#" className="forgot-link">Forgot Password?</a>
+                  <br></br>
+                  <br></br>
 
-                {error && (
-                  <p className="error-message">{error}</p>
-                )}
+                  {error && (
+                    <p className="error-message">{error}</p>
+                  )}
 
-                <button type="submit" disabled={isLoading} className="sign-btn">
-                  {isLoading && <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} />}
-                  {isLoading ? "Signing in..." : "Sign in"}
-                </button>
+                  <button type="submit" disabled={isLoading} className="sign-btn">
+                    {isLoading && <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} />}
+                    {isLoading ? "Signing in..." : "Sign in"}
+                  </button>
 
                 </div>
 

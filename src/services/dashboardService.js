@@ -445,6 +445,23 @@ getApplicationWhitelisted: async () => {
   return data;
 },
 
+getAllNetworkPolicy: async () => {
+  const { data } = await axiosInstance.get(
+    API_ENDPOINTS.NETWORK_POLICY.GETNETWORKPOLICY
+  );
+  return data;
+},
+
+getPolicyByName: async (policyName) => {
+  const { data } = await axiosInstance.get(
+    `/NetworkDLP/GetPolicy/${encodeURIComponent(policyName)}`
+  );
+  return data;
+},
+
+
+
+
 
 };
 

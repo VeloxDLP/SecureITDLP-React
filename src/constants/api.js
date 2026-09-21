@@ -76,6 +76,12 @@ Drive_Control: {
 
 
 
+NETWORK_POLICY: {
+  GETNETWORKPOLICY: "/NetworkDLP/GetDistinctPolicy",
+  GETPOLICYBYNAME: "/NetworkDLP/GetPolicy", // then use `${...}/${name}`
+},
+
+
 REPORTS:{
   GET_REPORTS:"/reports/getReports",
 },
