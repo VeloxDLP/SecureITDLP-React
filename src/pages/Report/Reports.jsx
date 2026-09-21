@@ -144,11 +144,11 @@ export default function ReportCenter() {
       fromDate:fromDate,
       toDate:toDate
     };
-    // alert(JSON.stringify(requestData));
+    alert(JSON.stringify(requestData));
     // alert("User section is :"+branch+" "+ device+" "+selectedModule+" "+selectedReport+" "+dateRange);
       const ReportFetchedData = await dashboardService.GetReports(requestData);
       console.log("ReportData : ",ReportFetchedData.data);
-      // alert(JSON.stringify(ReportFetchedData));
+      alert(JSON.stringify(ReportFetchedData));
     setCurrentPage(1); 
     setShowReport(true);
     setTimeout(() => {
