@@ -21,7 +21,7 @@ export const API_ENDPOINTS = {
     CLIPBOARD_INCIDENT: "/ClipboardControl/7DaysClipboardIncident",
     MAIL_INCIDENT: "/Dashboard/mailIncident",
     PRINTER_INCIDENT: "/PrinterDLP/printerIncidentcount",
-PREVENTED_APPLICATIONDATA: "/DashboardModal/PreventedApplication",
+    PREVENTED_APPLICATIONDATA: "/DashboardModal/PreventedApplication",
     ENDPOINT_TABLE: "/Dashboard/endpointTable",
     FILE_UPLOAD:"/NetworkDLP/getTodaysUploadCount",
     INCIDENT_BY_CHANNEL:"/incidents/by-channel",
@@ -68,6 +68,7 @@ APPLICATION_CONTROL:{
 
 USB_Policy: {
   USB_Policy: "/UsbProtection/getUsbPolicies",
+  ADD_USB_POLICY:"/UsbProtection/addUsbPolicy",
 },
 
 Drive_Control: {

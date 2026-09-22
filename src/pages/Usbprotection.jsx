@@ -596,11 +596,8 @@ function AddForm({
         device: form.device,
         mode: form.mode,
       };
-
-      const response =
-        await dashboardService.addPrinterPolicy(
-          requestData
-        );
+      // alert("USB request : "+form.branch+" "+form.device+" "+form.device+" "+form.mode)
+      const response = await dashboardService.addUSBPolicy(requestData);
 
       if (response.data === "SUCCESS") {
         setSuccess(true);
@@ -608,7 +605,7 @@ function AddForm({
         await showAlert({
           icon: "success",
           title: "Policy Saved",
-          text: "Printer policy successful",
+          text: "USB policy successful",
           timer: 2500,
           timerProgressBar: true,
           showConfirmButton: true,

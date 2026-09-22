@@ -319,6 +319,10 @@ getDrivePolicies: async () => {
     return data;
   },
 
+    addUSBPolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(API_ENDPOINTS.USB_Policy.ADD_USB_POLICY,requestData);
+    return data;
+  },
   
   
 
