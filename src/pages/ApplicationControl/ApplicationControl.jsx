@@ -49,7 +49,7 @@ function StatusPill({ status }) {
   );
 }
 
-// ─── Dropdown ──────────────────────────────────────────────────
+// ─── Dropdown (single-select) ──────────────────────────────────
 function Dropdown({ value, onChange, options, placeholder = 'Select…', disabled = false, searchable = false, error = false }) {
   const { isDark } = useTheme();
   const [open, setOpen] = useState(false);
@@ -190,6 +190,205 @@ function Dropdown({ value, onChange, options, placeholder = 'Select…', disable
   );
 }
 
+// ─── MultiSelect Dropdown ──────────────────────────────────────
+function MultiSelectDropdown({
+  values = [],
+  onChange,
+  options = [],
+  placeholder = 'Select…',
+  disabled = false,
+  error = false,
+}) {
+  const { isDark } = useTheme();
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  const normalised = options.map(o =>
+    typeof o === 'string'
+      ? { value: o, label: o, status: null }
+      : { status: null, ...o }
+  );
+
+  const allSelected =
+    normalised.length > 0 &&
+    normalised.every(o => values.includes(o.value));
+
+  const toggleOne = val => {
+    if (values.includes(val)) {
+      onChange(values.filter(v => v !== val));
+    } else {
+      onChange([...values, val]);
+    }
+  };
+
+  const toggleAll = () => {
+    if (allSelected) {
+      onChange([]);
+    } else {
+      onChange(normalised.map(o => o.value));
+    }
+  };
+
+  const upCount = normalised.filter(
+    o => String(o.status).toLowerCase() === 'up'
+  ).length;
+  const downCount = normalised.filter(
+    o => String(o.status).toLowerCase() === 'down'
+  ).length;
+
+  useEffect(() => {
+    const handler = e => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const glassSurface = isDark
+    ? { background: '#111827', backdropFilter: 'none', WebkitBackdropFilter: 'none' }
+    : { background: 'rgba(255,255,255,0.80)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' };
+
+  const triggerBorder = error
+    ? 'border-rose-500/60'
+    : open
+      ? 'border-[#7094ff]/60'
+      : isDark ? 'border-white/[0.10]' : 'border-slate-300/70';
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(!open)}
+        className={`
+          w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-[13px] text-left
+          border transition-all duration-200 outline-none disabled:opacity-40 disabled:cursor-not-allowed
+          ${triggerBorder} ${open ? 'ring-2 ring-[#7094ff]/20' : ''}
+          ${isDark ? 'text-slate-200' : 'text-slate-800'}
+        `}
+        style={glassSurface}
+      >
+        <span
+          className={`truncate flex-1 ${
+            values.length > 0
+              ? ''
+              : isDark
+              ? 'text-slate-500'
+              : 'text-slate-400'
+          }`}
+        >
+          {values.length > 0
+            ? `${values.length} device${values.length !== 1 ? 's' : ''} selected`
+            : placeholder}
+        </span>
+
+        <ChevronDown
+          size={14}
+          className={`flex-shrink-0 transition-transform duration-200 ${
+            open ? 'rotate-180' : ''
+          } ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+        />
+      </button>
+
+      {open && (
+        <div
+          className={`absolute top-full left-0 right-0 mt-1.5 z-[200] rounded-xl border overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.35)] animate-slide-up ${isDark ? 'border-white/[0.10]' : 'border-slate-200/80'}`}
+          style={{
+            background: isDark ? '#111827' : 'rgba(255,255,255,0.98)',
+            backdropFilter: 'blur(32px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+          }}
+        >
+          {/* SELECT ALL */}
+          <div className={`px-3 py-2 border-b ${isDark ? 'border-white/[0.07]' : 'border-slate-100'}`}>
+            <button
+              type="button"
+              onClick={toggleAll}
+              className={`w-full flex items-center justify-between gap-2 text-left text-[12px] ${
+                isDark
+                  ? 'text-gray-300 hover:text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span
+                  className={`h-4 w-4 rounded border flex items-center justify-center ${
+                    allSelected
+                      ? 'bg-[#7094ff] border-[#7094ff]'
+                      : isDark
+                      ? 'border-slate-500'
+                      : 'border-slate-300'
+                  }`}
+                >
+                  {allSelected && <Check size={11} className="text-white" />}
+                </span>
+                {allSelected ? 'Deselect all' : 'Select all'}
+              </span>
+
+              <span
+                className={`text-[10px] ${
+                  isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
+                {upCount} Up / {downCount} Down
+              </span>
+            </button>
+          </div>
+
+          {/* DEVICE LIST */}
+          <div className="max-h-52 overflow-y-auto py-1">
+            {normalised.length === 0 ? (
+              <p className={`px-4 py-3 text-[12px] text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                No devices available
+              </p>
+            ) : (
+              normalised.map((o, index) => {
+                const isSelected = values.includes(o.value);
+
+                return (
+                  <button
+                    key={`${o.value}-${index}`}
+                    type="button"
+                    onClick={() => toggleOne(o.value)}
+                    className={`w-full text-left px-4 py-2.5 text-[13px] flex items-center justify-between gap-2 transition-colors duration-100 ${
+                      isSelected
+                        ? 'text-[#7094ff] bg-[#7094ff]/10'
+                        : isDark
+                        ? 'text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]'
+                        : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2 min-w-0 flex-1">
+                      <span
+                        className={`shrink-0 h-4 w-4 rounded border flex items-center justify-center ${
+                          isSelected
+                            ? 'bg-[#7094ff] border-[#7094ff]'
+                            : isDark
+                            ? 'border-slate-500'
+                            : 'border-slate-300'
+                        }`}
+                      >
+                        {isSelected && <Check size={10} className="text-white" />}
+                      </span>
+                      <span className="truncate">{o.label}</span>
+                    </span>
+
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      {o.status && <StatusPill status={o.status} />}
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── GlassButton ──────────────────────────────────────────────
 function GlassButton({ children, onClick, variant = 'default', className = '', disabled = false, type = 'button' }) {
   const { isDark } = useTheme();
@@ -304,7 +503,7 @@ function GlassCard({ children, className = '' }) {
 // ─── Add Form ──────────────────────────────────────────────────
 function AddForm({ branches, onAdd }) {
   const { isDark } = useTheme();
-  const [form, setForm] = useState({ branch: '', device: '', mode: '' });
+  const [form, setForm] = useState({ branch: '', device: [], mode: '' });
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetchedDevices, setFetchedDevices] = useState([]);
@@ -340,10 +539,10 @@ function AddForm({ branches, onAdd }) {
     { value: 'Protection', label: 'Protection' },
   ];
 
-  const isValid = form.branch && form.device && form.mode;
+  const isValid = form.branch && form.device.length > 0 && form.mode;
 
   const handleBranchChange = async (branch) => {
-    setForm(f => ({ ...f, branch, device: '' }));
+    setForm(f => ({ ...f, branch, device: [] }));
     setFetchedDevices([]);
     try {
       const response = await dashboardService.getDevicesByBranch(branch);
@@ -365,7 +564,7 @@ function AddForm({ branches, onAdd }) {
     try {
       const response = await dashboardService.addApplicationPolicy({
         branch: form.branch,
-        device: form.device,
+        device: form.device,   // array
         mode: form.mode,
       });
       if (response?.data === 'SUCCESS' || response?.success === true) {
@@ -383,7 +582,7 @@ function AddForm({ branches, onAdd }) {
           date: new Date().toISOString().slice(0, 10),
         });
         setSubmitted(false);
-        setForm({ branch: '', device: '', mode: '' });
+        setForm({ branch: '', device: [], mode: '' });
         setFetchedDevices([]);
       } else {
         await showAlert({
@@ -411,24 +610,37 @@ function AddForm({ branches, onAdd }) {
   return (
     <GlassCard className="p-6 mb-50">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
+        {/* Branch */}
         <div>
           <label className={labelCls}>Branch Name <span className="text-rose-500 normal-case tracking-normal">*</span></label>
           <Dropdown value={form.branch} onChange={handleBranchChange} options={branchOptions} placeholder="Select Branch" searchable error={submitted && !form.branch} />
           {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
+
+        {/* Device (MULTI SELECT) */}
         <div>
           <label className={labelCls}>Device Name <span className="text-rose-500 normal-case tracking-normal">*</span></label>
-          <Dropdown value={form.device} onChange={val => setForm(f => ({ ...f, device: val }))} options={deviceOptions} placeholder={form.branch ? 'Select Device' : 'Select branch first'} disabled={!form.branch} error={submitted && !form.device} />
-          {submitted && !form.device && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
+          <MultiSelectDropdown
+            values={form.device}
+            onChange={vals => setForm(f => ({ ...f, device: vals }))}
+            options={deviceOptions}
+            placeholder={form.branch ? 'Select Devices' : 'Select branch first'}
+            disabled={!form.branch}
+            error={submitted && form.device.length === 0}
+          />
+          {submitted && form.device.length === 0 && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
+
+        {/* Mode */}
         <div>
           <label className={labelCls}>Set Mode <span className="text-rose-500 normal-case tracking-normal">*</span></label>
           <Dropdown value={form.mode} onChange={val => setForm(f => ({ ...f, mode: val }))} options={modeOptions} placeholder="Select Mode" error={submitted && !form.mode} />
           {submitted && !form.mode && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
       </div>
+
       <div className="flex items-center justify-end gap-3">
-        <GlassButton onClick={() => { setForm({ branch: '', device: '', mode: '' }); setSubmitted(false); setFetchedDevices([]); }} variant="default" className="px-4 py-2" disabled={isSubmitting}>
+        <GlassButton onClick={() => { setForm({ branch: '', device: [], mode: '' }); setSubmitted(false); setFetchedDevices([]); }} variant="default" className="px-4 py-2" disabled={isSubmitting}>
           <RotateCcw size={13} /> Reset
         </GlassButton>
         <GlassButton onClick={handleSubmit} variant="primary" className="px-5 py-2 font-semibold" disabled={isSubmitting}>

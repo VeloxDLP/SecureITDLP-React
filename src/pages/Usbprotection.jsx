@@ -18,9 +18,33 @@ import { alert as showAlert } from "../components/ui/AlertModal";
 import { dashboardService } from "../services/dashboardService";
 
 /* =========================================================
+   STATUS PILL
+========================================================= */
+function StatusPill({ status }) {
+  if (!status) return null;
+
+  const lower = String(status).toLowerCase();
+  const isUp = lower === "up";
+  const isDown = lower === "down";
+
+  const styles = isUp
+    ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/[0.08]"
+    : isDown
+    ? "text-rose-400 border-rose-500/40 bg-rose-500/[0.08]"
+    : "text-slate-400 border-slate-500/40 bg-slate-500/[0.08]";
+
+  return (
+    <span
+      className={`shrink-0 px-2 py-[1px] rounded-md text-[10px] font-bold uppercase tracking-wide border ${styles}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+/* =========================================================
    CUSTOM DROPDOWN
 ========================================================= */
-
 function Dropdown({
   value,
   onChange,
@@ -37,7 +61,9 @@ function Dropdown({
   const containerRef = useRef(null);
 
   const normalised = options.map((o) =>
-    typeof o === "string" ? { value: o, label: o } : o
+    typeof o === "string"
+      ? { value: o, label: o, status: null }
+      : { status: null, ...o }
   );
 
   const filtered =
@@ -104,29 +130,24 @@ function Dropdown({
         `}
       >
         <span
-          className={
-            selected
-              ? ""
-              : isDark
-              ? "text-slate-500"
-              : "text-slate-400"
-          }
+          className={`truncate flex-1 ${
+            selected ? "" : isDark ? "text-slate-500" : "text-slate-400"
+          }`}
         >
           {selected ? selected.label : placeholder}
         </span>
 
-        <ChevronDown
-          size={10}
-          className={`
-            flex-shrink-0 transition-transform duration-200
-            ${open ? "rotate-180" : ""}
-            ${
-              isDark
-                ? "text-slate-500"
-                : "text-slate-400"
-            }
-          `}
-        />
+        <span className="flex items-center gap-2 flex-shrink-0">
+          {selected?.status && <StatusPill status={selected.status} />}
+          <ChevronDown
+            size={10}
+            className={`
+              flex-shrink-0 transition-transform duration-200
+              ${open ? "rotate-180" : ""}
+              ${isDark ? "text-slate-500" : "text-slate-400"}
+            `}
+          />
+        </span>
       </button>
 
       {open && (
@@ -136,15 +157,11 @@ function Dropdown({
             rounded-xl border overflow-hidden
             shadow-[0_16px_48px_rgba(0,0,0,0.35)]
             ${
-              isDark
-                ? "border-white/[0.10]"
-                : "border-slate-200/80"
+              isDark ? "border-white/[0.10]" : "border-slate-200/80"
             }
           `}
           style={{
-            background: isDark
-              ? "#111827"
-              : "rgba(255,255,255,0.98)",
+            background: isDark ? "#111827" : "rgba(255,255,255,0.98)",
             backdropFilter: "blur(32px) saturate(180%)",
             WebkitBackdropFilter: "blur(32px) saturate(180%)",
           }}
@@ -153,11 +170,7 @@ function Dropdown({
             <div
               className={`
                 px-3 py-2 border-b
-                ${
-                  isDark
-                    ? "border-white/[0.07]"
-                    : "border-slate-100"
-                }
+                ${isDark ? "border-white/[0.07]" : "border-slate-100"}
               `}
             >
               <div className="relative flex items-center">
@@ -165,11 +178,7 @@ function Dropdown({
                   size={12}
                   className={`
                     absolute left-2.5
-                    ${
-                      isDark
-                        ? "text-slate-500"
-                        : "text-slate-400"
-                    }
+                    ${isDark ? "text-slate-500" : "text-slate-400"}
                   `}
                 />
 
@@ -208,11 +217,7 @@ function Dropdown({
               <p
                 className={`
                   px-4 py-3 text-[12px] text-center
-                  ${
-                    isDark
-                      ? "text-slate-600"
-                      : "text-slate-400"
-                  }
+                  ${isDark ? "text-slate-600" : "text-slate-400"}
                 `}
               >
                 No results
@@ -240,14 +245,14 @@ function Dropdown({
                       }
                     `}
                   >
-                    {o.label}
+                    <span className="truncate flex-1">{o.label}</span>
 
-                    {isSelected && (
-                      <Check
-                        size={13}
-                        className="text-[#7094ff]"
-                      />
-                    )}
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      {o.status && <StatusPill status={o.status} />}
+                      {isSelected && (
+                        <Check size={13} className="text-[#7094ff]" />
+                      )}
+                    </span>
                   </button>
                 );
               })
@@ -262,7 +267,6 @@ function Dropdown({
 /* =========================================================
    GLASS BUTTON
 ========================================================= */
-
 function GlassButton({
   children,
   onClick,
@@ -285,49 +289,35 @@ function GlassButton({
         backdropFilter: "blur(16px)",
       },
     },
-
     primary: {
-      className:
-        "text-white border-[#7094ff]/40 hover:border-[#7094ff]/60",
+      className: "text-white border-[#7094ff]/40 hover:border-[#7094ff]/60",
       style: {
         background: "rgba(112,148,255,0.85)",
         backdropFilter: "blur(16px)",
-        boxShadow:
-          "0 4px 20px rgba(112,148,255,0.35)",
+        boxShadow: "0 4px 20px rgba(112,148,255,0.35)",
       },
     },
-
     success: {
-      className:
-        "text-white border-emerald-500/40",
+      className: "text-white border-emerald-500/40",
       style: {
-        background:
-          "rgba(16,185,129,0.85)",
+        background: "rgba(16,185,129,0.85)",
         backdropFilter: "blur(16px)",
       },
     },
-
     tab_active: {
-      className:
-        "text-white border-[#7094ff]/40",
+      className: "text-white border-[#7094ff]/40",
       style: {
-        background:
-          "rgba(112,148,255,0.82)",
+        background: "rgba(112,148,255,0.82)",
         backdropFilter: "blur(20px)",
-        boxShadow:
-          "0 6px 24px rgba(112,148,255,0.35)",
+        boxShadow: "0 6px 24px rgba(112,148,255,0.35)",
       },
     },
-
     tab_inactive: {
       className: isDark
         ? "text-slate-400 hover:text-slate-100 border-transparent"
         : "text-slate-500 hover:text-slate-800 border-transparent",
-      style: {
-        background: "transparent",
-      },
+      style: { background: "transparent" },
     },
-
     chip_allow: {
       className: isDark
         ? "text-emerald-400 border-emerald-500/25"
@@ -338,7 +328,6 @@ function GlassButton({
           : "rgba(255,255,255,0.72)",
       },
     },
-
     chip_prevent: {
       className: isDark
         ? "text-rose-400 border-rose-500/25"
@@ -351,8 +340,7 @@ function GlassButton({
     },
   };
 
-  const v =
-    variants[variant] || variants.default;
+  const v = variants[variant] || variants.default;
 
   return (
     <button
@@ -377,10 +365,8 @@ function GlassButton({
 /* =========================================================
    BADGE
 ========================================================= */
-
 function Badge({ mode }) {
-  const normalMode =
-    String(mode || "").toLowerCase();
+  const normalMode = String(mode || "").toLowerCase();
 
   const base =
     "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border";
@@ -388,12 +374,7 @@ function Badge({ mode }) {
   if (normalMode === "allow") {
     return (
       <span
-        className={`
-          ${base}
-          bg-emerald-500/10
-          text-emerald-500
-          border-emerald-500/20
-        `}
+        className={`${base} bg-emerald-500/10 text-emerald-500 border-emerald-500/20`}
       >
         <Check size={10} />
         Allow
@@ -403,12 +384,7 @@ function Badge({ mode }) {
 
   return (
     <span
-      className={`
-        ${base}
-        bg-rose-500/10
-        text-rose-500
-        border-rose-500/20
-      `}
+      className={`${base} bg-rose-500/10 text-rose-500 border-rose-500/20`}
     >
       <AlertTriangle size={10} />
       Prevent
@@ -419,25 +395,15 @@ function Badge({ mode }) {
 /* =========================================================
    GLASS CARD
 ========================================================= */
-
-function GlassCard({
-  children,
-  className = "",
-}) {
+function GlassCard({ children, className = "" }) {
   const { isDark } = useTheme();
 
   return (
     <div
       className={`rounded-2xl border ${className}`}
       style={{
-        background: isDark
-          ? "#020617"
-          : "rgba(255,255,255,0.95)",
-
-        borderColor: isDark
-          ? "rgba(255,255,255,0.07)"
-          : "#e2e8f0",
-
+        background: isDark ? "#020617" : "rgba(255,255,255,0.95)",
+        borderColor: isDark ? "rgba(255,255,255,0.07)" : "#e2e8f0",
         boxShadow: isDark
           ? "0 4px 24px rgba(0,0,0,0.5)"
           : "0 2px 16px rgba(0,0,0,0.08)",
@@ -451,11 +417,7 @@ function GlassCard({
 /* =========================================================
    ADD FORM
 ========================================================= */
-
-function AddForm({
-  branches,
-  onAdd,
-}) {
+function AddForm({ branches, onAdd }) {
   const { isDark } = useTheme();
 
   const [form, setForm] = useState({
@@ -465,53 +427,30 @@ function AddForm({
     mode: "",
   });
 
-  const [submitted, setSubmitted] =
-    useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [fetchedDevices, setFetchedDevices] = useState([]);
 
-  const [success, setSuccess] =
-    useState(false);
-
-  const [fetchedDevices, setFetchedDevices] =
-    useState([]);
-
-  const branchOptions = (
-    branches || []
-  )
+  const branchOptions = (branches || [])
     .map((branch) => {
-      if (
-        typeof branch === "string" ||
-        typeof branch === "number"
-      ) {
-        return {
-          value: String(branch),
-          label: String(branch),
-        };
+      if (typeof branch === "string" || typeof branch === "number") {
+        return { value: String(branch), label: String(branch) };
       }
 
       const value =
-        branch.branchName ||
-        branch.name ||
-        branch.branch ||
-        "";
+        branch.branchName || branch.name || branch.branch || "";
 
-      return {
-        value,
-        label: value,
-      };
+      return { value, label: value };
     })
     .filter((b) => b.value);
 
-  const deviceOptions = (
-    fetchedDevices || []
-  )
+  const deviceOptions = (fetchedDevices || [])
     .map((device) => {
-      if (
-        typeof device === "string" ||
-        typeof device === "number"
-      ) {
+      if (typeof device === "string" || typeof device === "number") {
         return {
           value: String(device),
           label: String(device),
+          status: null,
         };
       }
 
@@ -520,44 +459,33 @@ function AddForm({
         device.deviceName ||
         device.hostName ||
         device.device ||
+        device.pcName ||
+        device.computerName ||
         "";
 
-      return {
-        value,
-        label: value,
-      };
+      const status =
+        device.agentStatus ?? device.status ?? null;
+
+      return { value, label: value, status };
     })
     .filter((d) => d.value);
 
   const modeOptions = [
-    {
-      value: "Allow",
-      label: "Allow",
-    },
-    {
-      value: "Prevent",
-      label: "Prevent",
-    },
+    { value: "Allow", label: "Allow" },
+    { value: "Prevent", label: "Prevent" },
   ];
 
   const set = (key) => (value) => {
     setForm((prev) => ({
       ...prev,
       [key]: value,
-      ...(key === "branch"
-        ? { device: "" }
-        : {}),
+      ...(key === "branch" ? { device: "" } : {}),
     }));
   };
 
-  const isValid =
-    form.branch &&
-    form.device &&
-    form.mode;
+  const isValid = form.branch && form.device && form.mode;
 
-  const handleBranchChange = async (
-    branch
-  ) => {
+  const handleBranchChange = async (branch) => {
     setForm((prev) => ({
       ...prev,
       branch,
@@ -567,20 +495,10 @@ function AddForm({
     setFetchedDevices([]);
 
     try {
-      const response =
-        await dashboardService.getDevicesByBranch(
-          branch
-        );
-
-      setFetchedDevices(
-        response.data || []
-      );
+      const response = await dashboardService.getDevicesByBranch(branch);
+      setFetchedDevices(response.data || []);
     } catch (error) {
-      console.error(
-        "Error loading devices:",
-        error
-      );
-
+      console.error("Error loading devices:", error);
       setFetchedDevices([]);
     }
   };
@@ -596,8 +514,13 @@ function AddForm({
         device: form.device,
         mode: form.mode,
       };
+
       // alert("USB request : "+form.branch+" "+form.device+" "+form.device+" "+form.mode)
       const response = await dashboardService.addUSBPolicy(requestData);
+
+
+   
+
 
       if (response.data === "SUCCESS") {
         setSuccess(true);
@@ -635,10 +558,7 @@ function AddForm({
         });
       }
     } catch (error) {
-      console.error(
-        "Error adding printer policy:",
-        error
-      );
+      console.error("Error adding printer policy:", error);
 
       await showAlert({
         icon: "error",
@@ -665,31 +585,16 @@ function AddForm({
   const labelCls = `
     block text-[11px] font-semibold
     uppercase tracking-wider mb-1.5
-    ${
-      isDark
-        ? "text-slate-500"
-        : "text-slate-400"
-    }
+    ${isDark ? "text-slate-500" : "text-slate-400"}
   `;
 
   return (
     <GlassCard className="p-6 mb-5">
-      <div
-        className="
-          grid grid-cols-1
-          md:grid-cols-2
-          xl:grid-cols-3
-          gap-5 mb-6
-        "
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
         {/* Branch */}
-
         <div>
           <label className={labelCls}>
-            Branch Name{" "}
-            <span className="text-rose-500">
-              *
-            </span>
+            Branch Name <span className="text-rose-500">*</span>
           </label>
 
           <Dropdown
@@ -698,26 +603,18 @@ function AddForm({
             options={branchOptions}
             placeholder="Select Branch"
             searchable
-            error={
-              submitted && !form.branch
-            }
+            error={submitted && !form.branch}
           />
 
           {submitted && !form.branch && (
-            <p className="text-[10px] text-rose-500 mt-1">
-              Required
-            </p>
+            <p className="text-[10px] text-rose-500 mt-1">Required</p>
           )}
         </div>
 
         {/* Device */}
-
         <div>
           <label className={labelCls}>
-            Device Name{" "}
-            <span className="text-rose-500">
-              *
-            </span>
+            Device Name <span className="text-rose-500">*</span>
           </label>
 
           <Dropdown
@@ -725,31 +622,21 @@ function AddForm({
             onChange={set("device")}
             options={deviceOptions}
             placeholder={
-              form.branch
-                ? "Select Device"
-                : "Select branch first"
+              form.branch ? "Select Device" : "Select branch first"
             }
             disabled={!form.branch}
-            error={
-              submitted && !form.device
-            }
+            error={submitted && !form.device}
           />
 
           {submitted && !form.device && (
-            <p className="text-[10px] text-rose-500 mt-1">
-              Required
-            </p>
+            <p className="text-[10px] text-rose-500 mt-1">Required</p>
           )}
         </div>
 
         {/* Mode */}
-
         <div>
           <label className={labelCls}>
-            Mode of Access{" "}
-            <span className="text-rose-500">
-              *
-            </span>
+            Mode of Access <span className="text-rose-500">*</span>
           </label>
 
           <Dropdown
@@ -757,15 +644,11 @@ function AddForm({
             onChange={set("mode")}
             options={modeOptions}
             placeholder="Select Mode"
-            error={
-              submitted && !form.mode
-            }
+            error={submitted && !form.mode}
           />
 
           {submitted && !form.mode && (
-            <p className="text-[10px] text-rose-500 mt-1">
-              Required
-            </p>
+            <p className="text-[10px] text-rose-500 mt-1">Required</p>
           )}
         </div>
       </div>
@@ -782,9 +665,7 @@ function AddForm({
 
         <GlassButton
           onClick={handleSubmit}
-          variant={
-            success ? "success" : "primary"
-          }
+          variant={success ? "success" : "primary"}
           className="px-5 py-2 font-semibold"
         >
           {success ? (
@@ -807,91 +688,38 @@ function AddForm({
 /* =========================================================
    POLICY TABLE
 ========================================================= */
-
-function PolicyTable({
-  policies,
-  onDelete,
-}) {
+function PolicyTable({ policies, onDelete }) {
   const { isDark } = useTheme();
 
   const [search, setSearch] = useState("");
-  const [filterMode, setFilterMode] =
-    useState("");
+  const [filterMode, setFilterMode] = useState("");
 
-  const safePolicies = Array.isArray(
-    policies
-  )
-    ? policies
-    : [];
+  const safePolicies = Array.isArray(policies) ? policies : [];
 
-  const filtered =
-    safePolicies.filter((p) => {
-      const q =
-        search.toLowerCase();
+  const filtered = safePolicies.filter((p) => {
+    const q = search.toLowerCase();
 
-      const branch = String(
-        p.branchName || ""
-      );
+    const branch = String(p.branchName || "");
+    const ip = String(p.ipAddress || "");
+    const device = String(p.deviceName || "");
+    const mode = String(p.modeAccess || "");
+    const ctime = String(p.ctime || "");
 
-      const ip = String(
-        p.ipAddress || ""
-      );
-
-      const device = String(
-        p.deviceName || ""
-      );
-
-      const mode = String(
-        p.modeAccess || ""
-      );
-
-      const ctime = String(
-        p.ctime || ""
-      );
-
-      return (
-        (
-          !q ||
-          branch
-            .toLowerCase()
-            .includes(q) ||
-          ip
-            .toLowerCase()
-            .includes(q) ||
-          device
-            .toLowerCase()
-            .includes(q) ||
-          mode
-            .toLowerCase()
-            .includes(q) ||
-          ctime
-            .toLowerCase()
-            .includes(q)
-        ) &&
-        (
-          !filterMode ||
-          mode.toLowerCase() ===
-            filterMode.toLowerCase()
-        )
-      );
-    });
-
-  /* =====================================================
-     TABLE HEADER STYLE
-  ===================================================== */
+    return (
+      (!q ||
+        branch.toLowerCase().includes(q) ||
+        ip.toLowerCase().includes(q) ||
+        device.toLowerCase().includes(q) ||
+        mode.toLowerCase().includes(q) ||
+        ctime.toLowerCase().includes(q)) &&
+      (!filterMode ||
+        mode.toLowerCase() === filterMode.toLowerCase())
+    );
+  });
 
   const thCls = `
-    text-left
-    text-[10px]
-    font-semibold
-    uppercase
-    tracking-wider
-    px-3
-    py-3
-    whitespace-nowrap
-    sticky
-    top-0
-    z-20
+    text-left text-[10px] font-semibold uppercase tracking-wider
+    px-3 py-3 whitespace-nowrap sticky top-0 z-20
     ${
       isDark
         ? "text-slate-500 border-b border-white/[0.07]"
@@ -899,117 +727,47 @@ function PolicyTable({
     }
   `;
 
-  /* =====================================================
-     TABLE CELL STYLE
-  ===================================================== */
-
   const tdCls = `
-    px-3
-    py-3
-    text-[11px]
-    whitespace-nowrap
-    ${
-      isDark
-        ? "text-slate-300"
-        : "text-slate-700"
-    }
+    px-3 py-3 text-[11px] whitespace-nowrap
+    ${isDark ? "text-slate-300" : "text-slate-700"}
   `;
 
   const filterOptions = [
-    {
-      value: "",
-      label: "All",
-    },
-    {
-      value: "Allow",
-      label: "Allow",
-    },
-    {
-      value: "Prevent",
-      label: "Prevent",
-    },
+    { value: "", label: "All" },
+    { value: "Allow", label: "Allow" },
+    { value: "Prevent", label: "Prevent" },
   ];
 
   return (
     <GlassCard className="overflow-hidden">
-      {/* =================================================
-          TOOLBAR
-      ================================================= */}
-
       <div
         className={`
-          flex items-center
-          justify-between
-          gap-3
-          px-5
-          py-3
-          border-b
-          ${
-            isDark
-              ? "border-white/[0.06]"
-              : "border-slate-100"
-          }
+          flex items-center justify-between gap-3 px-5 py-3 border-b
+          ${isDark ? "border-white/[0.06]" : "border-slate-100"}
         `}
       >
-        {/* TITLE */}
-
         <div>
           <div className="flex items-center gap-2">
-            <ShieldCheck
-              size={14}
-              className="text-[#7094ff]"
-            />
-
+            <ShieldCheck size={14} className="text-[#7094ff]" />
             <span
               className={`
-                text-[13px]
-                font-semibold
-                ${
-                  isDark
-                    ? "text-slate-200"
-                    : "text-slate-700"
-                }
+                text-[13px] font-semibold
+                ${isDark ? "text-slate-200" : "text-slate-700"}
               `}
             >
               Printer Policies
             </span>
-
-            <span
-              className="
-                px-1.5
-                py-0.5
-                rounded-full
-                text-[9px]
-                font-bold
-                bg-[#7094ff]/15
-                text-[#7094ff]
-                border
-                border-[#7094ff]/20
-              "
-            >
+            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#7094ff]/15 text-[#7094ff] border border-[#7094ff]/20">
               {filtered.length}
             </span>
           </div>
         </div>
 
-        {/* SEARCH + FILTER */}
-
         <div className="flex items-center gap-2">
-          {/* SEARCH */}
-
           <div
             className={`
-              relative
-              flex
-              items-center
-              rounded-lg
-              border
-              text-[11px]
-              ${
-                isDark
-                  ? "border-white/[0.08]"
-                  : "border-slate-200/80"
-              }
+              relative flex items-center rounded-lg border text-[11px]
+              ${isDark ? "border-white/[0.08]" : "border-slate-200/80"}
             `}
             style={{
               background: isDark
@@ -1020,30 +778,16 @@ function PolicyTable({
             <Search
               size={12}
               className={`
-                absolute
-                left-2.5
-                ${
-                  isDark
-                    ? "text-slate-500"
-                    : "text-slate-400"
-                }
+                absolute left-2.5
+                ${isDark ? "text-slate-500" : "text-slate-400"}
               `}
             />
-
             <input
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search..."
               className={`
-                bg-transparent
-                pl-7
-                pr-2.5
-                py-1.5
-                outline-none
-                w-36
-                text-[11px]
+                bg-transparent pl-7 pr-2.5 py-1.5 outline-none w-36 text-[11px]
                 ${
                   isDark
                     ? "text-slate-300 placeholder-slate-600"
@@ -1052,8 +796,6 @@ function PolicyTable({
               `}
             />
           </div>
-
-          {/* FILTER */}
 
           <div className="w-28">
             <Dropdown
@@ -1066,42 +808,18 @@ function PolicyTable({
         </div>
       </div>
 
-      {/* =================================================
-          EMPTY STATE
-      ================================================= */}
-
       {filtered.length === 0 ? (
         <div
           className={`
-            py-12
-            text-center
-            text-[12px]
-            ${
-              isDark
-                ? "text-slate-600"
-                : "text-slate-400"
-            }
+            py-12 text-center text-[12px]
+            ${isDark ? "text-slate-600" : "text-slate-400"}
           `}
         >
           No printer policies found.
         </div>
       ) : (
-        /* =================================================
-           TABLE
-        ================================================= */
-
         <div
-          className={`
-            w-full
-            overflow-x-auto
-            overflow-y-auto
-            max-h-[440px]
-            ${
-              isDark
-                ? "scrollbar-dark"
-                : "scrollbar-light"
-            }
-          `}
+          className="w-full overflow-x-auto overflow-y-auto max-h-[440px]"
           style={{
             scrollbarWidth: "thin",
             scrollbarColor: isDark
@@ -1112,65 +830,13 @@ function PolicyTable({
           <table className="w-full min-w-[1100px] table-fixed">
             <thead>
               <tr>
-                {/* SR NO */}
-
-                <th
-                  className={`${thCls} w-[7%]`}
-                >
-                  #
-                </th>
-
-                {/* BRANCH */}
-
-                <th
-                  className={`${thCls} w-[18%]`}
-                >
-                  BRANCH
-                </th>
-
-                {/* IP */}
-
-                <th
-                  className={`${thCls} w-[22%]`}
-                >
-                  IP ADDRESS
-                </th>
-
-                {/* DEVICE */}
-
-                <th
-                  className={`${thCls} w-[20%]`}
-                >
-                  DEVICE
-                </th>
-
-                {/* MODE */}
-
-                <th
-                  className={`${thCls} w-[12%]`}
-                >
-                  MODE
-                </th>
-
-                {/* CREATED TIME */}
-
-                <th
-                  className={`${thCls} w-[13%]`}
-                >
-                  CREATED TIME
-                </th>
-
-                {/* ACTION */}
-
-                <th
-                  className={`
-                    ${thCls}
-                    w-[8%]
-                    text-right
-                  `}
-                >
-                  ACTION
-                </th>
+                <th className={`${thCls} w-[7%]`}>#</th>
+                <th className={`${thCls} w-[18%]`}>BRANCH</th>
+                <th className={`${thCls} w-[22%]`}>IP ADDRESS</th>
+                <th className={`${thCls} w-[20%]`}>DEVICE</th>
+                <th className={`${thCls} w-[12%]`}>MODE</th>
+                <th className={`${thCls} w-[13%]`}>CREATED TIME</th>
+                <th className={`${thCls} w-[8%] text-right`}>ACTION</th>
               </tr>
             </thead>
 
@@ -1184,137 +850,55 @@ function PolicyTable({
                     ${i}
                   `}
                   className={`
-                    border-b
-                    last:border-b-0
-                    transition-colors
-                    duration-150
+                    border-b last:border-b-0 transition-colors duration-150
                     ${
                       isDark
-                        ? `
-                          border-white/[0.045]
-                          hover:bg-white/[0.025]
-                        `
-                        : `
-                          border-slate-100
-                          hover:bg-slate-50/60
-                        `
+                        ? "border-white/[0.045] hover:bg-white/[0.025]"
+                        : "border-slate-100 hover:bg-slate-50/60"
                     }
                   `}
                 >
-                  {/* SR NO */}
-
                   <td
-                    className={`
-                      ${tdCls}
-                      text-[10px]
-                      ${
-                        isDark
-                          ? "text-slate-600"
-                          : "text-slate-400"
-                      }
-                    `}
+                    className={`${tdCls} text-[10px] ${
+                      isDark ? "text-slate-600" : "text-slate-400"
+                    }`}
                   >
                     {i + 1}
                   </td>
 
-                  {/* BRANCH */}
-
                   <td className={tdCls}>
                     <span
-                      className={`
-                        font-medium
-                        ${
-                          isDark
-                            ? "text-slate-200"
-                            : "text-slate-700"
-                        }
-                      `}
+                      className={`font-medium ${
+                        isDark ? "text-slate-200" : "text-slate-700"
+                      }`}
                     >
-                      {p.branchName ||
-                        "N/A"}
+                      {p.branchName || "N/A"}
                     </span>
                   </td>
 
-                  {/* IP ADDRESS */}
-
                   <td
-                    className={`
-                      ${tdCls}
-                      font-mono
-                      text-[10px]
-                      ${
-                        isDark
-                          ? "text-slate-400"
-                          : "text-slate-500"
-                      }
-                    `}
+                    className={`${tdCls} font-mono text-[10px] ${
+                      isDark ? "text-slate-400" : "text-slate-500"
+                    }`}
                   >
                     {p.ipAddress || "N/A"}
                   </td>
 
-                  {/* DEVICE */}
-
-                  <td
-                    className={`
-                      ${tdCls}
-                      ${
-                        isDark
-                          ? "text-slate-300"
-                          : "text-slate-700"
-                      }
-                    `}
-                  >
-                    {p.deviceName ||
-                      "N/A"}
-                  </td>
-
-                  {/* MODE */}
+                  <td className={tdCls}>{p.deviceName || "N/A"}</td>
 
                   <td className={tdCls}>
-                    <Badge
-                      mode={p.modeAccess}
-                    />
+                    <Badge mode={p.modeAccess} />
                   </td>
 
-                  {/* CREATED TIME */}
-
-                  <td
-                    className={`
-                      ${tdCls}
-                      text-[10px]
-                      text-slate-500
-                    `}
-                  >
+                  <td className={`${tdCls} text-[10px] text-slate-500`}>
                     {p.ctime || "N/A"}
                   </td>
 
-                  {/* ACTION */}
-
-                  <td
-                    className={`
-                      ${tdCls}
-                      text-right
-                    `}
-                  >
+                  <td className={`${tdCls} text-right`}>
                     <button
                       type="button"
-                      onClick={() =>
-                        onDelete(i)
-                      }
-                      className="
-                        w-6
-                        h-6
-                        rounded-md
-                        flex
-                        items-center
-                        justify-center
-                        ml-auto
-                        text-slate-500
-                        hover:text-rose-500
-                        hover:bg-rose-500/10
-                        transition-all
-                        duration-150
-                      "
+                      onClick={() => onDelete(i)}
+                      className="w-6 h-6 rounded-md flex items-center justify-center ml-auto text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-all duration-150"
                       title="Delete"
                     >
                       <Trash2 size={12} />
@@ -1333,46 +917,22 @@ function PolicyTable({
 /* =========================================================
    TAB BAR
 ========================================================= */
-
-function TabBar({
-  active,
-  onChange,
-}) {
+function TabBar({ active, onChange }) {
   const { isDark } = useTheme();
 
   const tabs = [
-    {
-      id: "add",
-      label: "Add Policy",
-      icon: Plus,
-    },
-    {
-      id: "view",
-      label: "View Policies",
-      icon: Eye,
-    },
+    { id: "add", label: "Add Policy", icon: Plus },
+    { id: "view", label: "View Policies", icon: Eye },
   ];
 
   return (
     <div
-      className="
-        inline-flex
-        items-center
-        gap-1.5
-        rounded-2xl
-        p-1.5
-        mb-6
-        border
-      "
+      className="inline-flex items-center gap-1.5 rounded-2xl p-1.5 mb-6 border"
       style={{
-        background: isDark
-          ? "#020617"
-          : "rgba(255,255,255,0.60)",
-
+        background: isDark ? "#020617" : "rgba(255,255,255,0.60)",
         borderColor: isDark
           ? "rgba(255,255,255,0.07)"
           : "rgba(203,213,225,0.70)",
-
         boxShadow: isDark
           ? "0 4px 16px rgba(0,0,0,0.40)"
           : "0 4px 16px rgba(148,163,184,0.15)",
@@ -1380,26 +940,14 @@ function TabBar({
     >
       {tabs.map((t) => {
         const Icon = t.icon;
-
-        const isActive =
-          active === t.id;
+        const isActive = active === t.id;
 
         return (
           <GlassButton
             key={t.id}
-            onClick={() =>
-              onChange(t.id)
-            }
-            variant={
-              isActive
-                ? "tab_active"
-                : "tab_inactive"
-            }
-            className="
-              px-5
-              py-2.5
-              font-semibold
-            "
+            onClick={() => onChange(t.id)}
+            variant={isActive ? "tab_active" : "tab_inactive"}
+            className="px-5 py-2.5 font-semibold"
           >
             <Icon size={14} />
             {t.label}
@@ -1413,252 +961,118 @@ function TabBar({
 /* =========================================================
    MAIN PAGE
 ========================================================= */
-
 export default function PrinterControl() {
   const { isDark } = useTheme();
 
-  const [tab, setTab] =
-    useState("add");
-
-  const [policies, setPolicies] =
-    useState([]);
-
-  const [branches, setBranches] =
-    useState([]);
-
-  /* =======================================================
-     LOAD DATA
-  ======================================================= */
+  const [tab, setTab] = useState("add");
+  const [policies, setPolicies] = useState([]);
+  const [branches, setBranches] = useState([]);
 
   const loadPageData = async () => {
     try {
-      const [
-        ALLBranch,
-        PrinterPolicies,
-      ] = await Promise.all([
+      const [ALLBranch, PrinterPolicies] = await Promise.all([
         dashboardService.getBranch(),
         dashboardService.getUSBPolicies(),
       ]);
 
-      console.log(
-        "Branches:",
-        ALLBranch.data
-      );
+      console.log("Branches:", ALLBranch.data);
+      console.log("Printer Policies:", PrinterPolicies.data);
 
-      console.log(
-        "Printer Policies:",
-        PrinterPolicies.data
-      );
-
-      setBranches(
-        ALLBranch.data || []
-      );
+      setBranches(ALLBranch.data || []);
 
       setPolicies(
-        Array.isArray(
-          PrinterPolicies.data
-        )
-          ? PrinterPolicies.data
-          : []
+        Array.isArray(PrinterPolicies.data) ? PrinterPolicies.data : []
       );
     } catch (error) {
-      console.error(
-        "Error loading printer protection data:",
-        error
-      );
-
+      console.error("Error loading printer protection data:", error);
       setPolicies([]);
       setBranches([]);
     }
   };
 
-  /* =======================================================
-     INITIAL LOAD
-  ======================================================= */
-
   useEffect(() => {
     loadPageData();
   }, []);
 
-  /* =======================================================
-     DELETE
-  ======================================================= */
-
   const handleDelete = (index) => {
-    setPolicies((prev) =>
-      prev.filter(
-        (_, i) => i !== index
-      )
-    );
+    setPolicies((prev) => prev.filter((_, i) => i !== index));
   };
-
-  /* =======================================================
-     AFTER ADD
-  ======================================================= */
 
   const handleAdd = async () => {
     await loadPageData();
     setTab("view");
   };
 
-  /* =======================================================
-     STATS
-  ======================================================= */
+  const allowedCount = policies.filter(
+    (p) => String(p.modeAccess || "").toLowerCase() === "allow"
+  ).length;
 
-  const allowedCount =
-    policies.filter(
-      (p) =>
-        String(
-          p.modeAccess || ""
-        ).toLowerCase() === "allow"
-    ).length;
-
-  const preventedCount =
-    policies.filter(
-      (p) =>
-        String(
-          p.modeAccess || ""
-        ).toLowerCase() === "prevent"
-    ).length;
-
-  /* =======================================================
-     PAGE
-  ======================================================= */
+  const preventedCount = policies.filter(
+    (p) => String(p.modeAccess || "").toLowerCase() === "prevent"
+  ).length;
 
   return (
     <div className="w-full">
       <br />
 
-      {/* =================================================
-          PAGE HEADER
-      ================================================= */}
-
+      {/* PAGE HEADER */}
       <div className="flex items-start justify-between mb-7">
         <div className="flex items-center gap-3">
-          {/* ICON */}
-
           <div
-            className="
-              w-10
-              h-10
-              rounded-2xl
-              flex
-              items-center
-              justify-center
-            "
+            className="w-10 h-10 rounded-2xl flex items-center justify-center"
             style={{
-              background:
-                "rgba(112,148,255,0.15)",
-              border:
-                "1px solid rgba(112,148,255,0.25)",
-              backdropFilter:
-                "blur(12px)",
+              background: "rgba(112,148,255,0.15)",
+              border: "1px solid rgba(112,148,255,0.25)",
+              backdropFilter: "blur(12px)",
             }}
           >
-            <Printer
-              size={18}
-              className="text-[#7094ff]"
-            />
+            <Printer size={18} className="text-[#7094ff]" />
           </div>
-
-          {/* TITLE */}
 
           <div>
             <h2
               className={`
-                font-display
-                font-bold
-                text-lg
-                leading-tight
-                ${
-                  isDark
-                    ? "text-slate-100"
-                    : "text-slate-800"
-                }
+                font-display font-bold text-lg leading-tight
+                ${isDark ? "text-slate-100" : "text-slate-800"}
               `}
             >
               USB Protection
             </h2>
-
             <p
               className={`
-                text-[11px]
-                mt-0.5
-                ${
-                  isDark
-                    ? "text-slate-500"
-                    : "text-slate-400"
-                }
+                text-[11px] mt-0.5
+                ${isDark ? "text-slate-500" : "text-slate-400"}
               `}
             >
-              Manage printer access policies
-              across endpoints
+              Manage printer access policies across endpoints
             </p>
           </div>
         </div>
 
-        {/* =================================================
-            STATS
-        ================================================= */}
-
+        {/* STATS */}
         <div className="hidden sm:flex items-center gap-2">
           <GlassButton
             variant="chip_allow"
-            className="
-              px-3
-              py-1.5
-              text-[11px]
-              font-semibold
-              cursor-default
-            "
+            className="px-3 py-1.5 text-[11px] font-semibold cursor-default"
           >
             {allowedCount} Allowed
           </GlassButton>
 
           <GlassButton
             variant="chip_prevent"
-            className="
-              px-3
-              py-1.5
-              text-[11px]
-              font-semibold
-              cursor-default
-            "
+            className="px-3 py-1.5 text-[11px] font-semibold cursor-default"
           >
             {preventedCount} Prevented
           </GlassButton>
         </div>
       </div>
 
-      {/* =================================================
-          TABS
-      ================================================= */}
+      <TabBar active={tab} onChange={setTab} />
 
-      <TabBar
-        active={tab}
-        onChange={setTab}
-      />
-
-      {/* =================================================
-          ADD POLICY
-      ================================================= */}
-
-      {tab === "add" && (
-        <AddForm
-          branches={branches}
-          onAdd={handleAdd}
-        />
-      )}
-
-      {/* =================================================
-          VIEW POLICIES
-      ================================================= */}
+      {tab === "add" && <AddForm branches={branches} onAdd={handleAdd} />}
 
       {tab === "view" && (
-        <PolicyTable
-          policies={policies}
-          onDelete={handleDelete}
-        />
+        <PolicyTable policies={policies} onDelete={handleDelete} />
       )}
     </div>
   );

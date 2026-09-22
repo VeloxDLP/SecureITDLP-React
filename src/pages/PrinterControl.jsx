@@ -4,14 +4,37 @@ import {
   ShieldCheck, Trash2, Search, ChevronDown, X,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
-// import printerApi from '../api/printerApi'
 import { alert as showAlert } from '../components/ui/AlertModal'
 import { dashboardService } from '../services/dashboardService'
 
 /* ─────────────────────────────────────────────────────────────
+   STATUS PILL
+───────────────────────────────────────────────────────────── */
+function StatusPill({ status }) {
+  if (!status) return null
+
+  const lower = String(status).toLowerCase()
+  const isUp = lower === 'up'
+  const isDown = lower === 'down'
+
+  const styles = isUp
+    ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/[0.08]'
+    : isDown
+    ? 'text-rose-400 border-rose-500/40 bg-rose-500/[0.08]'
+    : 'text-slate-400 border-slate-500/40 bg-slate-500/[0.08]'
+
+  return (
+    <span
+      className={`shrink-0 px-2 py-[1px] rounded-md text-[10px] font-bold uppercase tracking-wide border ${styles}`}
+    >
+      {status}
+    </span>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────
    DATA
 ───────────────────────────────────────────────────────────── */
-
 const DEVICES_BY_BRANCH = {
   1: ['DESKTOP-VM8O1CP', 'localhost.localdomain', 'velox-ubuntu'],
   2: ['DESKTOP-GIBI8G2'],
@@ -51,12 +74,14 @@ function Dropdown({
   const containerRef = useRef(null)
 
   const normalised = options.map(o =>
-    typeof o === 'string' ? { value: o, label: o } : o
+    typeof o === 'string'
+      ? { value: o, label: o, status: null }
+      : { status: null, ...o }
   )
 
   const filtered = searchable && query
     ? normalised.filter(o =>
-        o.label.toLowerCase().includes(query.toLowerCase())
+        String(o.label).toLowerCase().includes(query.toLowerCase())
       )
     : normalised
 
@@ -85,7 +110,6 @@ function Dropdown({
     setQuery('')
   }
 
-  // RGB(17, 24, 39) = #111827
   const glassSurface = isDark
     ? {
         background: '#111827',
@@ -124,25 +148,28 @@ function Dropdown({
         style={glassSurface}
       >
         <span
-          className={
+          className={`truncate flex-1 ${
             selected
               ? ''
               : isDark
                 ? 'text-slate-500'
                 : 'text-slate-400'
-          }
+          }`}
         >
           {selected ? selected.label : placeholder}
         </span>
 
-        <ChevronDown
-          size={10}
-          className={`
-            flex-shrink-0 transition-transform duration-200
-            ${open ? 'rotate-180' : ''}
-            ${isDark ? 'text-slate-500' : 'text-slate-400'}
-          `}
-        />
+        <span className="flex items-center gap-2 flex-shrink-0">
+          {selected?.status && <StatusPill status={selected.status} />}
+          <ChevronDown
+            size={10}
+            className={`
+              flex-shrink-0 transition-transform duration-200
+              ${open ? 'rotate-180' : ''}
+              ${isDark ? 'text-slate-500' : 'text-slate-400'}
+            `}
+          />
+        </span>
       </button>
 
       {open && (
@@ -248,14 +275,17 @@ function Dropdown({
                       }
                     `}
                   >
-                    {o.label}
+                    <span className="truncate flex-1">{o.label}</span>
 
-                    {isSelected && (
-                      <Check
-                        size={13}
-                        className="text-[#7094ff] flex-shrink-0"
-                      />
-                    )}
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      {o.status && <StatusPill status={o.status} />}
+                      {isSelected && (
+                        <Check
+                          size={13}
+                          className="text-[#7094ff] flex-shrink-0"
+                        />
+                      )}
+                    </span>
                   </button>
                 )
               })
@@ -413,26 +443,42 @@ function GlassCard({ children, className = '' }) {
    ADD FORM
 ───────────────────────────────────────────────────────────── */
 function AddForm({ branches, onAdd }) {
-
   const branchOptions = branches.map(branch => ({
-        value: branch,
-        label: branch
-    }));
-    
+    value: branch,
+    label: branch,
+  }))
+
   const { isDark } = useTheme()
   const [form, setForm] = useState({ branch: '', device: '', printerType: '', mode: '' })
   const [submitted, setSubmitted] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [fetchedDevices, setFetchedDevices] = useState([]);
+  const [fetchedDevices, setFetchedDevices] = useState([])
+
   const set = k => v =>
     setForm(f => ({ ...f, [k]: v, ...(k === 'branch' ? { device: '' } : {}) }))
 
-  // const branchOptions = BRANCHES.map(b => ({ value: String(b.id), label: b.name }))
-  // const deviceOptions = form.branch ? (DEVICES_BY_BRANCH[Number(form.branch)] || []) : []
-  const deviceOptions = (fetchedDevices || []).map(device => ({
-    value: device,
-    label: device
-}));
+  /* Map devices → { value, label, status } for pill rendering */
+  const deviceOptions = (fetchedDevices || []).map(device => {
+    if (typeof device === 'string' || typeof device === 'number') {
+      return { value: String(device), label: String(device), status: null }
+    }
+
+    const value =
+      device?.deviceName ??
+      device?.device ??
+      device?.pcName ??
+      device?.computerName ??
+      device?.hostName ??
+      device?.ipAddress ??
+      device?.value ??
+      ''
+
+    const status =
+      device?.agentStatus ?? device?.status ?? null
+
+    return { value, label: value, status }
+  })
+
   const modeOptions = [
     { value: 'Allow', label: 'Allow' },
     { value: 'Prevent', label: 'Prevent' },
@@ -440,67 +486,68 @@ function AddForm({ branches, onAdd }) {
   const isValid = form.branch && form.device && form.mode
 
   const handleSubmit = async () => {
+    setSubmitted(true)
+    if (!isValid) return
 
-    setSubmitted(true);
-    if (!isValid) return;
     const requestData = {
-        branch: form.branch,
-        device: form.device,
-        mode: form.mode
-    };
-    // alert("Selected Data"+requestData.branch+" "+requestData.device+" "+requestData.mode);
-    const response = await dashboardService.addPrinterPolicy(requestData);
-    console.log("The policy Status IS",response.data);
-
-    if(response.data === "SUCCESS"){
-        await showAlert({
-              icon:              'success',
-              title:             'Policy Saved',
-              text:              'Printer policy successful',
-              timer:             2500,
-              timerProgressBar:  true,
-              showConfirmButton: true,
-            });
-            setSubmitted(false);  
-            setForm({ branch: '', device: '', mode: '' });
-    }else{
-      showAlert({
-              icon:              'error',
-              title:             'Policy Failed',
-              text:              "Error Sending policy",
-              confirmButtonText: 'Cancel',
-            })
+      branch: form.branch,
+      device: form.device,
+      mode: form.mode,
     }
-}
+
+    const response = await dashboardService.addPrinterPolicy(requestData)
+    console.log('The policy Status IS', response.data)
+
+    if (response.data === 'SUCCESS') {
+      await showAlert({
+        icon: 'success',
+        title: 'Policy Saved',
+        text: 'Printer policy successful',
+        timer: 2500,
+        timerProgressBar: true,
+        showConfirmButton: true,
+      })
+      setSubmitted(false)
+      setForm({ branch: '', device: '', mode: '' })
+      setFetchedDevices([])
+    } else {
+      showAlert({
+        icon: 'error',
+        title: 'Policy Failed',
+        text: 'Error Sending policy',
+        confirmButtonText: 'Cancel',
+      })
+    }
+  }
 
   const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5
                     ${isDark ? 'text-slate-500' : 'text-slate-400'}`
 
+  const handleBranchChange = async branch => {
+    setForm(f => ({
+      ...f,
+      branch,
+      device: '',
+    }))
 
-  const handleBranchChange = async(branch)=>{
-  // alert("User selected branch "+branch)
-       setForm(f => ({
-        ...f,
-        branch,
-        device: ""
-    }));
-
-    const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch);
-    setFetchedDevices(DevicesOfBranches.data);
-    // alert("Received devices "+DevicesOfBranches.data);
-}                  
+    try {
+      const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch)
+      setFetchedDevices(DevicesOfBranches.data || [])
+    } catch (err) {
+      console.error('Error loading devices:', err)
+      setFetchedDevices([])
+    }
+  }
 
   return (
     <GlassCard className="p-6 mb-5">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
-
         {/* Branch */}
         <div>
           <label className={labelCls}>
             Branch Name <span className="text-rose-500 normal-case tracking-normal">*</span>
           </label>
           <Dropdown
-          
             value={form.branch}
             onChange={handleBranchChange}
             options={branchOptions}
@@ -546,7 +593,7 @@ function AddForm({ branches, onAdd }) {
       {/* Actions */}
       <div className="flex items-center justify-end gap-3">
         <GlassButton
-          onClick={() => { setForm({ branch: '', device: '', printerType: '', mode: '' }); setSubmitted(false) }}
+          onClick={() => { setForm({ branch: '', device: '', printerType: '', mode: '' }); setSubmitted(false); setFetchedDevices([]) }}
           variant="default"
           className="px-4 py-2"
         >
@@ -565,7 +612,6 @@ function AddForm({ branches, onAdd }) {
   )
 }
 
-
 /* ─────────────────────────────────────────────────────────────
    POLICY TABLE
 ───────────────────────────────────────────────────────────── */
@@ -577,7 +623,9 @@ function PolicyTable({ policies, onDelete }) {
   const filtered = policies.filter(p => {
     const q = search.toLowerCase()
     return (
-      (!q || p.branch.toLowerCase().includes(q) || p.ipAddress.toLowerCase().includes(q)) &&
+      (!q ||
+        String(p.branch || '').toLowerCase().includes(q) ||
+        String(p.ipAddress || '').toLowerCase().includes(q)) &&
       (!filterMode || p.allowPrevent === filterMode)
     )
   })
@@ -594,8 +642,6 @@ function PolicyTable({ policies, onDelete }) {
 
   return (
     <GlassCard className="overflow-hidden">
-
-      {/* Toolbar */}
       <div className={`flex items-center justify-between gap-3 px-5 py-4 border-b
                        ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
         <div className="flex items-center gap-2">
@@ -610,7 +656,6 @@ function PolicyTable({ policies, onDelete }) {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Search */}
           <div
             className={`relative flex items-center rounded-xl border text-[12px]
                         ${isDark ? 'border-white/[0.08]' : 'border-slate-200/80'}`}
@@ -630,7 +675,6 @@ function PolicyTable({ policies, onDelete }) {
             />
           </div>
 
-          {/* Filter */}
           <div className="w-36">
             <Dropdown
               value={filterMode}
@@ -642,7 +686,6 @@ function PolicyTable({ policies, onDelete }) {
         </div>
       </div>
 
-      {/* Table */}
       {filtered.length === 0 ? (
         <div className={`py-16 text-center text-[13px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
           No printer policies found.
@@ -655,9 +698,7 @@ function PolicyTable({ policies, onDelete }) {
                 <th className={thCls}>#</th>
                 <th className={thCls}>Branch</th>
                 <th className={thCls}>Device</th>
-                {/* <th className={thCls}>Printer Type</th> */}
                 <th className={thCls}>Mode</th>
-                {/* <th className={thCls}>Added On</th> */}
                 <th className={`${thCls} text-right`}>Action</th>
               </tr>
             </thead>
@@ -675,14 +716,7 @@ function PolicyTable({ policies, onDelete }) {
                   <td className={`${tdCls} font-mono text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     {p.ipAddress}
                   </td>
-                  {/* <td className={tdCls}>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Printer size={12} className="text-[#7094ff]" />
-                      {p.printerType}
-                    </span>
-                  </td> */}
                   <td className={tdCls}><Badge mode={p.allowPrevent} /></td>
-                  {/* <td className={`${tdCls} ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{p.addedOn}</td> */}
                   <td className={`${tdCls} text-right`}>
                     <button
                       onClick={() => onDelete(p.id)}
@@ -751,7 +785,6 @@ function TabBar({ active, onChange }) {
 export default function PrinterControl() {
   const { isDark } = useTheme()
   const [tab, setTab] = useState('add')
-  // const [policies, setPolicies] = useState(DUMMY_POLICIES)
   const [policies, setPolicies] = useState([])
   const [branches, setBranches] = useState([])
 
@@ -770,32 +803,24 @@ export default function PrinterControl() {
   }
 
   const loadPageData = async () => {
-  
-      const [ALLBranch,PrinterPolicies] = await Promise.all([
-        dashboardService.getBranch(),
-        dashboardService.getPrinterPolicies()
-        
-      ]);
-      // console.log("All Policies Fetched ", PrinterPolicies.data);
-      setBranches(ALLBranch.data);
-      setPolicies(PrinterPolicies.data);
-
-
-    };
+    const [ALLBranch, PrinterPolicies] = await Promise.all([
+      dashboardService.getBranch(),
+      dashboardService.getPrinterPolicies(),
+    ])
+    setBranches(ALLBranch.data)
+    setPolicies(PrinterPolicies.data)
+  }
 
   useEffect(() => {
-    loadPageData();
-  }, []);
-
-  
-
+    loadPageData()
+  }, [])
 
   const handleDelete = id => setPolicies(prev => prev.filter(p => p.id !== id))
 
   return (
     <div className="w-full">
-      <br>
-      </br>
+      <br />
+
       {/* Page header */}
       <div className="flex items-start justify-between mb-7">
         <div className="flex items-center gap-3">
