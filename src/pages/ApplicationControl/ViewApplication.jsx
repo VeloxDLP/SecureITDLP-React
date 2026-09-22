@@ -10,6 +10,7 @@ import {
   Check,
   Eye,
   ArrowLeft,
+  AppWindow,
 } from "lucide-react";
 
 import { dashboardService } from "../../services/dashboardService";
@@ -147,7 +148,7 @@ function MultiSelectDropdown({
           disabled:opacity-40 disabled:cursor-not-allowed
           ${
             isDark
-              ? "bg-[#172439] border-white/[0.10] text-slate-200"
+              ? "bg-[#111827] border-[#334155] text-slate-200"
               : "bg-white border-slate-300 text-slate-800"
           }
           ${
@@ -190,7 +191,7 @@ function MultiSelectDropdown({
             shadow-[0_16px_48px_rgba(0,0,0,0.35)]
             ${
               isDark
-                ? "bg-[#172439] border-white/[0.10]"
+                ? "bg-[#111827] border-[#334155]"
                 : "bg-white border-slate-200"
             }
           `}
@@ -388,7 +389,7 @@ function Dropdown({
           disabled:opacity-40 disabled:cursor-not-allowed
           ${
             isDark
-              ? "bg-[#172439] border-white/[0.10] text-slate-200"
+              ? "bg-[#111827] border-[#334155] text-slate-200"
               : "bg-white border-slate-300 text-slate-800"
           }
           ${
@@ -422,7 +423,7 @@ function Dropdown({
             shadow-[0_16px_48px_rgba(0,0,0,0.35)]
             ${
               isDark
-                ? "bg-[#172439] border-white/[0.10]"
+                ? "bg-[#111827] border-[#334155]"
                 : "bg-white border-slate-200"
             }
           `}
@@ -779,41 +780,52 @@ export default function ViewApplication() {
   // RENDER
   // =========================
   return (
-    <div className="min-h-screen p-6">
-      {/* HEADER */}
-      <div
-        className={`w-full mb-6 rounded-xl border px-6 py-4 ${
-          isDark
-            ? "bg-[#020617] border-[#2B3345]"
-            : "bg-white border-slate-200"
-        }`}
-      >
-        <h2
-          className={`text-lg font-medium ${
-            isDark ? "text-white" : "text-gray-900"
-          }`}
-        >
-          View Application
-        </h2>
+    <div className="w-full">
+      <br />
 
-        <p
-          className={`mt-1 text-sm ${
-            isDark ? "text-gray-400" : "text-gray-500"
-          }`}
-        >
-          View application control policies and application details.
-        </p>
+      {/* HEADING with icon badge */}
+      <div className="flex items-start justify-between mb-7">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-2xl flex items-center justify-center"
+            style={{
+              background: "rgba(112,148,255,0.15)",
+              border: "1px solid rgba(112,148,255,0.25)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <AppWindow size={18} className="text-[#7094ff]" />
+          </div>
+
+          <div>
+            <h2
+              className={`font-display font-bold text-lg leading-tight ${
+                isDark ? "text-slate-100" : "text-slate-800"
+              }`}
+            >
+              View Application
+            </h2>
+
+            <p
+              className={`text-[11px] mt-0.5 ${
+                isDark ? "text-slate-500" : "text-slate-400"
+              }`}
+            >
+              View application control policies and application details
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* FILTER SECTION */}
       <div
-        className={`w-full rounded-xl border p-5 ${
+        className={`w-full rounded-2xl border p-5 ${
           isDark
             ? "bg-[#020617] border-indigo-950"
             : "bg-white border-slate-200"
         }`}
       >
-        <div className="grid grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
           {/* BRANCH */}
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-[rgb(100,116,139)]">
@@ -857,7 +869,7 @@ export default function ViewApplication() {
           <button
             type="button"
             onClick={handleReset}
-            className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+            className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
               isDark
                 ? "border-gray-600 text-gray-300 hover:bg-white/5"
                 : "border-slate-300 text-gray-700 hover:bg-slate-100"
@@ -873,7 +885,7 @@ export default function ViewApplication() {
             disabled={
               loading || !selectedBranch || selectedDevices.length === 0
             }
-            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#4f56f0] text-white text-sm font-semibold shadow-lg shadow-indigo-900/40 hover:bg-[#5c63f5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#4f56f0] text-white text-sm font-semibold shadow-lg shadow-indigo-900/40 hover:bg-[#5c63f5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
@@ -894,7 +906,7 @@ export default function ViewApplication() {
       {showResults && (
         <div
           ref={applicationResultRef}
-          className={`mt-8 rounded-xl border p-6 scroll-mt-6 ${
+          className={`mt-8 rounded-2xl border p-6 scroll-mt-6 ${
             isDark
               ? "bg-[#020617] border-indigo-950"
               : "bg-white border-slate-200"
@@ -1135,7 +1147,7 @@ export default function ViewApplication() {
       {viewingHostname !== null && (
         <div
           ref={detailsSectionRef}
-          className={`mt-8 rounded-xl border p-6 scroll-mt-6 ${
+          className={`mt-8 rounded-2xl border p-6 scroll-mt-6 ${
             isDark
               ? "bg-[#020617] border-indigo-950"
               : "bg-white border-slate-200"
@@ -1434,4 +1446,4 @@ export default function ViewApplication() {
       )}
     </div>
   );
-}
+}          
