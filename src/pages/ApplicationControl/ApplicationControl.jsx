@@ -26,6 +26,29 @@ const INITIAL_POLICIES = [
   { id: 2, ipAddress: '192.168.1.105', mode: 'Protection', date: '2026-08-21' },
 ];
 
+// ─── Status Pill ───────────────────────────────────────────────
+function StatusPill({ status }) {
+  if (!status) return null;
+
+  const lower = String(status).toLowerCase();
+  const isUp = lower === 'up';
+  const isDown = lower === 'down';
+
+  const styles = isUp
+    ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/[0.08]'
+    : isDown
+    ? 'text-rose-400 border-rose-500/40 bg-rose-500/[0.08]'
+    : 'text-slate-400 border-slate-500/40 bg-slate-500/[0.08]';
+
+  return (
+    <span
+      className={`shrink-0 px-2 py-[1px] rounded-md text-[10px] font-bold uppercase tracking-wide border ${styles}`}
+    >
+      {status}
+    </span>
+  );
+}
+
 // ─── Dropdown ──────────────────────────────────────────────────
 function Dropdown({ value, onChange, options, placeholder = 'Select…', disabled = false, searchable = false, error = false }) {
   const { isDark } = useTheme();
@@ -33,10 +56,14 @@ function Dropdown({ value, onChange, options, placeholder = 'Select…', disable
   const [query, setQuery] = useState('');
   const containerRef = useRef(null);
 
-  const normalised = options.map(o => (typeof o === 'string' ? { value: o, label: o } : o));
+  const normalised = options.map(o =>
+    typeof o === 'string' ? { value: o, label: o, status: null } : { status: null, ...o }
+  );
+
   const filtered = searchable && query
     ? normalised.filter(o => o.label.toLowerCase().includes(query.toLowerCase()))
     : normalised;
+
   const selected = normalised.find(o => o.value === value);
 
   useEffect(() => {
@@ -80,10 +107,23 @@ function Dropdown({ value, onChange, options, placeholder = 'Select…', disable
         `}
         style={glassSurface}
       >
-        <span className={selected ? '' : isDark ? 'text-slate-500' : 'text-slate-400'}>
+        <span
+          className={`truncate flex-1 ${
+            selected ? '' : isDark ? 'text-slate-500' : 'text-slate-400'
+          }`}
+        >
           {selected ? selected.label : placeholder}
         </span>
-        <ChevronDown size={14} className={`flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''} ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
+
+        <span className="flex items-center gap-2 flex-shrink-0">
+          {selected?.status && <StatusPill status={selected.status} />}
+          <ChevronDown
+            size={14}
+            className={`transition-transform duration-200 ${
+              open ? 'rotate-180' : ''
+            } ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+          />
+        </span>
       </button>
 
       {open && (
@@ -114,12 +154,14 @@ function Dropdown({ value, onChange, options, placeholder = 'Select…', disable
               </div>
             </div>
           )}
+
           <div className="max-h-52 overflow-y-auto py-1">
             {filtered.length === 0 ? (
               <p className={`px-4 py-3 text-[12px] text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>No results</p>
             ) : (
               filtered.map(o => {
                 const isSelected = o.value === value;
+
                 return (
                   <button
                     key={o.value}
@@ -127,8 +169,16 @@ function Dropdown({ value, onChange, options, placeholder = 'Select…', disable
                     onClick={() => handleSelect(o.value)}
                     className={`w-full text-left px-4 py-2.5 text-[13px] flex items-center justify-between gap-2 transition-colors duration-100 ${isSelected ? 'text-[#7094ff] bg-[#7094ff]/10' : isDark ? 'text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]' : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'}`}
                   >
-                    {o.label}
-                    {isSelected && <Check size={13} className="text-[#7094ff] flex-shrink-0" />}
+                    <span className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">{o.label}</span>
+                    </span>
+
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      {o.status && <StatusPill status={o.status} />}
+                      {isSelected && (
+                        <Check size={13} className="text-[#7094ff] flex-shrink-0" />
+                      )}
+                    </span>
                   </button>
                 );
               })
@@ -217,7 +267,7 @@ function GlassButton({ children, onClick, variant = 'default', className = '', d
   );
 }
 
-// ─── Badge (case-insensitive) ─────────────────────────────────
+// ─── Badge ─────────────────────────────────────────────────────
 function Badge({ mode }) {
   const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border';
   const isAllowed = ['allow', 'learning'].includes(mode?.toLowerCase());
@@ -259,8 +309,32 @@ function AddForm({ branches, onAdd }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetchedDevices, setFetchedDevices] = useState([]);
 
+  const getDeviceValue = (item) => {
+    if (typeof item === 'string') return item;
+    return (
+      item?.deviceName ??
+      item?.device ??
+      item?.name ??
+      item?.pcName ??
+      item?.computerName ??
+      item?.value ??
+      ''
+    );
+  };
+
+  const getAgentStatus = (item) => {
+    if (typeof item === 'string') return null;
+    return item?.agentStatus ?? item?.status ?? null;
+  };
+
   const branchOptions = branches.map(b => ({ value: b, label: b }));
-  const deviceOptions = fetchedDevices.map(d => ({ value: d, label: d }));
+
+  const deviceOptions = fetchedDevices.map((item) => {
+    const value = getDeviceValue(item);
+    const status = getAgentStatus(item);
+    return { value, label: value, status };
+  });
+
   const modeOptions = [
     { value: 'Learning', label: 'Learning' },
     { value: 'Protection', label: 'Protection' },
@@ -383,7 +457,6 @@ function PolicyTable({ policies, onDelete, loading = false }) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
-  // 🔥 FIX: case-insensitive filter
   const filtered = policies.filter(p => {
     const q = search.toLowerCase();
     return (
@@ -533,7 +606,6 @@ export default function ApplicationControl() {
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // ─── Load branches ─────────────────────────────────────────────
   useEffect(() => {
     const loadBranches = async () => {
       try {
@@ -547,7 +619,6 @@ export default function ApplicationControl() {
     loadBranches();
   }, []);
 
-  // ─── Fetch policies ───────────────────────────────────────────
   const fetchPolicies = async () => {
     setLoading(true);
     try {
@@ -561,7 +632,6 @@ export default function ApplicationControl() {
       else if (response?.result && Array.isArray(response.result)) rawData = response.result;
 
       if (Array.isArray(rawData) && rawData.length > 0) {
-        // 🔥 Map fields & convert "learning" → "Learning"
         const mapped = rawData.map((item, index) => ({
           id: item.id || index + 1,
           ipAddress: item.ipAddress || 'N/A',
@@ -583,19 +653,16 @@ export default function ApplicationControl() {
     }
   };
 
-  // ─── Fetch on mount ───────────────────────────────────────────
   useEffect(() => {
     fetchPolicies();
   }, []);
 
-  // ─── Refetch when switching to View tab ──────────────────────
   useEffect(() => {
     if (tab === 'view') {
       fetchPolicies();
     }
   }, [tab]);
 
-  // ─── Add new policy (local) ──────────────────────────────────
   const handleAdd = (newPolicy) => {
     const newId = Math.max(...policies.map(p => p.id), 0) + 1;
     setPolicies(prev => [

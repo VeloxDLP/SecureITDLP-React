@@ -12,6 +12,29 @@ import {
 } from "lucide-react";
 import { dashboardService } from "../../services/dashboardService";
 
+// ─── Status Pill ───────────────────────────────────────────────
+function StatusPill({ status }) {
+  if (!status) return null;
+
+  const lower = String(status).toLowerCase();
+  const isUp = lower === "up";
+  const isDown = lower === "down";
+
+  const styles = isUp
+    ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/[0.08]"
+    : isDown
+    ? "text-rose-400 border-rose-500/40 bg-rose-500/[0.08]"
+    : "text-slate-400 border-slate-500/40 bg-slate-500/[0.08]";
+
+  return (
+    <span
+      className={`shrink-0 px-2 py-[1px] rounded-md text-[10px] font-bold uppercase tracking-wide border ${styles}`}
+    >
+      {status}
+    </span>
+  );
+}
+
 function ManageBlacklisted() {
   const [branch, setBranch] = useState("");
   const [device, setDevice] = useState([]);
@@ -19,8 +42,7 @@ function ManageBlacklisted() {
   const [branches, setBranches] = useState([]);
   const [devices, setDevices] = useState([]);
 
-  const [blacklistedApplications, setBlacklistedApplications] =
-    useState([]);
+  const [blacklistedApplications, setBlacklistedApplications] = useState([]);
 
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -49,9 +71,7 @@ function ManageBlacklisted() {
   const loadBranches = async () => {
     try {
       const response = await dashboardService.getBranch();
-
       console.log("Branch API Response:", response);
-
       setBranches(response?.data || []);
     } catch (error) {
       console.error("Failed to load branches:", error);
@@ -64,13 +84,8 @@ function ManageBlacklisted() {
   // ============================================================
   const getBranchValue = (item) => {
     if (typeof item === "string") return item;
-
     return (
-      item?.branchName ??
-      item?.branch ??
-      item?.name ??
-      item?.value ??
-      ""
+      item?.branchName ?? item?.branch ?? item?.name ?? item?.value ?? ""
     );
   };
 
@@ -79,7 +94,6 @@ function ManageBlacklisted() {
   // ============================================================
   const getDeviceValue = (item) => {
     if (typeof item === "string") return item;
-
     return (
       item?.deviceName ??
       item?.device ??
@@ -92,14 +106,20 @@ function ManageBlacklisted() {
   };
 
   // ============================================================
+  // AGENT STATUS VALUE
+  // ============================================================
+  const getAgentStatus = (item) => {
+    if (typeof item === "string") return null;
+    return item?.agentStatus ?? item?.status ?? null;
+  };
+
+  // ============================================================
   // BRANCH CHANGE
   // ============================================================
   const handleBranchChange = async (branchValue) => {
     setBranch(branchValue);
 
-    // Clear multiple devices
     setDevice([]);
-
     setDevices([]);
     setBlacklistedApplications([]);
 
@@ -115,8 +135,7 @@ function ManageBlacklisted() {
     try {
       setDeviceLoading(true);
 
-      const response =
-        await dashboardService.getDevicesByBranch(branchValue);
+      const response = await dashboardService.getDevicesByBranch(branchValue);
 
       console.log("Device API Response:", response);
 
@@ -137,11 +156,9 @@ function ManageBlacklisted() {
       if (prev.includes(deviceValue)) {
         return prev.filter((item) => item !== deviceValue);
       }
-
       return [...prev, deviceValue];
     });
 
-    // Clear old results when device selection changes
     setBlacklistedApplications([]);
     setSearchTerm("");
     setCurrentPage(1);
@@ -188,22 +205,10 @@ function ManageBlacklisted() {
   // DEVICE DISPLAY TEXT
   // ============================================================
   const getDeviceDisplayText = () => {
-    if (!branch) {
-      return "Select branch first";
-    }
-
-    if (deviceLoading) {
-      return "Loading devices...";
-    }
-
-    if (device.length === 0) {
-      return "Select Device";
-    }
-
-    if (device.length === 1) {
-      return device[0];
-    }
-
+    if (!branch) return "Select branch first";
+    if (deviceLoading) return "Loading devices...";
+    if (device.length === 0) return "Select Device";
+    if (device.length === 1) return device[0];
     return `${device.length} devices selected`;
   };
 
@@ -247,20 +252,13 @@ function ManageBlacklisted() {
         device: device,
       };
 
-      console.log(
-        "Application Blacklisted Request:",
+      console.log("Application Blacklisted Request:", requestData);
+
+      const response = await dashboardService.getApplicationBlacklisted(
         requestData
       );
 
-      const response =
-        await dashboardService.getApplicationBlacklisted(
-          requestData
-        );
-
-      console.log(
-        "Application Blacklisted Response:",
-        response
-      );
+      console.log("Application Blacklisted Response:", response);
 
       const result = response?.data || [];
 
@@ -275,11 +273,7 @@ function ManageBlacklisted() {
         }
       }, 150);
     } catch (error) {
-      console.error(
-        "Application Blacklisted API Error:",
-        error
-      );
-
+      console.error("Application Blacklisted API Error:", error);
       setBlacklistedApplications([]);
     } finally {
       setLoading(false);
@@ -291,56 +285,35 @@ function ManageBlacklisted() {
   // ============================================================
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        branchRef.current &&
-        !branchRef.current.contains(event.target)
-      ) {
+      if (branchRef.current && !branchRef.current.contains(event.target)) {
         setBranchOpen(false);
       }
 
-      if (
-        deviceRef.current &&
-        !deviceRef.current.contains(event.target)
-      ) {
+      if (deviceRef.current && !deviceRef.current.contains(event.target)) {
         setDeviceOpen(false);
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   // ============================================================
   // SEARCH
   // ============================================================
-  const filteredApplications =
-    blacklistedApplications.filter((item) => {
-      const search = searchTerm.toLowerCase();
+  const filteredApplications = blacklistedApplications.filter((item) => {
+    const search = searchTerm.toLowerCase();
 
-      return (
-        String(item?.applicationHash || "")
-          .toLowerCase()
-          .includes(search) ||
-        String(item?.applicationName || "")
-          .toLowerCase()
-          .includes(search) ||
-        String(item?.applicationType || "")
-          .toLowerCase()
-          .includes(search) ||
-        String(item?.ipAddress || "")
-          .toLowerCase()
-          .includes(search)
-      );
-    });
+    return (
+      String(item?.applicationHash || "").toLowerCase().includes(search) ||
+      String(item?.applicationName || "").toLowerCase().includes(search) ||
+      String(item?.applicationType || "").toLowerCase().includes(search) ||
+      String(item?.ipAddress || "").toLowerCase().includes(search)
+    );
+  });
 
   // ============================================================
   // APPLICATION UNIQUE KEY
@@ -350,9 +323,9 @@ function ManageBlacklisted() {
       return String(item.applicationHash);
     }
 
-    return `${item?.applicationName || ""}-${
-      item?.applicationType || ""
-    }-${item?.ipAddress || ""}`;
+    return `${item?.applicationName || ""}-${item?.applicationType || ""}-${
+      item?.ipAddress || ""
+    }`;
   };
 
   // ============================================================
@@ -363,11 +336,8 @@ function ManageBlacklisted() {
 
     setSelectedApplications((prev) => {
       if (prev.includes(key)) {
-        return prev.filter(
-          (selected) => selected !== key
-        );
+        return prev.filter((selected) => selected !== key);
       }
-
       return [...prev, key];
     });
   };
@@ -382,46 +352,32 @@ function ManageBlacklisted() {
 
     const allSelected =
       allKeys.length > 0 &&
-      allKeys.every((key) =>
-        selectedApplications.includes(key)
-      );
+      allKeys.every((key) => selectedApplications.includes(key));
 
     if (allSelected) {
       setSelectedApplications((prev) =>
         prev.filter((key) => !allKeys.includes(key))
       );
     } else {
-      setSelectedApplications((prev) => [
-        ...new Set([...prev, ...allKeys]),
-      ]);
+      setSelectedApplications((prev) => [...new Set([...prev, ...allKeys])]);
     }
   };
 
   const allFilteredSelected =
     filteredApplications.length > 0 &&
     filteredApplications.every((item) =>
-      selectedApplications.includes(
-        getApplicationKey(item)
-      )
+      selectedApplications.includes(getApplicationKey(item))
     );
 
   // ============================================================
   // ADD TO WHITELIST
   // ============================================================
   const handleAddToWhitelist = () => {
-    const selectedRows =
-      blacklistedApplications.filter((item) =>
-        selectedApplications.includes(
-          getApplicationKey(item)
-        )
-      );
-
-    console.log(
-      "Selected applications for whitelist:",
-      selectedRows
+    const selectedRows = blacklistedApplications.filter((item) =>
+      selectedApplications.includes(getApplicationKey(item))
     );
 
-    // Add whitelist API here when endpoint is available.
+    console.log("Selected applications for whitelist:", selectedRows);
   };
 
   // ============================================================
@@ -429,19 +385,15 @@ function ManageBlacklisted() {
   // ============================================================
   const totalPages = Math.max(
     1,
-    Math.ceil(
-      filteredApplications.length / rowsPerPage
-    )
+    Math.ceil(filteredApplications.length / rowsPerPage)
   );
 
-  const startIndex =
-    (currentPage - 1) * rowsPerPage;
+  const startIndex = (currentPage - 1) * rowsPerPage;
 
-  const paginatedApplications =
-    filteredApplications.slice(
-      startIndex,
-      startIndex + rowsPerPage
-    );
+  const paginatedApplications = filteredApplications.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
 
   // ============================================================
   // KEEP PAGE VALID
@@ -456,9 +408,7 @@ function ManageBlacklisted() {
   // DISPLAY START / END
   // ============================================================
   const displayStart =
-    filteredApplications.length === 0
-      ? 0
-      : startIndex + 1;
+    filteredApplications.length === 0 ? 0 : startIndex + 1;
 
   const displayEnd = Math.min(
     startIndex + paginatedApplications.length,
@@ -470,34 +420,21 @@ function ManageBlacklisted() {
   // ============================================================
   return (
     <div className="w-full pt-6 space-y-4">
-
-      {/* ======================================================
-          HEADER
-      ====================================================== */}
+      {/* HEADER */}
       <div className="w-full rounded-xl border border-slate-700/80 bg-[#020617] px-5 py-4">
         <h2 className="text-[15px] font-semibold text-white">
           Manage Blacklisted
         </h2>
-
         <p className="mt-1 text-[12px] text-slate-400">
           Manage blacklisted application policies and application details.
         </p>
       </div>
 
-      {/* ======================================================
-          FILTER CARD
-      ====================================================== */}
+      {/* FILTER CARD */}
       <div className="w-full rounded-xl border border-[#27355f] bg-[#020617] px-4 py-4 min-h-[148px]">
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-[830px]">
-
-          {/* ==================================================
-              BRANCH NAME
-          ================================================== */}
-          <div
-            ref={branchRef}
-            className="relative"
-          >
+          {/* BRANCH NAME */}
+          <div ref={branchRef} className="relative">
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-[rgb(100,116,139)]">
               BRANCH NAME{" "}
               <span className="text-rose-500 normal-case tracking-normal">
@@ -517,13 +454,7 @@ function ManageBlacklisted() {
                   : "border-[#334155]"
               }`}
             >
-              <span
-                className={
-                  branch
-                    ? "text-slate-300"
-                    : "text-slate-500"
-                }
-              >
+              <span className={branch ? "text-slate-300" : "text-slate-500"}>
                 {branch || "Select Branch"}
               </span>
 
@@ -537,25 +468,20 @@ function ManageBlacklisted() {
 
             {branchOpen && (
               <div className="absolute z-50 left-0 right-0 mt-1 rounded-lg border border-[#334155] bg-[#111827] shadow-xl overflow-hidden">
-
                 <div className="max-h-[160px] overflow-y-auto py-1">
-
                   {branches.length === 0 ? (
                     <div className="px-3 py-2.5 text-[12px] text-slate-500">
                       No branches found
                     </div>
                   ) : (
                     branches.map((item, index) => {
-                      const value =
-                        getBranchValue(item);
+                      const value = getBranchValue(item);
 
                       return (
                         <button
                           key={index}
                           type="button"
-                          onClick={() =>
-                            handleBranchChange(value)
-                          }
+                          onClick={() => handleBranchChange(value)}
                           className={`w-full px-3 py-2.5 text-left text-[12px] flex items-center justify-between transition-colors ${
                             branch === value
                               ? "bg-[#1e293b] text-[#7094ff]"
@@ -563,27 +489,18 @@ function ManageBlacklisted() {
                           }`}
                         >
                           <span>{value}</span>
-
-                          {branch === value && (
-                            <Check size={14} />
-                          )}
+                          {branch === value && <Check size={14} />}
                         </button>
                       );
                     })
                   )}
-
                 </div>
               </div>
             )}
           </div>
 
-          {/* ==================================================
-              DEVICE NAME - MULTI SELECT
-          ================================================== */}
-          <div
-            ref={deviceRef}
-            className="relative"
-          >
+          {/* DEVICE NAME - MULTI SELECT */}
+          <div ref={deviceRef} className="relative">
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-[rgb(100,116,139)]">
               DEVICE NAME{" "}
               <span className="text-rose-500 normal-case tracking-normal">
@@ -596,7 +513,6 @@ function ManageBlacklisted() {
               disabled={!branch || deviceLoading}
               onClick={() => {
                 if (!branch || deviceLoading) return;
-
                 setDeviceOpen((prev) => !prev);
                 setBranchOpen(false);
               }}
@@ -610,19 +526,14 @@ function ManageBlacklisted() {
             >
               <span
                 className={
-                  device.length > 0
-                    ? "text-slate-300"
-                    : "text-slate-500"
+                  device.length > 0 ? "text-slate-300" : "text-slate-500"
                 }
               >
                 {getDeviceDisplayText()}
               </span>
 
               {deviceLoading ? (
-                <RefreshCw
-                  size={13}
-                  className="text-slate-500 animate-spin"
-                />
+                <RefreshCw size={13} className="text-slate-500 animate-spin" />
               ) : (
                 <ChevronDown
                   size={15}
@@ -633,89 +544,92 @@ function ManageBlacklisted() {
               )}
             </button>
 
-            {deviceOpen &&
-              branch &&
-              !deviceLoading && (
-                <div className="absolute z-50 left-0 right-0 mt-1 rounded-lg border border-[#334155] bg-[#111827] shadow-xl overflow-hidden">
-
-                  <div className="max-h-[187px] overflow-y-auto py-1">
-
-                    {devices.length === 0 ? (
-                      <div className="px-3 py-2.5 text-[12px] text-slate-500">
-                        No devices found
-                      </div>
-                    ) : (
-                      <>
-
-                        {/* ==================================================
-                            SELECT ALL
-                        ================================================== */}
-                        <button
-                          type="button"
-                          onClick={handleSelectAllDevices}
-                          className={`w-full px-3 py-2.5 text-left text-[12px] flex items-center gap-2 transition-colors border-b border-[#27355f] ${
-                            allDevicesSelected
-                              ? "bg-[#1e293b] text-[#7094ff]"
-                              : "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
-                          }`}
-                        >
+            {deviceOpen && branch && !deviceLoading && (
+              <div className="absolute z-50 left-0 right-0 mt-1 rounded-lg border border-[#334155] bg-[#111827] shadow-xl overflow-hidden">
+                <div className="max-h-[187px] overflow-y-auto py-1">
+                  {devices.length === 0 ? (
+                    <div className="px-3 py-2.5 text-[12px] text-slate-500">
+                      No devices found
+                    </div>
+                  ) : (
+                    <>
+                      {/* SELECT ALL */}
+                      <button
+                        type="button"
+                        onClick={handleSelectAllDevices}
+                        className={`w-full px-3 py-2.5 text-left text-[12px] flex items-center justify-between transition-colors border-b border-[#27355f] ${
+                          allDevicesSelected
+                            ? "bg-[#1e293b] text-[#7094ff]"
+                            : "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
                           <span className="w-[14px] flex items-center justify-center">
-                            {allDevicesSelected && (
-                              <Check size={14} />
-                            )}
+                            {allDevicesSelected && <Check size={14} />}
                           </span>
-
                           <span>Select all</span>
-                        </button>
+                        </span>
 
-                        {/* ==================================================
-                            DEVICE LIST
-                        ================================================== */}
-                        {devices.map((item, index) => {
-                          const value =
-                            getDeviceValue(item);
+                        <span className="text-[10px] text-slate-500">
+                          {
+                            devices.filter(
+                              (d) =>
+                                String(getAgentStatus(d)).toLowerCase() ===
+                                "up"
+                            ).length
+                          }{" "}
+                          Up /{" "}
+                          {
+                            devices.filter(
+                              (d) =>
+                                String(getAgentStatus(d)).toLowerCase() ===
+                                "down"
+                            ).length
+                          }{" "}
+                          Down
+                        </span>
+                      </button>
 
-                          const isSelected =
-                            device.includes(value);
+                      {/* DEVICE LIST */}
+                      {devices.map((item, index) => {
+                        const value = getDeviceValue(item);
+                        const status = getAgentStatus(item);
+                        const isSelected = device.includes(value);
 
-                          return (
-                            <button
-                              key={index}
-                              type="button"
-                              onClick={() =>
-                                handleDeviceChange(value)
-                              }
-                              className={`w-full px-3 py-2.5 text-left text-[12px] flex items-center justify-between transition-colors ${
-                                isSelected
-                                  ? "bg-[#1e293b] text-[#7094ff]"
-                                  : "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
-                              }`}
-                            >
-                              <span>{value}</span>
+                        return (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleDeviceChange(value)}
+                            className={`w-full px-3 py-2.5 text-left text-[12px] flex items-center justify-between gap-2 transition-colors ${
+                              isSelected
+                                ? "bg-[#1e293b] text-[#7094ff]"
+                                : "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                            }`}
+                          >
+                            <span className="flex items-center gap-2 min-w-0 flex-1">
+                              <span className="truncate">{value}</span>
+                            </span>
 
+                            <span className="flex items-center gap-2 flex-shrink-0">
+                              {status && <StatusPill status={status} />}
                               {isSelected && (
-                                <Check size={14} />
+                                <Check size={14} className="shrink-0" />
                               )}
-                            </button>
-                          );
-                        })}
-
-                      </>
-                    )}
-
-                  </div>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
                 </div>
-              )}
+              </div>
+            )}
           </div>
-
         </div>
 
-        {/* ======================================================
-            TOP BUTTONS
-        ====================================================== */}
+        {/* TOP BUTTONS */}
         <div className="flex justify-end gap-2 mt-4">
-
-          {/* RESET */}
           <button
             type="button"
             onClick={handleReset}
@@ -725,23 +639,15 @@ function ManageBlacklisted() {
             Reset
           </button>
 
-          {/* SUBMIT */}
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={
-              loading ||
-              !branch ||
-              device.length === 0
-            }
+            disabled={loading || !branch || device.length === 0}
             className="h-[36px] px-5 rounded-lg bg-[#4f56f0] text-[11px] font-semibold text-white flex items-center gap-2 hover:bg-[#5d64f5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
-                <RefreshCw
-                  size={13}
-                  className="animate-spin"
-                />
+                <RefreshCw size={13} className="animate-spin" />
                 Loading...
               </>
             ) : (
@@ -751,27 +657,20 @@ function ManageBlacklisted() {
               </>
             )}
           </button>
-
         </div>
       </div>
 
-      {/* ======================================================
-          BLACKLISTED APPLICATION TABLE
-      ====================================================== */}
+      {/* BLACKLISTED APPLICATION TABLE */}
       {blacklistedApplications.length > 0 && (
         <div
           ref={tableRef}
           className="w-full rounded-xl border border-[#27355f] bg-[#020617] p-6 scroll-mt-6"
         >
-
-          {/* TABLE HEADER */}
           <div className="flex items-center justify-between mb-5">
-
             <div>
               <h3 className="text-[14px] font-semibold text-white">
                 Blacklisted Applications
               </h3>
-
               <p className="mt-1 text-[11px] text-slate-500">
                 Device:{" "}
                 {device.length === 1
@@ -780,9 +679,7 @@ function ManageBlacklisted() {
               </p>
             </div>
 
-            {/* SEARCH */}
             <div className="relative w-[250px]">
-
               <Search
                 size={13}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
@@ -811,20 +708,13 @@ function ManageBlacklisted() {
                   <X size={13} />
                 </button>
               )}
-
             </div>
           </div>
 
-          {/* TABLE SCROLLER */}
           <div className="overflow-x-auto max-h-[430px] overflow-y-auto custom-scrollbar">
-
             <table className="w-full text-left">
-
               <thead className="sticky top-0 z-10 bg-[#020617]">
-
                 <tr className="border-b border-[#27355f]">
-
-                  {/* SELECT CHECKBOX */}
                   <th className="w-[55px] px-2 py-3 text-center">
                     <input
                       type="checkbox"
@@ -834,38 +724,31 @@ function ManageBlacklisted() {
                     />
                   </th>
 
-                  {/* SR NO */}
                   <th className="w-[55px] px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                     Sr
                     <br />
                     No
                   </th>
 
-                  {/* APPLICATION HASH */}
                   <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                     Application Hash
                   </th>
 
-                  {/* APPLICATION NAME */}
                   <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                     Application Name
                   </th>
 
-                  {/* APPLICATION TYPE */}
                   <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                     Application Type
                   </th>
 
-                  {/* IP ADDRESS */}
                   <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                     IP Address
                   </th>
-
                 </tr>
               </thead>
 
               <tbody>
-
                 {paginatedApplications.length === 0 ? (
                   <tr>
                     <td
@@ -876,96 +759,65 @@ function ManageBlacklisted() {
                     </td>
                   </tr>
                 ) : (
-                  paginatedApplications.map(
-                    (item, index) => {
-                      const applicationKey =
-                        getApplicationKey(item);
+                  paginatedApplications.map((item, index) => {
+                    const applicationKey = getApplicationKey(item);
+                    const isSelected =
+                      selectedApplications.includes(applicationKey);
 
-                      const isSelected =
-                        selectedApplications.includes(
-                          applicationKey
-                        );
+                    return (
+                      <tr
+                        key={applicationKey}
+                        className="border-b border-[#27355f]/60 hover:bg-[#0f172a] transition-colors"
+                      >
+                        <td className="w-[55px] px-2 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleSelectApplication(item)}
+                            className="h-3 w-3 cursor-pointer accent-[#4f56f0]"
+                          />
+                        </td>
 
-                      return (
-                        <tr
-                          key={applicationKey}
-                          className="border-b border-[#27355f]/60 hover:bg-[#0f172a] transition-colors"
-                        >
+                        <td className="w-[55px] px-2 py-3 text-center text-[11px] text-slate-500">
+                          {startIndex + index + 1}
+                        </td>
 
-                          {/* CHECKBOX */}
-                          <td className="w-[55px] px-2 py-3 text-center">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() =>
-                                handleSelectApplication(
-                                  item
-                                )
-                              }
-                              className="h-3 w-3 cursor-pointer accent-[#4f56f0]"
-                            />
-                          </td>
+                        <td className="px-4 py-3 text-[11px] text-slate-300 break-all max-w-[300px]">
+                          {item?.applicationHash || "-"}
+                        </td>
 
-                          {/* SR NO */}
-                          <td className="w-[55px] px-2 py-3 text-center text-[11px] text-slate-500">
-                            {startIndex + index + 1}
-                          </td>
+                        <td className="px-4 py-3 text-[11px] text-slate-300 break-all max-w-[450px]">
+                          {item?.applicationName || "-"}
+                        </td>
 
-                          {/* APPLICATION HASH */}
-                          <td className="px-4 py-3 text-[11px] text-slate-300 break-all max-w-[300px]">
-                            {item?.applicationHash || "-"}
-                          </td>
+                        <td className="px-4 py-3 text-[11px] text-slate-300">
+                          {item?.applicationType || "-"}
+                        </td>
 
-                          {/* APPLICATION NAME */}
-                          <td className="px-4 py-3 text-[11px] text-slate-300 break-all max-w-[450px]">
-                            {item?.applicationName || "-"}
-                          </td>
-
-                          {/* APPLICATION TYPE */}
-                          <td className="px-4 py-3 text-[11px] text-slate-300">
-                            {item?.applicationType || "-"}
-                          </td>
-
-                          {/* IP ADDRESS */}
-                          <td className="px-4 py-3 text-[11px] text-slate-300 whitespace-nowrap">
-                            {item?.ipAddress || "-"}
-                          </td>
-
-                        </tr>
-                      );
-                    }
-                  )
+                        <td className="px-4 py-3 text-[11px] text-slate-300 whitespace-nowrap">
+                          {item?.ipAddress || "-"}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
-
               </tbody>
             </table>
           </div>
 
-          {/* ======================================================
-              PAGINATION
-          ====================================================== */}
+          {/* PAGINATION */}
           <div className="flex items-center justify-between mt-5 pt-4">
-
             <div className="text-[11px] text-slate-500">
-              Showing{" "}
-              {displayStart}{" "}
-              to{" "}
-              {displayEnd}{" "}
-              of{" "}
-              {filteredApplications.length}{" "}
-              entries
+              Showing {displayStart} to {displayEnd} of{" "}
+              {filteredApplications.length} entries
             </div>
 
             <div className="flex items-center gap-1">
-
-              {/* PREVIOUS */}
               <button
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() =>
-                  setCurrentPage((prev) =>
-                    Math.max(prev - 1, 1)
-                  )
+                  setCurrentPage((prev) => Math.max(prev - 1, 1))
                 }
                 className={`h-[32px] px-3 border text-[11px] flex items-center gap-1 transition-colors ${
                   currentPage === 1
@@ -977,40 +829,28 @@ function ManageBlacklisted() {
                 Previous
               </button>
 
-              {/* PAGE NUMBERS */}
-              {Array.from(
-                { length: totalPages },
-                (_, index) => index + 1
-              ).map((page) => (
-                <button
-                  key={page}
-                  type="button"
-                  onClick={() =>
-                    setCurrentPage(page)
-                  }
-                  className={`h-[32px] min-w-[32px] px-2 border text-[11px] transition-colors ${
-                    currentPage === page
-                      ? "border-[#4f56f0] bg-[#4f56f0] text-white"
-                      : "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setCurrentPage(page)}
+                    className={`h-[32px] min-w-[32px] px-2 border text-[11px] transition-colors ${
+                      currentPage === page
+                        ? "border-[#4f56f0] bg-[#4f56f0] text-white"
+                        : "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
 
-              {/* NEXT */}
               <button
                 type="button"
-                disabled={
-                  currentPage === totalPages
-                }
+                disabled={currentPage === totalPages}
                 onClick={() =>
-                  setCurrentPage((prev) =>
-                    Math.min(
-                      prev + 1,
-                      totalPages
-                    )
-                  )
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 className={`h-[32px] px-3 border text-[11px] flex items-center gap-1 transition-colors ${
                   currentPage === totalPages
@@ -1021,15 +861,11 @@ function ManageBlacklisted() {
                 Next
                 <ChevronRight size={13} />
               </button>
-
             </div>
           </div>
 
-          {/* ======================================================
-              BOTTOM ACTION BUTTONS
-          ====================================================== */}
+          {/* BOTTOM ACTION BUTTONS */}
           <div className="flex justify-center items-center gap-1 mt-2 pt-1">
-
             <button
               type="button"
               onClick={handleAddToWhitelist}
@@ -1045,12 +881,9 @@ function ManageBlacklisted() {
             >
               Reset
             </button>
-
           </div>
-
         </div>
       )}
-
     </div>
   );
 }

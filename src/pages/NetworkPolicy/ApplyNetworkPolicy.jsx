@@ -679,6 +679,8 @@ function ApplyNetworkPolicy() {
                 </div>
               )}
             </div>
+
+           
           ) : (
             <div
               className={`rounded-xl border ${
