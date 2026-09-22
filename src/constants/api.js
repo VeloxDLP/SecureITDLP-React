@@ -41,7 +41,7 @@ PREVENTED_APPLICATIONDATA: "/DashboardModal/PreventedApplication",
 VIEWDEVICE:{
     VIEW_DEVICE:"/DeviceManager/allDevices",
     GET_BRANCH:"/UsbProtection/getBranches",
-    GET_DEVICES_ON_BRANCH:"/UsbProtection/devices",
+    GET_DEVICES_ON_BRANCH:"/DeviceManager/DevicesByBranch",
     GET_MODEACESS:"/UsbProtection/modeAccessCount",
     GET_DEVICEDETAIL:"/UsbProtection/deviceDetails",
     GET_DEVICENAME:"/UsbProtection/devices"
@@ -78,7 +78,8 @@ Drive_Control: {
 
 NETWORK_POLICY: {
   GETNETWORKPOLICY: "/NetworkDLP/GetDistinctPolicy",
-  GETPOLICYBYNAME: "/NetworkDLP/GetPolicy", // then use `${...}/${name}`
+  GETPOLICYBYNAME: "/NetworkDLP/GetPolicy", 
+  GETACTIVEDISTINCTPOLICY:"/NetworkDLP/GetActiveDistinctPolicy"
 },
 
 

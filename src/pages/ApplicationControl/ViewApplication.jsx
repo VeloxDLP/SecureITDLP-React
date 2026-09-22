@@ -16,10 +16,32 @@ import { dashboardService } from "../../services/dashboardService";
 import { useTheme } from "../../context/ThemeContext";
 
 /* =========================================================
+   STATUS PILL
+========================================================= */
+function StatusPill({ status }) {
+  if (!status) return null;
+
+  const lower = String(status).toLowerCase();
+  const isUp = lower === "up";
+  const isDown = lower === "down";
+
+  const styles = isUp
+    ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/[0.08]"
+    : isDown
+    ? "text-rose-400 border-rose-500/40 bg-rose-500/[0.08]"
+    : "text-slate-400 border-slate-500/40 bg-slate-500/[0.08]";
+
+  return (
+    <span
+      className={`shrink-0 px-2 py-[1px] rounded-md text-[10px] font-bold uppercase tracking-wide border ${styles}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+/* =========================================================
    MULTI SELECT DROPDOWN
-   IMPORTANT:
-   Keep this OUTSIDE ViewApplication so selecting a device
-   does not remount the component and close the dropdown.
 ========================================================= */
 function MultiSelectDropdown({
   values = [],
@@ -45,20 +67,14 @@ function MultiSelectDropdown({
     document.addEventListener("mousedown", handleOutsideClick);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleOutsideClick
-      );
+      document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, []);
 
   const normalizedOptions = (options || [])
     .map((item) => {
       if (typeof item === "string") {
-        return {
-          value: item,
-          label: item,
-        };
+        return { value: item, label: item, status: null };
       }
 
       const value =
@@ -79,55 +95,42 @@ function MultiSelectDropdown({
         item?.name ??
         value;
 
-      return {
-        value,
-        label,
-      };
+      const status = item?.agentStatus ?? item?.status ?? null;
+
+      return { value, label, status };
     })
     .filter((item) => item.value !== "");
 
   const allSelected =
     normalizedOptions.length > 0 &&
-    normalizedOptions.every((item) =>
-      values.includes(item.value)
-    );
+    normalizedOptions.every((item) => values.includes(item.value));
 
   const toggleDevice = (deviceValue) => {
     if (values.includes(deviceValue)) {
-      onChange(
-        values.filter(
-          (value) => value !== deviceValue
-        )
-      );
+      onChange(values.filter((value) => value !== deviceValue));
     } else {
-      onChange([
-        ...values,
-        deviceValue,
-      ]);
+      onChange([...values, deviceValue]);
     }
-
-    // DO NOT CLOSE DROPDOWN HERE
   };
 
   const toggleSelectAll = () => {
     if (allSelected) {
       onChange([]);
     } else {
-      onChange(
-        normalizedOptions.map(
-          (item) => item.value
-        )
-      );
+      onChange(normalizedOptions.map((item) => item.value));
     }
-
-    // DO NOT CLOSE DROPDOWN HERE
   };
 
+  const upCount = normalizedOptions.filter(
+    (o) => String(o.status).toLowerCase() === "up"
+  ).length;
+
+  const downCount = normalizedOptions.filter(
+    (o) => String(o.status).toLowerCase() === "down"
+  ).length;
+
   return (
-    <div
-      ref={containerRef}
-      className="relative w-full"
-    >
+    <div ref={containerRef} className="relative w-full">
       {/* SELECTED VALUE BUTTON */}
       <button
         type="button"
@@ -164,9 +167,7 @@ function MultiSelectDropdown({
           }
         >
           {values.length > 0
-            ? `${values.length} device${
-                values.length !== 1 ? "s" : ""
-              } selected`
+            ? `${values.length} device${values.length !== 1 ? "s" : ""} selected`
             : placeholder}
         </span>
 
@@ -175,11 +176,7 @@ function MultiSelectDropdown({
           className={`
             transition-transform
             ${open ? "rotate-180" : ""}
-            ${
-              isDark
-                ? "text-slate-500"
-                : "text-slate-400"
-            }
+            ${isDark ? "text-slate-500" : "text-slate-400"}
           `}
         />
       </button>
@@ -217,7 +214,7 @@ function MultiSelectDropdown({
                 toggleSelectAll();
               }}
               className={`
-                w-full flex items-center gap-2
+                w-full flex items-center justify-between gap-2
                 text-left text-[12px]
                 ${
                   isDark
@@ -226,30 +223,36 @@ function MultiSelectDropdown({
                 }
               `}
             >
-              <span
-                className={`
-                  h-4 w-4 rounded border
-                  flex items-center justify-center
-                  ${
-                    allSelected
-                      ? "bg-[#7094ff] border-[#7094ff]"
-                      : isDark
-                      ? "border-slate-500"
-                      : "border-slate-300"
-                  }
-                `}
-              >
-                {allSelected && (
-                  <Check
-                    size={11}
-                    className="text-white"
-                  />
-                )}
+              <span className="flex items-center gap-2">
+                <span
+                  className={`
+                    h-4 w-4 rounded border
+                    flex items-center justify-center
+                    ${
+                      allSelected
+                        ? "bg-[#7094ff] border-[#7094ff]"
+                        : isDark
+                        ? "border-slate-500"
+                        : "border-slate-300"
+                    }
+                  `}
+                >
+                  {allSelected && (
+                    <Check size={11} className="text-white" />
+                  )}
+                </span>
+
+                {allSelected ? "Deselect all" : "Select all"}
               </span>
 
-              {allSelected
-                ? "Deselect all"
-                : "Select all"}
+              {/* UP / DOWN COUNTS */}
+              <span
+                className={`text-[10px] ${
+                  isDark ? "text-slate-500" : "text-slate-400"
+                }`}
+              >
+                {upCount} Up / {downCount} Down
+              </span>
             </button>
           </div>
 
@@ -259,20 +262,14 @@ function MultiSelectDropdown({
               <p
                 className={`
                   px-4 py-3 text-[12px] text-center
-                  ${
-                    isDark
-                      ? "text-slate-600"
-                      : "text-slate-400"
-                  }
+                  ${isDark ? "text-slate-600" : "text-slate-400"}
                 `}
               >
                 No devices available
               </p>
             ) : (
               normalizedOptions.map((option) => {
-                const selected = values.includes(
-                  option.value
-                );
+                const selected = values.includes(option.value);
 
                 return (
                   <button
@@ -297,16 +294,16 @@ function MultiSelectDropdown({
                       }
                     `}
                   >
-                    <span>
-                      {option.label}
+                    <span className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">{option.label}</span>
                     </span>
 
-                    {selected && (
-                      <Check
-                        size={13}
-                        className="text-[#7094ff]"
-                      />
-                    )}
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      {option.status && <StatusPill status={option.status} />}
+                      {selected && (
+                        <Check size={13} className="text-[#7094ff]" />
+                      )}
+                    </span>
                   </button>
                 );
               })
@@ -320,7 +317,6 @@ function MultiSelectDropdown({
 
 /* =========================================================
    SINGLE DROPDOWN
-   Also kept outside parent component.
 ========================================================= */
 function Dropdown({
   value,
@@ -343,25 +339,16 @@ function Dropdown({
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleOutsideClick
-    );
+    document.addEventListener("mousedown", handleOutsideClick);
 
     return () =>
-      document.removeEventListener(
-        "mousedown",
-        handleOutsideClick
-      );
+      document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   const normalizedOptions = (options || [])
     .map((item) => {
       if (typeof item === "string") {
-        return {
-          value: item,
-          label: item,
-        };
+        return { value: item, label: item };
       }
 
       const value =
@@ -378,22 +365,14 @@ function Dropdown({
         item?.name ??
         value;
 
-      return {
-        value,
-        label,
-      };
+      return { value, label };
     })
     .filter((item) => item.value !== "");
 
-  const selected = normalizedOptions.find(
-    (item) => item.value === value
-  );
+  const selected = normalizedOptions.find((item) => item.value === value);
 
   return (
-    <div
-      ref={containerRef}
-      className="relative w-full"
-    >
+    <div ref={containerRef} className="relative w-full">
       <button
         type="button"
         disabled={disabled}
@@ -413,24 +392,16 @@ function Dropdown({
               : "bg-white border-slate-300 text-slate-800"
           }
           ${
-            open
-              ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60"
-              : ""
+            open ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60" : ""
           }
         `}
       >
         <span
           className={
-            selected
-              ? ""
-              : isDark
-              ? "text-slate-500"
-              : "text-slate-400"
+            selected ? "" : isDark ? "text-slate-500" : "text-slate-400"
           }
         >
-          {selected
-            ? selected.label
-            : placeholder}
+          {selected ? selected.label : placeholder}
         </span>
 
         <ChevronDown
@@ -438,11 +409,7 @@ function Dropdown({
           className={`
             transition-transform
             ${open ? "rotate-180" : ""}
-            ${
-              isDark
-                ? "text-slate-500"
-                : "text-slate-400"
-            }
+            ${isDark ? "text-slate-500" : "text-slate-400"}
           `}
         />
       </button>
@@ -465,19 +432,14 @@ function Dropdown({
               <p
                 className={`
                   px-4 py-3 text-[12px] text-center
-                  ${
-                    isDark
-                      ? "text-slate-600"
-                      : "text-slate-400"
-                  }
+                  ${isDark ? "text-slate-600" : "text-slate-400"}
                 `}
               >
                 No options available
               </p>
             ) : (
               normalizedOptions.map((option) => {
-                const selectedOption =
-                  option.value === value;
+                const selectedOption = option.value === value;
 
                 return (
                   <button
@@ -504,10 +466,7 @@ function Dropdown({
                     {option.label}
 
                     {selectedOption && (
-                      <Check
-                        size={13}
-                        className="text-[#7094ff]"
-                      />
+                      <Check size={13} className="text-[#7094ff]" />
                     )}
                   </button>
                 );
@@ -526,97 +485,49 @@ function Dropdown({
 export default function ViewApplication() {
   const { isDark } = useTheme();
 
-  // =========================
-  // STATES
-  // =========================
   const [applications, setApplications] = useState([]);
   const [branches, setBranches] = useState([]);
   const [devices, setDevices] = useState([]);
 
-  const [selectedBranch, setSelectedBranch] =
-    useState("");
+  const [selectedBranch, setSelectedBranch] = useState("");
+  const [selectedDevices, setSelectedDevices] = useState([]);
 
-  const [selectedDevices, setSelectedDevices] =
-    useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [deviceLoading, setDeviceLoading] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const [searchTerm, setSearchTerm] =
-    useState("");
+  const [viewingHostname, setViewingHostname] = useState(null);
+  const [viewDetails, setViewDetails] = useState([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
-
-  const [deviceLoading, setDeviceLoading] =
-    useState(false);
-
-  const [showResults, setShowResults] =
-    useState(false);
-
-  const [currentPage, setCurrentPage] =
-    useState(1);
-
-  // =========================
-  // INLINE DETAILS
-  // =========================
-  const [viewingHostname, setViewingHostname] =
-    useState(null);
-
-  const [viewDetails, setViewDetails] =
-    useState([]);
-
-  const [detailLoading, setDetailLoading] =
-    useState(false);
-
-  const [detailError, setDetailError] =
-    useState("");
-
-  // =========================
-  // DETAILS SEARCH
-  // =========================
-  const [detailSearchTerm, setDetailSearchTerm] =
-    useState("");
-
-  const [
-    detailCurrentPage,
-    setDetailCurrentPage,
-  ] = useState(1);
+  const [detailSearchTerm, setDetailSearchTerm] = useState("");
+  const [detailCurrentPage, setDetailCurrentPage] = useState(1);
 
   const itemsPerPage = 10;
 
-  const applicationResultRef =
-    useRef(null);
+  const applicationResultRef = useRef(null);
+  const detailsSectionRef = useRef(null);
 
-  const detailsSectionRef =
-    useRef(null);
-
-  // =========================
   // LOAD BRANCHES
-  // =========================
   useEffect(() => {
     loadBranches();
   }, []);
 
   const loadBranches = async () => {
     try {
-      const response =
-        await dashboardService.getBranch();
-
+      const response = await dashboardService.getBranch();
       setBranches(response?.data || []);
     } catch (error) {
-      console.error(
-        "Failed to load branches:",
-        error
-      );
-
+      console.error("Failed to load branches:", error);
       setBranches([]);
     }
   };
 
-  // =========================
   // BRANCH CHANGE
-  // =========================
-  const handleBranchChange = async (
-    branchValue
-  ) => {
+  const handleBranchChange = async (branchValue) => {
     setSelectedBranch(branchValue);
     setSelectedDevices([]);
     setDevices([]);
@@ -629,27 +540,20 @@ export default function ViewApplication() {
     try {
       setDeviceLoading(true);
 
-      const response =
-        await dashboardService.getDevicesByBranch(
-          branchValue
-        );
+      const response = await dashboardService.getDevicesByBranch(
+        branchValue
+      );
 
       setDevices(response?.data || []);
     } catch (error) {
-      console.error(
-        "Failed to load devices:",
-        error
-      );
-
+      console.error("Failed to load devices:", error);
       setDevices([]);
     } finally {
       setDeviceLoading(false);
     }
   };
 
-  // =========================
   // SUBMIT
-  // =========================
   const handleSubmit = async () => {
     setViewingHostname(null);
     setViewDetails([]);
@@ -657,10 +561,7 @@ export default function ViewApplication() {
     setDetailSearchTerm("");
     setDetailCurrentPage(1);
 
-    if (
-      !selectedBranch ||
-      selectedDevices.length === 0
-    ) {
+    if (!selectedBranch || selectedDevices.length === 0) {
       return;
     }
 
@@ -672,20 +573,11 @@ export default function ViewApplication() {
         device: selectedDevices,
       };
 
-      console.log(
-        "View Application Request:",
-        requestData
-      );
+      console.log("View Application Request:", requestData);
 
-      const response =
-        await dashboardService.getApplicationCount(
-          requestData
-        );
+      const response = await dashboardService.getApplicationCount(requestData);
 
-      console.log(
-        "View Application Response:",
-        response
-      );
+      console.log("View Application Response:", response);
 
       const responseData = response?.data;
 
@@ -693,10 +585,7 @@ export default function ViewApplication() {
 
       if (Array.isArray(responseData)) {
         applicationData = responseData;
-      } else if (
-        responseData &&
-        typeof responseData === "object"
-      ) {
+      } else if (responseData && typeof responseData === "object") {
         applicationData = [responseData];
       }
 
@@ -713,10 +602,7 @@ export default function ViewApplication() {
         }
       }, 150);
     } catch (error) {
-      console.error(
-        "View Application API Error:",
-        error
-      );
+      console.error("View Application API Error:", error);
 
       setApplications([]);
       setShowResults(true);
@@ -734,24 +620,16 @@ export default function ViewApplication() {
     }
   };
 
-  // =========================
   // VIEW DETAILS
-  // =========================
   const handleView = async (row) => {
     const hostname =
-      row?.pcName ??
-      row?.pc ??
-      row?.computerName ??
-      "";
+      row?.pcName ?? row?.pc ?? row?.computerName ?? "";
 
     setDetailSearchTerm("");
     setDetailCurrentPage(1);
 
     if (!hostname) {
-      setDetailError(
-        "Host name is not available"
-      );
-
+      setDetailError("Host name is not available");
       setViewDetails([]);
       setViewingHostname(hostname);
 
@@ -773,14 +651,9 @@ export default function ViewApplication() {
     setViewDetails([]);
 
     try {
-      const response =
-        await dashboardService.getApplicationDetails(
-          hostname
-        );
+      const response = await dashboardService.getApplicationDetails(hostname);
 
-      const details = Array.isArray(
-        response?.data
-      )
+      const details = Array.isArray(response?.data)
         ? response.data
         : response?.data
         ? [response.data]
@@ -788,10 +661,7 @@ export default function ViewApplication() {
 
       setViewDetails(details);
     } catch (error) {
-      console.error(
-        "Application details error:",
-        error
-      );
+      console.error("Application details error:", error);
 
       setViewDetails([]);
 
@@ -813,9 +683,7 @@ export default function ViewApplication() {
     }
   };
 
-  // =========================
   // CLOSE DETAILS
-  // =========================
   const handleCloseDetails = () => {
     setViewingHostname(null);
     setViewDetails([]);
@@ -825,9 +693,7 @@ export default function ViewApplication() {
     setDetailCurrentPage(1);
   };
 
-  // =========================
   // RESET
-  // =========================
   const handleReset = () => {
     setSelectedBranch("");
     setSelectedDevices([]);
@@ -851,112 +717,69 @@ export default function ViewApplication() {
     });
   };
 
-  // =========================
   // APPLICATION FILTER
-  // =========================
-  const filteredApplications =
-    applications.filter((item) => {
-      const search =
-        searchTerm.toLowerCase();
+  const filteredApplications = applications.filter((item) => {
+    const search = searchTerm.toLowerCase();
 
-      return Object.values(item || {}).some(
-        (value) =>
-          String(value ?? "")
-            .toLowerCase()
-            .includes(search)
-      );
-    });
+    return Object.values(item || {}).some((value) =>
+      String(value ?? "").toLowerCase().includes(search)
+    );
+  });
 
   const totalPages = Math.max(
     1,
-    Math.ceil(
-      filteredApplications.length /
-        itemsPerPage
-    )
+    Math.ceil(filteredApplications.length / itemsPerPage)
   );
 
-  const startIndex =
-    (currentPage - 1) *
-    itemsPerPage;
+  const startIndex = (currentPage - 1) * itemsPerPage;
 
-  const paginatedApplications =
-    filteredApplications.slice(
-      startIndex,
-      startIndex + itemsPerPage
-    );
+  const paginatedApplications = filteredApplications.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
-  // =========================
   // DETAILS FILTER
-  // =========================
-  const filteredViewDetails =
-    viewDetails.filter((detail) => {
-      const search =
-        detailSearchTerm
-          .toLowerCase()
-          .trim();
+  const filteredViewDetails = viewDetails.filter((detail) => {
+    const search = detailSearchTerm.toLowerCase().trim();
 
-      if (!search) return true;
+    if (!search) return true;
 
-      const applicationHash =
-        detail?.applicationHash ??
-        detail?.APPLICATION_HASH ??
-        "";
+    const applicationHash =
+      detail?.applicationHash ?? detail?.APPLICATION_HASH ?? "";
 
-      const applicationName =
-        detail?.applicationName ??
-        detail?.APPLICATION_NAME ??
-        "";
+    const applicationName =
+      detail?.applicationName ?? detail?.APPLICATION_NAME ?? "";
 
-      const applicationPath =
-        detail?.applicationPath ??
-        detail?.APPLICATION_PATH ??
-        "";
+    const applicationPath =
+      detail?.applicationPath ?? detail?.APPLICATION_PATH ?? "";
 
-      const ipAddress =
-        detail?.ipAddress ??
-        detail?.IP_ADDRESS ??
-        "";
+    const ipAddress = detail?.ipAddress ?? detail?.IP_ADDRESS ?? "";
 
-      return (
-        String(applicationHash)
-          .toLowerCase()
-          .includes(search) ||
-        String(applicationName)
-          .toLowerCase()
-          .includes(search) ||
-        String(applicationPath)
-          .toLowerCase()
-          .includes(search) ||
-        String(ipAddress)
-          .toLowerCase()
-          .includes(search)
-      );
-    });
+    return (
+      String(applicationHash).toLowerCase().includes(search) ||
+      String(applicationName).toLowerCase().includes(search) ||
+      String(applicationPath).toLowerCase().includes(search) ||
+      String(ipAddress).toLowerCase().includes(search)
+    );
+  });
 
   const detailTotalPages = Math.max(
     1,
-    Math.ceil(
-      filteredViewDetails.length /
-        itemsPerPage
-    )
+    Math.ceil(filteredViewDetails.length / itemsPerPage)
   );
 
-  const detailStartIndex =
-    (detailCurrentPage - 1) *
-    itemsPerPage;
+  const detailStartIndex = (detailCurrentPage - 1) * itemsPerPage;
 
-  const paginatedViewDetails =
-    filteredViewDetails.slice(
-      detailStartIndex,
-      detailStartIndex + itemsPerPage
-    );
+  const paginatedViewDetails = filteredViewDetails.slice(
+    detailStartIndex,
+    detailStartIndex + itemsPerPage
+  );
 
   // =========================
   // RENDER
   // =========================
   return (
     <div className="min-h-screen p-6">
-
       {/* HEADER */}
       <div
         className={`w-full mb-6 rounded-xl border px-6 py-4 ${
@@ -967,9 +790,7 @@ export default function ViewApplication() {
       >
         <h2
           className={`text-lg font-medium ${
-            isDark
-              ? "text-white"
-              : "text-gray-900"
+            isDark ? "text-white" : "text-gray-900"
           }`}
         >
           View Application
@@ -977,13 +798,10 @@ export default function ViewApplication() {
 
         <p
           className={`mt-1 text-sm ${
-            isDark
-              ? "text-gray-400"
-              : "text-gray-500"
+            isDark ? "text-gray-400" : "text-gray-500"
           }`}
         >
-          View application control policies and
-          application details.
+          View application control policies and application details.
         </p>
       </div>
 
@@ -996,14 +814,10 @@ export default function ViewApplication() {
         }`}
       >
         <div className="grid grid-cols-4 gap-5">
-
           {/* BRANCH */}
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-[rgb(100,116,139)]">
-              BRANCH NAME{" "}
-              <span className="text-rose-500">
-                *
-              </span>
+              BRANCH NAME <span className="text-rose-500">*</span>
             </label>
 
             <Dropdown
@@ -1018,10 +832,7 @@ export default function ViewApplication() {
           {/* DEVICE */}
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-[rgb(100,116,139)]">
-              DEVICE NAME{" "}
-              <span className="text-rose-500">
-                *
-              </span>
+              DEVICE NAME <span className="text-rose-500">*</span>
             </label>
 
             <MultiSelectDropdown
@@ -1035,20 +846,14 @@ export default function ViewApplication() {
                     : "Select Device(s)"
                   : "Select branch first"
               }
-              disabled={
-                !selectedBranch ||
-                deviceLoading
-              }
+              disabled={!selectedBranch || deviceLoading}
               isDark={isDark}
             />
           </div>
-
         </div>
 
         {/* BUTTONS */}
         <div className="flex justify-end gap-3 mt-5">
-
-          {/* RESET */}
           <button
             type="button"
             onClick={handleReset}
@@ -1062,14 +867,11 @@ export default function ViewApplication() {
             Reset
           </button>
 
-          {/* SUBMIT */}
           <button
             type="button"
             onClick={handleSubmit}
             disabled={
-              loading ||
-              !selectedBranch ||
-              selectedDevices.length === 0
+              loading || !selectedBranch || selectedDevices.length === 0
             }
             className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#4f56f0] text-white text-sm font-semibold shadow-lg shadow-indigo-900/40 hover:bg-[#5c63f5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -1085,7 +887,6 @@ export default function ViewApplication() {
               </>
             )}
           </button>
-
         </div>
       </div>
 
@@ -1100,35 +901,27 @@ export default function ViewApplication() {
           }`}
         >
           <div className="flex items-center justify-between mb-5">
-
             <div className="flex items-center gap-3">
               <ClipboardList
                 className={`h-5 w-5 ${
-                  isDark
-                    ? "text-indigo-400"
-                    : "text-indigo-600"
+                  isDark ? "text-indigo-400" : "text-indigo-600"
                 }`}
               />
 
               <h3
                 className={`font-semibold text-lg ${
-                  isDark
-                    ? "text-white"
-                    : "text-gray-900"
+                  isDark ? "text-white" : "text-gray-900"
                 }`}
               >
                 Application Results
               </h3>
             </div>
 
-            {/* SEARCH */}
             <div className="relative w-64">
               <Search
                 size={14}
                 className={`absolute left-3 top-1/2 -translate-y-1/2 ${
-                  isDark
-                    ? "text-gray-500"
-                    : "text-gray-400"
+                  isDark ? "text-gray-500" : "text-gray-400"
                 }`}
               />
 
@@ -1136,9 +929,7 @@ export default function ViewApplication() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => {
-                  setSearchTerm(
-                    e.target.value
-                  );
+                  setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
                 placeholder="Search application..."
@@ -1164,10 +955,8 @@ export default function ViewApplication() {
             </div>
           </div>
 
-          {/* TABLE */}
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-
               <thead
                 className={`text-xs uppercase border-b ${
                   isDark
@@ -1176,146 +965,107 @@ export default function ViewApplication() {
                 }`}
               >
                 <tr>
-                  <th className="px-4 py-3">
-                    #
-                  </th>
-
-                  <th className="px-4 py-3">
-                    PC Name
-                  </th>
-
-                  <th className="px-4 py-3">
-                    Branch
-                  </th>
-
-                  <th className="px-4 py-3">
-                    Application Count
-                  </th>
-
-                  <th className="px-4 py-3">
-                    Action
-                  </th>
+                  <th className="px-4 py-3">#</th>
+                  <th className="px-4 py-3">PC Name</th>
+                  <th className="px-4 py-3">Branch</th>
+                  <th className="px-4 py-3">Application Count</th>
+                  <th className="px-4 py-3">Action</th>
                 </tr>
               </thead>
 
               <tbody>
-                {paginatedApplications.length ===
-                0 ? (
+                {paginatedApplications.length === 0 ? (
                   <tr>
                     <td
                       colSpan="5"
                       className={`px-4 py-12 text-center ${
-                        isDark
-                          ? "text-gray-500"
-                          : "text-gray-400"
+                        isDark ? "text-gray-500" : "text-gray-400"
                       }`}
                     >
                       No application data found
                     </td>
                   </tr>
                 ) : (
-                  paginatedApplications.map(
-                    (row, index) => {
-                      const pcName =
-                        row.pcName ??
-                        row.pc ??
-                        row.computerName ??
-                        "—";
+                  paginatedApplications.map((row, index) => {
+                    const pcName =
+                      row.pcName ?? row.pc ?? row.computerName ?? "—";
 
-                      const branchName =
-                        row.branchName ??
-                        row.branch ??
-                        selectedBranch ??
-                        "—";
+                    const branchName =
+                      row.branchName ?? row.branch ?? selectedBranch ?? "—";
 
-                      const applicationCount =
-                        row.applicationCount ??
-                        row.count ??
-                        0;
+                    const applicationCount =
+                      row.applicationCount ?? row.count ?? 0;
 
-                      return (
-                        <tr
-                          key={
-                            row.id ??
-                            row.srNo ??
-                            `${pcName}-${index}`
-                          }
-                          className={`border-b ${
-                            isDark
-                              ? "border-gray-800/50 hover:bg-white/5"
-                              : "border-slate-100 hover:bg-slate-50"
+                    return (
+                      <tr
+                        key={
+                          row.id ??
+                          row.srNo ??
+                          `${pcName}-${index}`
+                        }
+                        className={`border-b ${
+                          isDark
+                            ? "border-gray-800/50 hover:bg-white/5"
+                            : "border-slate-100 hover:bg-slate-50"
+                        }`}
+                      >
+                        <td
+                          className={`px-4 py-3 ${
+                            isDark ? "text-gray-400" : "text-gray-500"
                           }`}
                         >
-                          <td
-                            className={`px-4 py-3 ${
+                          {startIndex + index + 1}
+                        </td>
+
+                        <td
+                          className={`px-4 py-3 font-medium ${
+                            isDark ? "text-gray-200" : "text-gray-800"
+                          }`}
+                        >
+                          {pcName}
+                        </td>
+
+                        <td
+                          className={`px-4 py-3 ${
+                            isDark ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          {branchName}
+                        </td>
+
+                        <td
+                          className={`px-4 py-3 ${
+                            isDark ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               isDark
-                                ? "text-gray-400"
-                                : "text-gray-500"
+                                ? "bg-indigo-900/30 text-indigo-400 border border-indigo-800/50"
+                                : "bg-indigo-100 text-indigo-700 border border-indigo-200"
                             }`}
                           >
-                            {startIndex +
-                              index +
-                              1}
-                          </td>
+                            {applicationCount}
+                          </span>
+                        </td>
 
-                          <td
-                            className={`px-4 py-3 font-medium ${
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleView(row)}
+                            className={`p-1.5 rounded-md transition ${
                               isDark
-                                ? "text-gray-200"
-                                : "text-gray-800"
+                                ? "text-indigo-400 hover:bg-indigo-900/30"
+                                : "text-indigo-600 hover:bg-indigo-50"
                             }`}
+                            title="View"
                           >
-                            {pcName}
-                          </td>
-
-                          <td
-                            className={`px-4 py-3 ${
-                              isDark
-                                ? "text-gray-300"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {branchName}
-                          </td>
-
-                          <td
-                            className={`px-4 py-3 ${
-                              isDark
-                                ? "text-gray-300"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                isDark
-                                  ? "bg-indigo-900/30 text-indigo-400 border border-indigo-800/50"
-                                  : "bg-indigo-100 text-indigo-700 border border-indigo-200"
-                              }`}
-                            >
-                              {applicationCount}
-                            </span>
-                          </td>
-
-                          <td className="px-4 py-3">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleView(row)
-                              }
-                              className={`p-1.5 rounded-md transition ${
-                                isDark
-                                  ? "text-indigo-400 hover:bg-indigo-900/30"
-                                  : "text-indigo-600 hover:bg-indigo-50"
-                              }`}
-                              title="View"
-                            >
-                              <Eye size={15} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    }
-                  )
+                            <Eye size={15} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -1323,33 +1073,21 @@ export default function ViewApplication() {
 
           {/* PAGINATION */}
           <div className="flex items-center justify-between mt-5 pt-4">
-
             <div
               className={`text-xs ${
-                isDark
-                  ? "text-gray-500"
-                  : "text-gray-400"
+                isDark ? "text-gray-500" : "text-gray-400"
               }`}
             >
-              Showing{" "}
-              {paginatedApplications.length} of{" "}
-              {filteredApplications.length}{" "}
-              records
+              Showing {paginatedApplications.length} of{" "}
+              {filteredApplications.length} records
             </div>
 
             <div className="flex items-center gap-2">
-
               <button
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() =>
-                  setCurrentPage(
-                    (prev) =>
-                      Math.max(
-                        prev - 1,
-                        1
-                      )
-                  )
+                  setCurrentPage((prev) => Math.max(prev - 1, 1))
                 }
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${
                   currentPage === 1
@@ -1365,28 +1103,17 @@ export default function ViewApplication() {
 
               <span
                 className={`text-xs px-2 ${
-                  isDark
-                    ? "text-gray-400"
-                    : "text-gray-600"
+                  isDark ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                Page {currentPage} of{" "}
-                {totalPages}
+                Page {currentPage} of {totalPages}
               </span>
 
               <button
                 type="button"
-                disabled={
-                  currentPage === totalPages
-                }
+                disabled={currentPage === totalPages}
                 onClick={() =>
-                  setCurrentPage(
-                    (prev) =>
-                      Math.min(
-                        prev + 1,
-                        totalPages
-                      )
-                  )
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${
                   currentPage === totalPages
@@ -1399,7 +1126,6 @@ export default function ViewApplication() {
                 Next
                 <ChevronRight size={14} />
               </button>
-
             </div>
           </div>
         </div>
@@ -1415,25 +1141,18 @@ export default function ViewApplication() {
               : "bg-white border-slate-200"
           }`}
         >
-
-          {/* HEADER */}
           <div className="flex items-center justify-between mb-5">
-
             <div className="flex items-center gap-3">
               <ClipboardList
                 className={`h-5 w-5 ${
-                  isDark
-                    ? "text-indigo-400"
-                    : "text-indigo-600"
+                  isDark ? "text-indigo-400" : "text-indigo-600"
                 }`}
               />
 
               <div>
                 <h3
                   className={`font-semibold text-lg ${
-                    isDark
-                      ? "text-white"
-                      : "text-gray-900"
+                    isDark ? "text-white" : "text-gray-900"
                   }`}
                 >
                   Application Details
@@ -1441,27 +1160,20 @@ export default function ViewApplication() {
 
                 <p
                   className={`text-xs ${
-                    isDark
-                      ? "text-gray-500"
-                      : "text-gray-400"
+                    isDark ? "text-gray-500" : "text-gray-400"
                   }`}
                 >
-                  Host:{" "}
-                  {viewingHostname || "—"}
+                  Host: {viewingHostname || "—"}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-
-              {/* DETAIL SEARCH */}
               <div className="relative w-64">
                 <Search
                   size={14}
                   className={`absolute left-3 top-1/2 -translate-y-1/2 ${
-                    isDark
-                      ? "text-gray-500"
-                      : "text-gray-400"
+                    isDark ? "text-gray-500" : "text-gray-400"
                   }`}
                 />
 
@@ -1469,10 +1181,7 @@ export default function ViewApplication() {
                   type="text"
                   value={detailSearchTerm}
                   onChange={(e) => {
-                    setDetailSearchTerm(
-                      e.target.value
-                    );
-
+                    setDetailSearchTerm(e.target.value);
                     setDetailCurrentPage(1);
                   }}
                   placeholder="Search application..."
@@ -1497,7 +1206,6 @@ export default function ViewApplication() {
                 )}
               </div>
 
-              {/* BACK */}
               <button
                 type="button"
                 onClick={handleCloseDetails}
@@ -1510,16 +1218,12 @@ export default function ViewApplication() {
                 <ArrowLeft size={14} />
                 Back
               </button>
-
             </div>
           </div>
 
-          {/* DETAIL TABLE */}
           <div className="overflow-x-auto">
-
             {detailLoading ? (
               <div className="flex flex-col items-center justify-center py-16">
-
                 <RefreshCw
                   size={24}
                   className="animate-spin text-indigo-500 mb-3"
@@ -1527,9 +1231,7 @@ export default function ViewApplication() {
 
                 <p
                   className={`text-sm ${
-                    isDark
-                      ? "text-gray-400"
-                      : "text-gray-500"
+                    isDark ? "text-gray-400" : "text-gray-500"
                   }`}
                 >
                   Loading application details...
@@ -1537,29 +1239,20 @@ export default function ViewApplication() {
               </div>
             ) : detailError ? (
               <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${
-                    isDark
-                      ? "bg-red-900/20"
-                      : "bg-red-50"
+                    isDark ? "bg-red-900/20" : "bg-red-50"
                   }`}
                 >
                   <X
                     size={20}
-                    className={
-                      isDark
-                        ? "text-red-400"
-                        : "text-red-500"
-                    }
+                    className={isDark ? "text-red-400" : "text-red-500"}
                   />
                 </div>
 
                 <p
                   className={`text-sm font-medium ${
-                    isDark
-                      ? "text-red-400"
-                      : "text-red-600"
+                    isDark ? "text-red-400" : "text-red-600"
                   }`}
                 >
                   {detailError}
@@ -1567,30 +1260,23 @@ export default function ViewApplication() {
               </div>
             ) : viewDetails.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-
                 <ClipboardList
                   size={28}
                   className={`mb-3 ${
-                    isDark
-                      ? "text-gray-600"
-                      : "text-gray-300"
+                    isDark ? "text-gray-600" : "text-gray-300"
                   }`}
                 />
 
                 <p
                   className={`text-sm ${
-                    isDark
-                      ? "text-gray-500"
-                      : "text-gray-400"
+                    isDark ? "text-gray-500" : "text-gray-400"
                   }`}
                 >
-                  No application details found
-                  for this host.
+                  No application details found for this host.
                 </p>
               </div>
             ) : (
               <table className="w-full text-sm text-left">
-
                 <thead
                   className={`text-xs uppercase border-b ${
                     isDark
@@ -1599,210 +1285,151 @@ export default function ViewApplication() {
                   }`}
                 >
                   <tr>
-                    <th className="px-4 py-3">
-                      #
-                    </th>
-
-                    <th className="px-4 py-3">
-                      Application Hash
-                    </th>
-
-                    <th className="px-4 py-3">
-                      Application Name
-                    </th>
-
-                    <th className="px-4 py-3">
-                      Application Path
-                    </th>
-
-                    <th className="px-4 py-3">
-                      IP Address
-                    </th>
+                    <th className="px-4 py-3">#</th>
+                    <th className="px-4 py-3">Application Hash</th>
+                    <th className="px-4 py-3">Application Name</th>
+                    <th className="px-4 py-3">Application Path</th>
+                    <th className="px-4 py-3">IP Address</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {paginatedViewDetails.map(
-                    (detail, index) => {
-                      const applicationHash =
-                        detail?.applicationHash ??
-                        detail?.APPLICATION_HASH ??
-                        "—";
+                  {paginatedViewDetails.map((detail, index) => {
+                    const applicationHash =
+                      detail?.applicationHash ??
+                      detail?.APPLICATION_HASH ??
+                      "—";
 
-                      const applicationName =
-                        detail?.applicationName ??
-                        detail?.APPLICATION_NAME ??
-                        "—";
+                    const applicationName =
+                      detail?.applicationName ??
+                      detail?.APPLICATION_NAME ??
+                      "—";
 
-                      const applicationPath =
-                        detail?.applicationPath ??
-                        detail?.APPLICATION_PATH ??
-                        "—";
+                    const applicationPath =
+                      detail?.applicationPath ??
+                      detail?.APPLICATION_PATH ??
+                      "—";
 
-                      const ipAddress =
-                        detail?.ipAddress ??
-                        detail?.IP_ADDRESS ??
-                        "—";
+                    const ipAddress =
+                      detail?.ipAddress ?? detail?.IP_ADDRESS ?? "—";
 
-                      return (
-                        <tr
-                          key={`${applicationHash}-${detailStartIndex + index}`}
-                          className={`border-b last:border-b-0 ${
-                            isDark
-                              ? "border-gray-800/50 hover:bg-white/5"
-                              : "border-slate-100 hover:bg-slate-50"
+                    return (
+                      <tr
+                        key={`${applicationHash}-${detailStartIndex + index}`}
+                        className={`border-b last:border-b-0 ${
+                          isDark
+                            ? "border-gray-800/50 hover:bg-white/5"
+                            : "border-slate-100 hover:bg-slate-50"
+                        }`}
+                      >
+                        <td
+                          className={`px-4 py-3 ${
+                            isDark ? "text-gray-500" : "text-gray-400"
                           }`}
                         >
-                          <td
-                            className={`px-4 py-3 ${
-                              isDark
-                                ? "text-gray-500"
-                                : "text-gray-400"
-                            }`}
-                          >
-                            {detailStartIndex +
-                              index +
-                              1}
-                          </td>
+                          {detailStartIndex + index + 1}
+                        </td>
 
-                          <td
-                            className={`px-4 py-3 max-w-[260px] break-all ${
-                              isDark
-                                ? "text-gray-300"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {applicationHash}
-                          </td>
+                        <td
+                          className={`px-4 py-3 max-w-[260px] break-all ${
+                            isDark ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          {applicationHash}
+                        </td>
 
-                          <td
-                            className={`px-4 py-3 font-medium max-w-[220px] break-words ${
-                              isDark
-                                ? "text-gray-200"
-                                : "text-gray-800"
-                            }`}
-                          >
-                            {applicationName}
-                          </td>
+                        <td
+                          className={`px-4 py-3 font-medium max-w-[220px] break-words ${
+                            isDark ? "text-gray-200" : "text-gray-800"
+                          }`}
+                        >
+                          {applicationName}
+                        </td>
 
-                          <td
-                            className={`px-4 py-3 max-w-[360px] break-all ${
-                              isDark
-                                ? "text-gray-300"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {applicationPath}
-                          </td>
+                        <td
+                          className={`px-4 py-3 max-w-[360px] break-all ${
+                            isDark ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          {applicationPath}
+                        </td>
 
-                          <td
-                            className={`px-4 py-3 whitespace-nowrap ${
-                              isDark
-                                ? "text-gray-300"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {ipAddress}
-                          </td>
-                        </tr>
-                      );
-                    }
-                  )}
+                        <td
+                          className={`px-4 py-3 whitespace-nowrap ${
+                            isDark ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          {ipAddress}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
           </div>
 
           {/* DETAILS PAGINATION */}
-          {!detailLoading &&
-            !detailError &&
-            viewDetails.length > 0 && (
-              <div className="flex items-center justify-between mt-5 pt-4">
+          {!detailLoading && !detailError && viewDetails.length > 0 && (
+            <div className="flex items-center justify-between mt-5 pt-4">
+              <div
+                className={`text-xs ${
+                  isDark ? "text-gray-500" : "text-gray-400"
+                }`}
+              >
+                Showing {paginatedViewDetails.length} of{" "}
+                {filteredViewDetails.length} records
+              </div>
 
-                <div
-                  className={`text-xs ${
-                    isDark
-                      ? "text-gray-500"
-                      : "text-gray-400"
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={detailCurrentPage === 1}
+                  onClick={() =>
+                    setDetailCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${
+                    detailCurrentPage === 1
+                      ? "opacity-40 cursor-not-allowed"
+                      : isDark
+                      ? "bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60"
+                      : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
                   }`}
                 >
-                  Showing{" "}
-                  {paginatedViewDetails.length} of{" "}
-                  {filteredViewDetails.length}{" "}
-                  records
-                </div>
+                  <ChevronLeft size={14} />
+                  Previous
+                </button>
 
-                <div className="flex items-center gap-2">
+                <span
+                  className={`text-xs px-2 ${
+                    isDark ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  Page {detailCurrentPage} of {detailTotalPages}
+                </span>
 
-                  <button
-                    type="button"
-                    disabled={
-                      detailCurrentPage === 1
-                    }
-                    onClick={() =>
-                      setDetailCurrentPage(
-                        (prev) =>
-                          Math.max(
-                            prev - 1,
-                            1
-                          )
-                      )
-                    }
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${
-                      detailCurrentPage === 1
-                        ? "opacity-40 cursor-not-allowed"
-                        : isDark
-                        ? "bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60"
-                        : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-                    }`}
-                  >
-                    <ChevronLeft size={14} />
-                    Previous
-                  </button>
-
-                  <span
-                    className={`text-xs px-2 ${
-                      isDark
-                        ? "text-gray-400"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    Page{" "}
-                    {detailCurrentPage} of{" "}
-                    {detailTotalPages}
-                  </span>
-
-                  <button
-                    type="button"
-                    disabled={
-                      detailCurrentPage ===
-                      detailTotalPages
-                    }
-                    onClick={() =>
-                      setDetailCurrentPage(
-                        (prev) =>
-                          Math.min(
-                            prev + 1,
-                            detailTotalPages
-                          )
-                      )
-                    }
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${
-                      detailCurrentPage ===
-                      detailTotalPages
-                        ? "opacity-40 cursor-not-allowed"
-                        : isDark
-                        ? "bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60"
-                        : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-                    }`}
-                  >
-                    Next
-                    <ChevronRight size={14} />
-                  </button>
-
-                </div>
+                <button
+                  type="button"
+                  disabled={detailCurrentPage === detailTotalPages}
+                  onClick={() =>
+                    setDetailCurrentPage((prev) =>
+                      Math.min(prev + 1, detailTotalPages)
+                    )
+                  }
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${
+                    detailCurrentPage === detailTotalPages
+                      ? "opacity-40 cursor-not-allowed"
+                      : isDark
+                      ? "bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60"
+                      : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                  }`}
+                >
+                  Next
+                  <ChevronRight size={14} />
+                </button>
               </div>
-            )}
+            </div>
+          )}
         </div>
       )}
     </div>

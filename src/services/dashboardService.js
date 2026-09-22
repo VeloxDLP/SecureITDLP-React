@@ -454,7 +454,16 @@ getAllNetworkPolicy: async () => {
 
 getPolicyByName: async (policyName) => {
   const { data } = await axiosInstance.get(
-    `/NetworkDLP/GetPolicy/${encodeURIComponent(policyName)}`
+    `${API_ENDPOINTS.NETWORK_POLICY.GETPOLICYBYNAME}/${encodeURIComponent(policyName)}`
+  );
+
+  return data;
+},
+
+
+getActiveNetworkPolicy: async () => {
+  const { data } = await axiosInstance.get(
+    API_ENDPOINTS.NETWORK_POLICY.GETACTIVEDISTINCTPOLICY
   );
   return data;
 },
