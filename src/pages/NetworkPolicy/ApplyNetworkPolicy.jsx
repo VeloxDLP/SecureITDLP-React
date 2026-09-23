@@ -395,31 +395,45 @@ function ApplyNetworkPolicy() {
       : "border-emerald-300 bg-emerald-50 text-emerald-700";
 
   return (
-    <div className="w-full space-y-3">
-      {/* Header */}
-      <div
-        className={`rounded-xl border px-6 py-5 ${
-          isDark ? "border-[#2B3345] bg-[#020617]" : "border-slate-200 bg-white"
-        }`}
-      >
-        <h1
-          className={`text-xl font-semibold ${
-            isDark ? "text-white" : "text-slate-800"
-          }`}
-        >
-          Apply Network Policy
-        </h1>
-        <p
-          className={`mt-1 text-sm ${
-            isDark ? "text-[#dadbdd]" : "text-slate-600"
-          }`}
-        >
-          Configure policy, source, destination, control, details.
-        </p>
+    <div className="w-full">
+      <br />
+
+      {/* HEADING — styled like Manage Blacklisted */}
+      <div className="flex items-start justify-between mb-7">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-2xl flex items-center justify-center"
+            style={{
+              background: "rgba(112,148,255,0.15)",
+              border: "1px solid rgba(112,148,255,0.25)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <ShieldCheck size={18} className="text-[#7094ff]" />
+          </div>
+
+          <div>
+            <h2
+              className={`font-display font-bold text-lg leading-tight ${
+                isDark ? "text-slate-100" : "text-slate-800"
+              }`}
+            >
+              Apply Network Policy
+            </h2>
+
+            <p
+              className={`text-[11px] mt-0.5 ${
+                isDark ? "text-slate-500" : "text-slate-400"
+              }`}
+            >
+              Configure policy, source, destination, control, details
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="mt-6 flex gap-3">
+      <div className="flex gap-3">
         {/* Left - Policies */}
         <div
           className={`w-[360px] rounded-xl border p-4 ${
@@ -605,7 +619,7 @@ function ApplyNetworkPolicy() {
                     </div>
                   )}
 
-                 {details.channels.length > 0 && (
+                  {details.channels.length > 0 && (
                     <div>
                       <SectionHeader icon={Share2} iconColor="#4F7CFF">
                         Channels
@@ -620,7 +634,7 @@ function ApplyNetworkPolicy() {
                     </div>
                   )}
 
-                     {details.keywords.length > 0 && (
+                  {details.keywords.length > 0 && (
                     <div>
                       <SectionHeader icon={FolderOpen} iconColor="#4F7CFF">
                         Keywords
@@ -679,8 +693,6 @@ function ApplyNetworkPolicy() {
                 </div>
               )}
             </div>
-
-           
           ) : (
             <div
               className={`rounded-xl border ${
@@ -876,99 +888,100 @@ function ApplyNetworkPolicy() {
               ) : (
                 <div className="h-full flex flex-col">
                   {/* Header — Search + Select all + Apply */}
-<div className="flex items-center gap-2 mb-3 flex-shrink-0">
-  {/* Left: title with count */}
-  <h3
-    className={`text-sm font-medium flex-shrink-0 ${
-      isDark ? "text-white" : "text-slate-700"
-    }`}
-  >
-    Endpoints
-    <span
-      className={`ml-1.5 text-[11px] ${
-        isDark ? "text-[#8C93A8]" : "text-slate-400"
-      }`}
-    >
-      ({filteredEndpoints.length})
-    </span>
-  </h3>
+                  <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+                    <h3
+                      className={`text-sm font-medium flex-shrink-0 ${
+                        isDark ? "text-white" : "text-slate-700"
+                      }`}
+                    >
+                      Endpoints
+                      <span
+                        className={`ml-1.5 text-[11px] ${
+                          isDark ? "text-[#8C93A8]" : "text-slate-400"
+                        }`}
+                      >
+                        ({filteredEndpoints.length})
+                      </span>
+                    </h3>
 
-  {/* Spacer */}
-  <div className="flex-1" />
+                    <div className="flex-1" />
 
-  {/* Compact search — matches the Latest Incidents style */}
-  <div className="relative w-44 flex-shrink-0">
-    <Search
-      size={13}
-      className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${
-        isDark ? "text-gray-500" : "text-gray-400"
-      }`}
-    />
-    <input
-      type="text"
-      value={endpointSearch}
-      onChange={(e) => setEndpointSearch(e.target.value)}
-      placeholder="Search..."
-      className={`w-full pl-7 pr-7 py-1 rounded-md border outline-none text-[11px] ${
-        isDark
-          ? "bg-[#0b1120] border-[#1e293b] text-gray-200 placeholder-gray-500"
-          : "bg-slate-50 border-slate-200 text-gray-700 placeholder-gray-400"
-      }`}
-    />
-    {endpointSearch && (
-      <button
-        type="button"
-        onClick={() => setEndpointSearch("")}
-        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
-      >
-        <X size={11} />
-      </button>
-    )}
-  </div>
+                    <div className="relative w-44 flex-shrink-0">
+                      <Search
+                        size={13}
+                        className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${
+                          isDark ? "text-gray-500" : "text-gray-400"
+                        }`}
+                      />
+                      <input
+                        type="text"
+                        value={endpointSearch}
+                        onChange={(e) => setEndpointSearch(e.target.value)}
+                        placeholder="Search..."
+                        className={`w-full pl-7 pr-7 py-1 rounded-md border outline-none text-[11px] ${
+                          isDark
+                            ? "bg-[#0b1120] border-[#1e293b] text-gray-200 placeholder-gray-500"
+                            : "bg-slate-50 border-slate-200 text-gray-700 placeholder-gray-400"
+                        }`}
+                      />
+                      {endpointSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setEndpointSearch("")}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                        >
+                          <X size={11} />
+                        </button>
+                      )}
+                    </div>
 
-  {/* Select All — bordered button */}
-  <button
-    type="button"
-    disabled={filteredEndpoints.length === 0}
-    onClick={() => {
-      const visibleIds = filteredEndpoints.map((e) => e.id);
-      const allVisibleSelected =
-        visibleIds.length > 0 &&
-        visibleIds.every((id) => selectedEndpoints.includes(id));
+                    <button
+                      type="button"
+                      disabled={filteredEndpoints.length === 0}
+                      onClick={() => {
+                        const visibleIds = filteredEndpoints.map((e) => e.id);
+                        const allVisibleSelected =
+                          visibleIds.length > 0 &&
+                          visibleIds.every((id) =>
+                            selectedEndpoints.includes(id)
+                          );
 
-      if (allVisibleSelected) {
-        setSelectedEndpoints((prev) =>
-          prev.filter((id) => !visibleIds.includes(id))
-        );
-      } else {
-        setSelectedEndpoints((prev) => {
-          const set = new Set([...prev, ...visibleIds]);
-          return Array.from(set);
-        });
-      }
-    }}
-    className={`px-3 py-1 rounded-md border text-[11px] font-medium whitespace-nowrap transition flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
-      isDark
-        ? "border-[#4F7CFF] text-[#7C9CFF] bg-transparent hover:bg-[#4F7CFF]/10"
-        : "border-[#4F7CFF] text-[#4F7CFF] bg-transparent hover:bg-[#4F7CFF]/10"
-    }`}
-  >
-    {filteredEndpoints.length > 0 &&
-    filteredEndpoints.every((e) => selectedEndpoints.includes(e.id))
-      ? "Deselect All"
-      : "Select All"}
-  </button>
+                        if (allVisibleSelected) {
+                          setSelectedEndpoints((prev) =>
+                            prev.filter((id) => !visibleIds.includes(id))
+                          );
+                        } else {
+                          setSelectedEndpoints((prev) => {
+                            const set = new Set([...prev, ...visibleIds]);
+                            return Array.from(set);
+                          });
+                        }
+                      }}
+                      className={`px-3 py-1 rounded-md border text-[11px] font-medium whitespace-nowrap transition flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
+                        isDark
+                          ? "border-[#4F7CFF] text-[#7C9CFF] bg-transparent hover:bg-[#4F7CFF]/10"
+                          : "border-[#4F7CFF] text-[#4F7CFF] bg-transparent hover:bg-[#4F7CFF]/10"
+                      }`}
+                    >
+                      {filteredEndpoints.length > 0 &&
+                      filteredEndpoints.every((e) =>
+                        selectedEndpoints.includes(e.id)
+                      )
+                        ? "Deselect All"
+                        : "Select All"}
+                    </button>
 
-  {/* Apply */}
-  <button
-    onClick={handleApplyPolicy}
-    disabled={selectedEndpoints.length === 0}
-    className="rounded-md bg-[#4F7CFF] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3A66E0] transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex-shrink-0"
-  >
-    Apply
-    {selectedEndpoints.length > 0 ? ` (${selectedEndpoints.length})` : ""}
-  </button>
-</div>
+                    <button
+                      onClick={handleApplyPolicy}
+                      disabled={selectedEndpoints.length === 0}
+                      className="rounded-md bg-[#4F7CFF] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3A66E0] transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex-shrink-0"
+                    >
+                      Apply
+                      {selectedEndpoints.length > 0
+                        ? ` (${selectedEndpoints.length})`
+                        : ""}
+                    </button>
+                  </div>
 
                   {/* Device list */}
                   <div
@@ -991,9 +1004,7 @@ function ApplyNetworkPolicy() {
                         return (
                           <div
                             key={endpoint.id}
-                            onClick={() =>
-                              handleEndpointToggle(endpoint.id)
-                            }
+                            onClick={() => handleEndpointToggle(endpoint.id)}
                             className={`flex items-center gap-3 rounded-lg border px-3 py-2 cursor-pointer transition flex-shrink-0 ${
                               isSelected
                                 ? isDark

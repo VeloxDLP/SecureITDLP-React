@@ -457,7 +457,6 @@ function AddForm({ branches, onAdd }) {
   const set = k => v =>
     setForm(f => ({ ...f, [k]: v, ...(k === 'branch' ? { device: '' } : {}) }))
 
-  /* Map devices → { value, label, status } for pill rendering */
   const deviceOptions = (fetchedDevices || []).map(device => {
     if (typeof device === 'string' || typeof device === 'number') {
       return { value: String(device), label: String(device), status: null }
@@ -542,7 +541,6 @@ function AddForm({ branches, onAdd }) {
   return (
     <GlassCard className="p-6 mb-5">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
-        {/* Branch */}
         <div>
           <label className={labelCls}>
             Branch Name <span className="text-rose-500 normal-case tracking-normal">*</span>
@@ -558,7 +556,6 @@ function AddForm({ branches, onAdd }) {
           {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1  ">Required</p>}
         </div>
 
-        {/* Device */}
         <div>
           <label className={labelCls}>
             Device Name <span className="text-rose-500 normal-case tracking-normal">*</span>
@@ -574,7 +571,6 @@ function AddForm({ branches, onAdd }) {
           {submitted && !form.device && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
 
-        {/* Mode */}
         <div>
           <label className={labelCls}>
             Mode of Access <span className="text-rose-500 normal-case tracking-normal">*</span>
@@ -590,7 +586,6 @@ function AddForm({ branches, onAdd }) {
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex items-center justify-end gap-3">
         <GlassButton
           onClick={() => { setForm({ branch: '', device: '', printerType: '', mode: '' }); setSubmitted(false); setFetchedDevices([]) }}
@@ -613,7 +608,7 @@ function AddForm({ branches, onAdd }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   POLICY TABLE
+   POLICY TABLE — shows 5 rows, scrolls beyond
 ───────────────────────────────────────────────────────────── */
 function PolicyTable({ policies, onDelete }) {
   const { isDark } = useTheme()
@@ -691,9 +686,17 @@ function PolicyTable({ policies, onDelete }) {
           No printer policies found.
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-y-auto"
+          style={{ maxHeight: '290px' }}
+        >
           <table className="w-full">
-            <thead>
+            <thead
+              className="sticky top-0 z-10"
+              style={{
+                background: isDark ? '#020617' : 'rgba(255,255,255,0.98)',
+              }}
+            >
               <tr>
                 <th className={thCls}>#</th>
                 <th className={thCls}>Branch</th>

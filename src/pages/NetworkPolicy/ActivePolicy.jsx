@@ -7,26 +7,43 @@ import {
   Trash2,
   Eye,
   X,
+  ShieldCheck,
+  Monitor,
+  Braces,
+  Tag,
+  Share2,
+  FileText,
+  Grid2X2,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
-// IMPORTANT: two ../ because ActivePolicy.jsx is inside pages/NetworkPolicy
+import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../context/ThemeContext";
 import { dashboardService } from "../../services/dashboardService";
 
 export default function ActivePolicy() {
   const navigate = useNavigate();
+  const { isDark } = useTheme();
 
   const [policies, setPolicies] = useState([]);
+
+  // Card selected policy
   const [selectedPolicy, setSelectedPolicy] = useState(null);
 
+  // Modal API data
+  const [policyDetails, setPolicyDetails] = useState(null);
+
   const [showModal, setShowModal] = useState(false);
+
   const [loading, setLoading] = useState(true);
+  const [modalLoading, setModalLoading] = useState(false);
+
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
   /* =========================================================
      FETCH ACTIVE NETWORK POLICIES
   ========================================================= */
+
   useEffect(() => {
     fetchActiveNetworkPolicies();
   }, []);
@@ -38,26 +55,16 @@ export default function ActivePolicy() {
 
       const response = await dashboardService.getActiveNetworkPolicy();
 
-      console.log(
-        "GetActiveDistinctPolicy Response:",
-        response
-      );
+      console.log("GetActiveDistinctPolicy Response:", response);
 
       if (response && response.success) {
-        const apiData = Array.isArray(response.data)
-          ? response.data
-          : [];
+        const apiData = Array.isArray(response.data) ? response.data : [];
 
         const formattedData = apiData.map((item, index) => ({
           id: `#${index + 1}`,
 
-          // Actual policy name from API
-          name:
-            item.policyName ||
-            item.policy_name ||
-            "N/A",
+          name: item.policyName || item.policy_name || "N/A",
 
-          // Actual description from API
           description:
             item.description ||
             item.DESCRIPTION ||
@@ -70,18 +77,13 @@ export default function ActivePolicy() {
       } else {
         setPolicies([]);
         setError(
-          response?.message ||
-            "Failed to fetch active network policies."
+          response?.message || "Failed to fetch active network policies."
         );
       }
     } catch (err) {
-      console.error(
-        "Error fetching active network policies:",
-        err
-      );
+      console.error("Error fetching active network policies:", err);
 
       setPolicies([]);
-
       setError(
         err?.response?.data?.message ||
           err?.message ||
@@ -95,6 +97,7 @@ export default function ActivePolicy() {
   /* =========================================================
      SEARCH
   ========================================================= */
+
   const filteredPolicies = policies.filter((policy) => {
     const search = searchTerm.toLowerCase();
 
@@ -107,22 +110,61 @@ export default function ActivePolicy() {
   /* =========================================================
      VIEW DETAILS
   ========================================================= */
-  const handleViewDetails = (policy) => {
-    setSelectedPolicy(policy);
-    setShowModal(true);
+
+  const handleViewDetails = async (policy) => {
+    try {
+      setSelectedPolicy(policy);
+      setPolicyDetails(null);
+      setModalLoading(true);
+      setShowModal(true);
+
+      console.log("Fetching policy details for:", policy.name);
+
+      const response = await dashboardService.getActivePolicyModal(policy.name);
+
+      console.log("GetActiveDistinctPolicyModal Response:", response);
+
+      if (response && response.success) {
+        const apiData = Array.isArray(response.data) ? response.data : [];
+
+        if (apiData.length > 0) {
+          setPolicyDetails(apiData[0]);
+        } else {
+          setPolicyDetails(null);
+          setError("No policy details found.");
+        }
+      } else {
+        setPolicyDetails(null);
+        setError(response?.message || "Failed to fetch policy details.");
+      }
+    } catch (err) {
+      console.error("Error fetching policy details:", err);
+
+      setPolicyDetails(null);
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Unable to fetch policy details."
+      );
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   /* =========================================================
      CLOSE MODAL
   ========================================================= */
+
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedPolicy(null);
+    setPolicyDetails(null);
   };
 
   /* =========================================================
      CREATE POLICY
   ========================================================= */
+
   const handleCreatePolicy = () => {
     navigate("/NetworkPolicy");
   };
@@ -130,10 +172,9 @@ export default function ActivePolicy() {
   /* =========================================================
      BODY SCROLL
   ========================================================= */
+
   useEffect(() => {
-    document.body.style.overflow = showModal
-      ? "hidden"
-      : "unset";
+    document.body.style.overflow = showModal ? "hidden" : "unset";
 
     return () => {
       document.body.style.overflow = "unset";
@@ -146,42 +187,49 @@ export default function ActivePolicy() {
       {/* =====================================================
           HEADER
       ===================================================== */}
-      <div className="
-        w-full rounded-xl
-        border border-gray-200 dark:border-[#2B3345]
-        bg-white dark:bg-[#020617]
-        px-6 py-4
-      ">
-        <h2 className="
-          text-lg font-medium
-          text-gray-900 dark:text-white
-        ">
-          Active Network Policy
-        </h2>
 
-        <p className="
-          mt-1 text-sm
-          text-gray-500 dark:text-gray-400
-        ">
-          Configure policy, source, destination, control, details.
-        </p>
+      <div className="flex items-start justify-between mb-7">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-2xl flex items-center justify-center"
+            style={{
+              background: "rgba(112,148,255,0.15)",
+              border: "1px solid rgba(112,148,255,0.25)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <ShieldCheck size={18} className="text-[#7094ff]" />
+          </div>
+
+          <div>
+            <h2
+              className={`font-display font-bold text-lg leading-tight ${
+                isDark ? "text-slate-100" : "text-slate-800"
+              }`}
+            >
+              Active Network Policy
+            </h2>
+
+            <p
+              className={`text-[11px] mt-0.5 ${
+                isDark ? "text-slate-500" : "text-slate-400"
+              }`}
+            >
+              Configure policy, source, destination, control, details
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* =====================================================
           TOOLBAR
       ===================================================== */}
+
       <div className="flex flex-wrap items-center gap-4">
-
-        {/* SEARCH */}
         <div className="relative flex-1 min-w-[300px]">
-
           <Search
             size={18}
-            className="
-              absolute left-4 top-1/2
-              -translate-y-1/2
-              text-indigo-500 dark:text-indigo-400
-            "
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 dark:text-indigo-400"
           />
 
           <input
@@ -201,15 +249,12 @@ export default function ActivePolicy() {
               focus:border-indigo-500
             "
           />
-
         </div>
 
-        {/* DATE */}
         <button
           type="button"
           className="
-            flex items-center gap-3
-            rounded-lg
+            flex items-center gap-3 rounded-lg
             border border-gray-200 dark:border-[#2B3345]
             bg-white dark:bg-[#020617]
             px-5 py-3
@@ -222,17 +267,14 @@ export default function ActivePolicy() {
             size={18}
             className="text-indigo-500 dark:text-indigo-400"
           />
-
           <span>Select Date Range</span>
         </button>
 
-        {/* CREATE */}
         <button
           type="button"
           onClick={handleCreatePolicy}
           className="
-            flex items-center gap-3
-            rounded-lg
+            flex items-center gap-3 rounded-lg
             border border-gray-200 dark:border-[#2B3345]
             bg-white dark:bg-[#020617]
             px-5 py-3
@@ -241,30 +283,18 @@ export default function ActivePolicy() {
             transition
           "
         >
-          <Plus
-            size={18}
-            className="text-indigo-500 dark:text-indigo-400"
-          />
-
+          <Plus size={18} className="text-indigo-500 dark:text-indigo-400" />
           <span>Create Policy</span>
         </button>
-
       </div>
 
       {/* =====================================================
           LOADING
       ===================================================== */}
+
       {loading && (
-        <div className="
-          rounded-xl
-          border border-gray-200 dark:border-[#2B3345]
-          bg-white dark:bg-[#020617]
-          p-10 text-center
-        ">
-          <p className="
-            text-sm
-            text-gray-500 dark:text-gray-400
-          ">
+        <div className="rounded-xl border border-gray-200 dark:border-[#2B3345] bg-white dark:bg-[#020617] p-10 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Loading active network policies...
           </p>
         </div>
@@ -273,15 +303,9 @@ export default function ActivePolicy() {
       {/* =====================================================
           ERROR
       ===================================================== */}
-      {!loading && error && (
-        <div className="
-          rounded-xl
-          border border-red-200 dark:border-red-500/30
-          bg-red-50 dark:bg-red-500/10
-          p-4
-          text-sm
-          text-red-600 dark:text-red-400
-        ">
+
+      {!loading && error && !showModal && (
+        <div className="rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
@@ -289,48 +313,27 @@ export default function ActivePolicy() {
       {/* =====================================================
           NO DATA
       ===================================================== */}
-      {!loading &&
-        !error &&
-        filteredPolicies.length === 0 && (
-          <div className="
-            rounded-xl
-            border border-gray-200 dark:border-[#2B3345]
-            bg-white dark:bg-[#020617]
-            p-10
-            text-center
-          ">
-            <Folder
-              size={40}
-              className="mx-auto mb-3 text-gray-400"
-            />
 
-            <p className="
-              text-sm
-              text-gray-500 dark:text-gray-400
-            ">
-              No active network policies found.
-            </p>
-          </div>
-        )}
+      {!loading && !error && filteredPolicies.length === 0 && (
+        <div className="rounded-xl border border-gray-200 dark:border-[#2B3345] bg-white dark:bg-[#020617] p-10 text-center">
+          <Folder size={40} className="mx-auto mb-3 text-gray-400" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No active network policies found.
+          </p>
+        </div>
+      )}
 
       {/* =====================================================
           POLICY CARDS
       ===================================================== */}
-      {!loading && filteredPolicies.length > 0 && (
-        <div className="
-          grid
-          grid-cols-1
-          md:grid-cols-2
-          xl:grid-cols-3
-          gap-5
-        ">
 
+      {!loading && filteredPolicies.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filteredPolicies.map((policy) => (
             <div
               key={policy.id}
               className="
-                rounded-xl
-                border border-gray-200 dark:border-[#2B3345]
+                rounded-xl border border-gray-200 dark:border-[#2B3345]
                 bg-white dark:bg-[#020617]
                 p-5
                 shadow-sm dark:shadow-lg
@@ -339,322 +342,249 @@ export default function ActivePolicy() {
                 transition
               "
             >
-
-              {/* TOP */}
-              <div className="
-                flex items-start
-                justify-between
-              ">
-
-                <div className="
-                  flex items-center
-                  gap-3
-                ">
-
-                  <span className="
-                    text-2xl font-bold
-                    text-gray-900 dark:text-white
-                  ">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">
                     {policy.id}
                   </span>
 
-                  <div className="
-                    flex items-center
-                    gap-2
-                  ">
-
+                  <div className="flex items-center gap-2">
                     <Folder
                       size={18}
-                      className="
-                        text-indigo-500
-                        dark:text-indigo-400
-                      "
+                      className="text-indigo-500 dark:text-indigo-400"
                     />
 
-                    <span className="
-                      text-xl font-medium
-                      text-gray-900 dark:text-white
-                    ">
+                    <span className="text-xl font-medium text-gray-900 dark:text-white">
                       {policy.name}
                     </span>
-
                   </div>
-
                 </div>
 
-                <span className="
-                  text-xs
-                  text-gray-500 dark:text-gray-400
-                ">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   {policy.date}
                 </span>
-
               </div>
 
-              {/* DESCRIPTION */}
-              <p className="
-                mt-5
-                text-sm
-                leading-7
-                text-gray-600 dark:text-gray-400
-              ">
+              <p className="mt-5 text-sm leading-7 text-gray-600 dark:text-gray-400">
                 {policy.description}
               </p>
 
-              {/* DIVIDER */}
-              <div className="
-                my-5
-                border-t
-                border-gray-200 dark:border-[#2B3345]
-              " />
+              <div className="my-5 border-t border-gray-200 dark:border-[#2B3345]" />
 
-              {/* FOOTER */}
-              <div className="
-                flex items-center
-                justify-between
-              ">
-
+              <div className="flex items-center justify-between">
                 <button
                   type="button"
-                  onClick={() =>
-                    handleViewDetails(policy)
-                  }
+                  onClick={() => handleViewDetails(policy)}
                   className="
-                    text-sm
-                    text-indigo-600
-                    dark:text-indigo-400
-                    hover:text-indigo-800
-                    dark:hover:text-indigo-300
-                    flex items-center gap-1
-                    transition
+                    text-sm text-indigo-600 dark:text-indigo-400
+                    hover:text-indigo-800 dark:hover:text-indigo-300
+                    flex items-center gap-1 transition
                   "
                 >
                   <Eye size={16} />
-
                   View Details →
                 </button>
 
-                <button
-                  type="button"
-                  className="
-                    hover:scale-110
-                    transition
-                  "
-                >
-                  <Trash2
-                    size={18}
-                    className="
-                      text-red-500
-                      hover:text-red-400
-                    "
-                  />
+                <button type="button" className="hover:scale-110 transition">
+                  <Trash2 size={18} className="text-red-500 hover:text-red-400" />
                 </button>
-
               </div>
-
             </div>
           ))}
-
         </div>
       )}
 
       {/* =====================================================
-          DETAILS MODAL
+          POLICY DETAILS MODAL
       ===================================================== */}
+
       {showModal && selectedPolicy && (
         <div
-          className="
-            fixed inset-0 z-50
-            flex items-center justify-center
-            bg-black/50 dark:bg-black/80
-            backdrop-blur-sm
-            p-4
-          "
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#000814]/60 p-4"
           onClick={handleCloseModal}
         >
-
           <div
             className="
-              w-[95%] max-w-4xl
-              max-h-[90vh]
-              rounded-xl
-              border border-gray-200
-              dark:border-[#2B3345]
-              bg-white dark:bg-[#020617]
-              shadow-2xl
-              flex flex-col
+              w-full max-w-5xl max-h-[92vh] overflow-hidden
+              rounded-xl border border-[#1E293B]
+              bg-[#020617]
+              shadow-[0_0_50px_rgba(0,0,0,0.5)]
             "
-            onClick={(e) =>
-              e.stopPropagation()
-            }
+            onClick={(e) => e.stopPropagation()}
           >
+            {/* =================================================
+                MODAL HEADER
+            ================================================= */}
 
-            {/* MODAL HEADER */}
-            <div className="
-              flex items-center
-              justify-between
-              border-b
-              border-gray-200
-              dark:border-[#2B3345]
-              px-6 py-4
-            ">
+            <div className="flex items-center justify-between px-7 py-5 border-b border-[#1E293B]">
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-lg flex items-center justify-center border border-[#3154A6] bg-[#0B1630]">
+                  <ShieldCheck size={25} className="text-[#7094FF]" />
+                </div>
 
-              <div>
-
-                <h2 className="
-                  text-xl font-semibold
-                  text-gray-900 dark:text-white
-                  flex items-center gap-3
-                ">
-
-                  <Folder
-                    size={20}
-                    className="
-                      text-indigo-500
-                      dark:text-indigo-400
-                    "
-                  />
-
-                  {selectedPolicy.name}
-
-                </h2>
-
-                <p className="
-                  text-sm
-                  text-gray-500 dark:text-gray-400
-                  mt-1
-                ">
-                  Policy ID: {selectedPolicy.id}
-                </p>
-
+                <div>
+                  <h2 className="text-xl font-semibold text-white">
+                    {selectedPolicy.name}
+                  </h2>
+                  {/* <p className="text-xs text-slate-500 mt-1">
+                    Active Network Policy
+                  </p> */}
+                </div>
               </div>
 
               <button
                 type="button"
                 onClick={handleCloseModal}
                 className="
-                  text-gray-400
-                  hover:text-gray-700
-                  dark:hover:text-white
+                  w-10 h-10 rounded-lg flex items-center justify-center
+                  border border-[#3154A6] bg-[#071126]
+                  text-[#7094FF]
+                  hover:bg-[#0D1B3A] hover:text-white
+                  transition
                 "
               >
-                <X size={24} />
+                <X size={23} />
               </button>
-
             </div>
 
-            {/* MODAL BODY */}
-            <div className="
-              flex-1
-              overflow-y-auto
-              p-6
-            ">
+            {/* =================================================
+                MODAL BODY
+            ================================================= */}
 
-              {/* POLICY NAME */}
-              <div className="
-                mb-5
-                rounded-lg
-                border border-gray-200
-                dark:border-[#2B3345]
-                bg-gray-50
-                dark:bg-[#0B1220]
-                p-5
-              ">
+            <div className="max-h-[70vh] overflow-y-auto px-7 py-6">
+              {modalLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="text-center">
+                    <div className="w-8 h-8 mx-auto mb-4 rounded-full border-2 border-[#3154A6] border-t-[#7094FF] animate-spin" />
+                    <p className="text-sm text-[#8EA8D8]">
+                      Loading policy details...
+                    </p>
+                  </div>
+                </div>
+              ) : policyDetails ? (
+                <div className="space-y-7">
 
-                <p className="
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-wider
-                  text-gray-500
-                  dark:text-gray-400
-                ">
-                  Policy Name
-                </p>
+                  {/* ---------- POLICY NAME (full width) ---------- */}
+                  {/* <FieldBlock
+                    icon={<ShieldCheck size={20} className="text-[#7094FF]" />}
+                    label="Policy Name"
+                    value={
+                      policyDetails.policyName ||
+                      policyDetails.policy_name ||
+                      selectedPolicy.name
+                    }
+                    highlight
+                  /> */}
 
-                <p className="
-                  mt-2
-                  text-lg
-                  font-medium
-                  text-gray-900
-                  dark:text-white
-                ">
-                  {selectedPolicy.name}
-                </p>
+                  {/* ---------- 2-COLUMN GRID ---------- */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-7">
+                    <FieldBlock
+                      icon={<Monitor size={20} className="text-[#7094FF]" />}
+                      label="IP Address"
+                      value={
+                        policyDetails.ipAddress || policyDetails.ipaddress
+                      }
+                    />
 
-              </div>
+                    <FieldBlock
+                      icon={<Braces size={20} className="text-[#7094FF]" />}
+                      label="Regex"
+                      value={policyDetails.regex}
+                    />
 
-              {/* DESCRIPTION */}
-              <div className="
-                rounded-lg
-                border border-gray-200
-                dark:border-[#2B3345]
-                bg-gray-50
-                dark:bg-[#0B1220]
-                p-5
-              ">
+                    <FieldBlock
+                      icon={<Tag size={20} className="text-[#7094FF]" />}
+                      label="Keywords"
+                      value={policyDetails.keywords}
+                    />
 
-                <p className="
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-wider
-                  text-gray-500
-                  dark:text-gray-400
-                ">
-                  Description
-                </p>
+                    <FieldBlock
+                      icon={<Share2 size={20} className="text-[#7094FF]" />}
+                      label="Channels"
+                      value={policyDetails.channels}
+                    />
 
-                <p className="
-                  mt-3
-                  text-sm
-                  leading-7
-                  text-gray-700
-                  dark:text-gray-300
-                ">
-                  {selectedPolicy.description}
-                </p>
+                    <FieldBlock
+                      icon={<FileText size={20} className="text-[#7094FF]" />}
+                      label="File Types"
+                      value={
+                        policyDetails.fileTypes || policyDetails.file_types
+                      }
+                    />
 
-              </div>
-
+                    <FieldBlock
+                      icon={<Grid2X2 size={20} className="text-[#7094FF]" />}
+                      label="Applications"
+                      value={policyDetails.applications}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="py-16 text-center">
+                  <p className="text-sm text-slate-400">
+                    No policy details available.
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* MODAL FOOTER */}
-            <div className="
-              flex
-              justify-end
-              border-t
-              border-gray-200
-              dark:border-[#2B3345]
-              px-6 py-4
-            ">
+            {/* =================================================
+                MODAL FOOTER
+            ================================================= */}
 
-              <button
+            <div className="flex justify-end  border-[#1E293B] px-7 py-5">
+              {/* <button
                 type="button"
                 onClick={handleCloseModal}
                 className="
-                  rounded-lg
-                  border
-                  border-gray-200
-                  dark:border-[#2B3345]
-                  px-5 py-2
-                  text-sm
-                  text-gray-700
-                  dark:text-gray-300
-                  hover:bg-gray-50
-                  dark:hover:bg-[#0B1220]
+                  min-w-[145px] rounded-lg
+                  border border-[#3154A6]
+                  bg-[#061126]
+                  px-6 py-3
+                  text-sm font-medium text-[#7094FF]
+                  hover:bg-[#0D1B3A] hover:text-white
+                  transition
                 "
               >
                 Close
-              </button>
-
+              </button> */}
             </div>
-
           </div>
-
         </div>
       )}
+    </div>
+  );
+}
 
+/* =========================================================
+   FieldBlock — label + pills, with bottom separator
+========================================================= */
+
+function FieldBlock({ icon, label, value, highlight = false }) {
+  const items = String(value || "-")
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean);
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-3">
+        {icon}
+        <span className="text-sm font-medium text-white">{label}</span>
+      </div>
+
+      <div className="border-b border-[#1E3A5F] pb-3 flex flex-wrap gap-2">
+        {items.map((v, i) => (
+          <span
+            key={i}
+            className={`px-3 py-1.5 rounded-lg border border-[#1E3A5F] bg-[#020B1C] text-xs ${
+              highlight ? "text-[#18C8FF] font-medium" : "text-[#C7D7F5]"
+            }`}
+          >
+            {v}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

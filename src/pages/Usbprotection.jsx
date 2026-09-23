@@ -590,7 +590,7 @@ function AddForm({ branches, onAdd }) {
 
   return (
     <GlassCard className="p-6 mb-5">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
         {/* Branch */}
         <div>
           <label className={labelCls}>

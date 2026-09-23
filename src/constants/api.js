@@ -80,7 +80,8 @@ Drive_Control: {
 NETWORK_POLICY: {
   GETNETWORKPOLICY: "/NetworkDLP/GetDistinctPolicy",
   GETPOLICYBYNAME: "/NetworkDLP/GetPolicy", 
-  GETACTIVEDISTINCTPOLICY:"/NetworkDLP/GetActiveDistinctPolicy"
+  GETACTIVEDISTINCTPOLICY:"/NetworkDLP/GetActiveDistinctPolicy",
+  GETACTIVE_DISTINCTPOLICY_MODAL:"/NetworkDLP/GetActiveDistinctPolicyModal"
 },
 
 

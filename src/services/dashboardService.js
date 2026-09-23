@@ -472,6 +472,12 @@ getActiveNetworkPolicy: async () => {
   return data;
 },
 
+  getActivePolicyModal: async (policyName) => {
+    const { data } = await axiosInstance.get(
+      `${API_ENDPOINTS.NETWORK_POLICY.GETACTIVE_DISTINCTPOLICY_MODAL}/${encodeURIComponent(policyName)}`
+    );
+    return data;
+  },
 
 
 
