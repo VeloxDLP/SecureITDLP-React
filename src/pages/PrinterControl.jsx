@@ -300,6 +300,232 @@ function Dropdown({
 /* ─────────────────────────────────────────────────────────────
    GLASS BUTTON
 ───────────────────────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────────────────────
+   MULTI SELECT DROPDOWN
+───────────────────────────────────────────────────────────── */
+function MultiSelectDropdown({
+  values = [],
+  onChange,
+  options = [],
+  placeholder = 'Select...',
+  disabled = false,
+  searchable = false,
+  error = false,
+}) {
+  const { isDark } = useTheme()
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const containerRef = useRef(null)
+
+  const normalized = (options || []).map(o =>
+    typeof o === 'string'
+      ? { value: o, label: o, status: null }
+      : { status: null, ...o }
+  )
+
+  const filtered = searchable && query
+    ? normalized.filter(o =>
+        String(o.label).toLowerCase().includes(query.toLowerCase())
+      )
+    : normalized
+
+  const allSelected =
+    filtered.length > 0 && filtered.every(o => values.includes(o.value))
+
+  useEffect(() => {
+    const handler = e => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    if (open) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const toggleValue = val => {
+    if (values.includes(val)) {
+      onChange(values.filter(v => v !== val))
+    } else {
+      onChange([...values, val])
+    }
+  }
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      onChange(values.filter(v => !filtered.some(o => o.value === v)))
+    } else {
+      const set = new Set([...values, ...filtered.map(o => o.value)])
+      onChange(Array.from(set))
+    }
+  }
+
+  const displayText =
+    values.length > 0
+      ? `${values.length} device${values.length !== 1 ? 's' : ''} selected`
+      : placeholder
+
+  const triggerBorder = error
+    ? 'border-rose-500/60'
+    : open
+      ? 'border-[#7094ff]/60'
+      : isDark
+        ? 'border-white/[0.10]'
+        : 'border-slate-300/70'
+
+  const glassSurface = isDark
+    ? { background: '#111827', backdropFilter: 'none', WebkitBackdropFilter: 'none' }
+    : {
+        background: 'rgba(255,255,255,0.80)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+      }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(!open)}
+        className={`
+          w-full min-h-[44px] px-3 py-2.5 rounded-xl text-[13px] text-left
+          flex items-center justify-between gap-2
+          border transition-all duration-200 outline-none
+          disabled:opacity-40 disabled:cursor-not-allowed
+          ${triggerBorder}
+          ${open ? 'ring-2 ring-[#7094ff]/20' : ''}
+          ${isDark ? 'text-slate-200' : 'text-slate-800'}
+        `}
+        style={glassSurface}
+      >
+        <span
+          className={`truncate flex-1 ${
+            values.length > 0 ? '' : isDark ? 'text-slate-500' : 'text-slate-400'
+          }`}
+        >
+          {displayText}
+        </span>
+
+        <ChevronDown
+          size={14}
+          className={`
+            flex-shrink-0 transition-transform duration-200
+            ${open ? 'rotate-180' : ''}
+            ${isDark ? 'text-slate-500' : 'text-slate-400'}
+          `}
+        />
+      </button>
+
+      {open && (
+        <div
+          className={`
+            absolute top-full left-0 right-0 mt-1.5 z-[9999]
+            rounded-xl border overflow-hidden
+            shadow-[0_16px_48px_rgba(0,0,0,0.35)]
+            ${isDark ? 'border-white/[0.10]' : 'border-slate-200/80'}
+          `}
+          style={{
+            background: isDark ? '#111827' : 'rgba(255,255,255,0.98)',
+            backdropFilter: 'blur(32px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+          }}
+        >
+          {/* -<div className={`px-3 py-2.5 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}> */}
+            {/* <button
+              type="button"
+              onClick={toggleSelectAll}
+              className={`w-full flex items-center gap-2 text-left text-[12px]
+                          ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              {allSelected ? (
+                <>
+                  <X size={14} className="text-red-400" /> Deselect all
+                </>
+              ) : (
+                <>
+                  <Check size={14} className="text-[#7094ff]" /> Select all
+                </>
+              )}
+            </button> */}
+          {/* </div> */}
+
+          {searchable && (
+            <div className={`px-3 py-2 border-b ${isDark ? 'border-white/[0.07]' : 'border-slate-100'}`}>
+              <div className="relative flex items-center">
+                <Search
+                  size={12}
+                  className={`absolute left-2.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+                />
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder="Search…"
+                  className={`
+                    w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none
+                    border transition-all duration-150
+                    ${isDark
+                      ? 'bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}
+                  `}
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    className="absolute right-2 text-slate-400 hover:text-slate-200"
+                  >
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="max-h-56 overflow-y-auto py-1">
+            {filtered.length === 0 ? (
+              <p className={`px-4 py-3 text-[12px] text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                No results
+              </p>
+            ) : (
+              filtered.map(o => {
+                const isSelected = values.includes(o.value)
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => toggleValue(o.value)}
+                    className={`
+                      w-full text-left px-4 py-2.5 text-[13px]
+                      flex items-center justify-between gap-2
+                      transition-colors duration-100
+                      ${isSelected
+                        ? 'text-[#7094ff] bg-[#7094ff]/10'
+                        : isDark
+                          ? 'text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]'
+                          : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'}
+                    `}
+                  >
+                    <span className="truncate flex-1">{o.label}</span>
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      {o.status && <StatusPill status={o.status} />}
+                      {isSelected && <Check size={13} className="text-[#7094ff] flex-shrink-0" />}
+                    </span>
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+
+
 function GlassButton({
   children, onClick, variant = 'default',
   className = '', disabled = false, type = 'button',
@@ -449,13 +675,13 @@ function AddForm({ branches, onAdd }) {
   }))
 
   const { isDark } = useTheme()
-  const [form, setForm] = useState({ branch: '', device: '', printerType: '', mode: '' })
+const [form, setForm] = useState({ branch: '', devices: [], printerType: '', mode: '' })
   const [submitted, setSubmitted] = useState(false)
   const [success, setSuccess] = useState(false)
   const [fetchedDevices, setFetchedDevices] = useState([])
 
-  const set = k => v =>
-    setForm(f => ({ ...f, [k]: v, ...(k === 'branch' ? { device: '' } : {}) }))
+const set = k => v =>
+  setForm(f => ({ ...f, [k]: v, ...(k === 'branch' ? { devices: [] } : {}) }))
 
   const deviceOptions = (fetchedDevices || []).map(device => {
     if (typeof device === 'string' || typeof device === 'number') {
@@ -482,20 +708,24 @@ function AddForm({ branches, onAdd }) {
     { value: 'Allow', label: 'Allow' },
     { value: 'Prevent', label: 'Prevent' },
   ]
-  const isValid = form.branch && form.device && form.mode
+const isValid = form.branch && form.devices.length > 0 && form.mode
 
   const handleSubmit = async () => {
     setSubmitted(true)
     if (!isValid) return
 
-    const requestData = {
-      branch: form.branch,
-      device: form.device,
-      mode: form.mode,
-    }
+const requestData = {
+  branch: form.branch,
+  device: form.devices.join(','),
+  mode: form.mode,
+}
 
     const response = await dashboardService.addPrinterPolicy(requestData)
     console.log('The policy Status IS', response.data)
+    console.log('🟢 requestData:', requestData)
+console.log('🟢 full response:', response)
+console.log('🟢 response.data:', response?.data)
+console.log('🟢 typeof response.data:', typeof response?.data)
 
     if (response.data === 'SUCCESS') {
       await showAlert({
@@ -507,7 +737,7 @@ function AddForm({ branches, onAdd }) {
         showConfirmButton: true,
       })
       setSubmitted(false)
-      setForm({ branch: '', device: '', mode: '' })
+     setForm({ branch: '', devices: [], printerType: '', mode: '' })
       setFetchedDevices([])
     } else {
       showAlert({
@@ -556,20 +786,23 @@ function AddForm({ branches, onAdd }) {
           {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1  ">Required</p>}
         </div>
 
-        <div>
-          <label className={labelCls}>
-            Device Name <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
-          <Dropdown
-            value={form.device}
-            onChange={set('device')}
-            options={deviceOptions}
-            placeholder={form.branch ? 'Select Device' : 'Select branch first'}
-            disabled={!form.branch}
-            error={submitted && !form.device}
-          />
-          {submitted && !form.device && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
-        </div>
+<div>
+  <label className={labelCls}>
+    Device Name <span className="text-rose-500 normal-case tracking-normal">*</span>
+  </label>
+  <MultiSelectDropdown
+    values={form.devices}
+    onChange={set('devices')}
+    options={deviceOptions}
+    placeholder={form.branch ? 'Select Device' : 'Select branch first'}
+    disabled={!form.branch}
+    searchable
+    error={submitted && form.devices.length === 0}
+  />
+  {submitted && form.devices.length === 0 && (
+    <p className="text-[10px] text-rose-500 mt-1">Required</p>
+  )}
+</div>
 
         <div>
           <label className={labelCls}>
@@ -791,19 +1024,19 @@ export default function PrinterControl() {
   const [policies, setPolicies] = useState([])
   const [branches, setBranches] = useState([])
 
-  const handleAdd = ({ branchName, device, printerType, mode }) => {
-    setPolicies(prev => [
-      ...prev,
-      {
-        id: Date.now(),
-        branch: branchName,
-        device,
-        printerType,
-        mode,
-        addedOn: new Date().toISOString().slice(0, 10),
-      },
-    ])
-  }
+const handleAdd = ({ branchName, devices, device, printerType, mode }) => {
+  setPolicies(prev => [
+    ...prev,
+    {
+      id: Date.now(),
+      branch: branchName,
+      device: Array.isArray(devices) ? devices.join(', ') : device,
+      printerType,
+      mode,
+      addedOn: new Date().toISOString().slice(0, 10),
+    },
+  ])
+}
 
   const loadPageData = async () => {
     const [ALLBranch, PrinterPolicies] = await Promise.all([
