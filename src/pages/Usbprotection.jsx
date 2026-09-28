@@ -42,6 +42,279 @@ function StatusPill({ status }) {
   );
 }
 
+
+function MultiSelectDropdown({
+  values = [],
+  onChange,
+  options = [],
+  placeholder = "Select...",
+  disabled = false,
+  isDark = false,
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
+  const normalizedOptions = (options || [])
+    .map((item) => {
+      if (typeof item === "string") {
+        return { value: item, label: item, status: null };
+      }
+
+      const value =
+        item?.value ??
+        item?.deviceName ??
+        item?.device ??
+        item?.pcName ??
+        item?.computerName ??
+        item?.name ??
+        "";
+
+      const label =
+        item?.label ??
+        item?.deviceName ??
+        item?.device ??
+        item?.pcName ??
+        item?.computerName ??
+        item?.name ??
+        value;
+
+      const status = item?.agentStatus ?? item?.status ?? null;
+
+      return { value, label, status };
+    })
+    .filter((item) => item.value !== "");
+
+  const allSelected =
+    normalizedOptions.length > 0 &&
+    normalizedOptions.every((item) => values.includes(item.value));
+
+  const toggleDevice = (deviceValue) => {
+    if (values.includes(deviceValue)) {
+      onChange(values.filter((value) => value !== deviceValue));
+    } else {
+      onChange([...values, deviceValue]);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      onChange([]);
+    } else {
+      onChange(normalizedOptions.map((item) => item.value));
+    }
+  };
+
+  const upCount = normalizedOptions.filter(
+    (o) => String(o.status).toLowerCase() === "up"
+  ).length;
+
+  const downCount = normalizedOptions.filter(
+    (o) => String(o.status).toLowerCase() === "down"
+  ).length;
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      {/* SELECTED VALUE BUTTON */}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) {
+            setOpen((prev) => !prev);
+          }
+        }}
+        className={`
+          w-full min-h-[42px] flex items-center justify-between
+          px-3 py-2.5 rounded-xl text-[13px] text-left
+          border transition-all
+          disabled:opacity-40 disabled:cursor-not-allowed
+          ${
+            isDark
+              ? "bg-[#111827] border-[#334155] text-slate-200"
+              : "bg-white border-slate-300 text-slate-800"
+          }
+          ${
+            open
+              ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60"
+              : ""
+          }
+        `}
+      >
+        <span
+          className={
+            values.length > 0
+              ? ""
+              : isDark
+              ? "text-slate-500"
+              : "text-slate-400"
+          }
+        >
+          {values.length > 0
+            ? `${values.length} device${values.length !== 1 ? "s" : ""} selected`
+            : placeholder}
+        </span>
+
+        <ChevronDown
+          size={14}
+          className={`
+            transition-transform
+            ${open ? "rotate-180" : ""}
+            ${isDark ? "text-slate-500" : "text-slate-400"}
+          `}
+        />
+      </button>
+
+      {/* DROPDOWN */}
+      {open && (
+        <div
+          className={`
+            absolute top-full left-0 right-0 mt-1.5 z-[200]
+            rounded-xl border overflow-hidden
+            shadow-[0_16px_48px_rgba(0,0,0,0.35)]
+            ${
+              isDark
+                ? "bg-[#111827] border-[#334155]"
+                : "bg-white border-slate-200"
+            }
+          `}
+        >
+          {/* SELECT ALL */}
+          <div
+            className={`
+              px-3 py-2.5 border-b
+              ${
+                isDark
+                  ? "border-white/[0.06]"
+                  : "border-slate-100"
+              }
+            `}
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleSelectAll();
+              }}
+              className={`
+                w-full flex items-center justify-between gap-2
+                text-left text-[12px]
+                ${
+                  isDark
+                    ? "text-gray-300 hover:text-white"
+                    : "text-gray-600 hover:text-gray-900"
+                }
+              `}
+            >
+              <span className="flex items-center gap-2">
+                <span
+                  className={`
+                    h-4 w-4 rounded border
+                    flex items-center justify-center
+                    ${
+                      allSelected
+                        ? "bg-[#7094ff] border-[#7094ff]"
+                        : isDark
+                        ? "border-slate-500"
+                        : "border-slate-300"
+                    }
+                  `}
+                >
+                  {allSelected && (
+                    <Check size={11} className="text-white" />
+                  )}
+                </span>
+
+                {allSelected ? "Deselect all" : "Select all"}
+              </span>
+
+              {/* UP / DOWN COUNTS */}
+              <span
+                className={`text-[10px] ${
+                  isDark ? "text-slate-500" : "text-slate-400"
+                }`}
+              >
+                {upCount} Up / {downCount} Down
+              </span>
+            </button>
+          </div>
+
+          {/* DEVICE LIST */}
+          <div className="max-h-52 overflow-y-auto py-1">
+            {normalizedOptions.length === 0 ? (
+              <p
+                className={`
+                  px-4 py-3 text-[12px] text-center
+                  ${isDark ? "text-slate-600" : "text-slate-400"}
+                `}
+              >
+                No devices available
+              </p>
+            ) : (
+              normalizedOptions.map((option) => {
+                const selected = values.includes(option.value);
+
+                return (
+                  <button
+                    key={String(option.value)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleDevice(option.value);
+                    }}
+                    className={`
+                      w-full text-left px-4 py-2.5
+                      text-[13px] flex items-center
+                      justify-between gap-2
+                      transition-colors
+                      ${
+                        selected
+                          ? "text-[#7094ff] bg-[#7094ff]/10"
+                          : isDark
+                          ? "text-[#a0aec0] hover:bg-white/[0.06] hover:text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }
+                    `}
+                  >
+                    <span className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">{option.label}</span>
+                    </span>
+
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      {option.status && <StatusPill status={option.status} />}
+                      {selected && (
+                        <Check size={13} className="text-[#7094ff]" />
+                      )}
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* =========================================================
    CUSTOM DROPDOWN
 ========================================================= */
@@ -430,6 +703,7 @@ function AddForm({ branches, onAdd }) {
   const [submitted, setSubmitted] = useState(false);
   const [success, setSuccess] = useState(false);
   const [fetchedDevices, setFetchedDevices] = useState([]);
+  const [selectedDevices, setSelectedDevices] = useState([]);
 
   const branchOptions = (branches || [])
     .map((branch) => {
@@ -617,7 +891,7 @@ function AddForm({ branches, onAdd }) {
             Device Name <span className="text-rose-500">*</span>
           </label>
 
-          <Dropdown
+          {/* <Dropdown
             value={form.device}
             onChange={set("device")}
             options={deviceOptions}
@@ -626,7 +900,26 @@ function AddForm({ branches, onAdd }) {
             }
             disabled={!form.branch}
             error={submitted && !form.device}
-          />
+          /> */}
+          <MultiSelectDropdown
+              values={form.device}
+              // onChange={set("device")}
+              onChange={setSelectedDevices}
+              options={deviceOptions}
+              placeholder={
+              form.branch ? "Select Device" : "Select branch first"
+            }
+              // placeholder={
+              //   form.branch
+              //     ? deviceLoading
+              //       ? "Loading devices..."
+              //       : "Select Device(s)"
+              //     : "Select branch first"
+              // }
+              disabled={!form.branch}
+              error={submitted && !form.device}
+              isDark={isDark}
+            />
 
           {submitted && !form.device && (
             <p className="text-[10px] text-rose-500 mt-1">Required</p>
@@ -755,7 +1048,7 @@ function PolicyTable({ policies, onDelete }) {
                 ${isDark ? "text-slate-200" : "text-slate-700"}
               `}
             >
-              Printer Policies
+              USB Policies
             </span>
             <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#7094ff]/15 text-[#7094ff] border border-[#7094ff]/20">
               {filtered.length}
@@ -1044,7 +1337,7 @@ export default function PrinterControl() {
                 ${isDark ? "text-slate-500" : "text-slate-400"}
               `}
             >
-              Manage printer access policies across endpoints
+              Manage USB access policies across endpoints
             </p>
           </div>
         </div>
