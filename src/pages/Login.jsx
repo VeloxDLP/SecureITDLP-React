@@ -120,10 +120,7 @@ const Login = () => {
   width: 100%;
 
   background:
-    linear-gradient(
-      rgba(2, 14, 36, 0.85),
-      rgba(2, 14, 36, 0.85)
-    ),
+   
     url(${DashboardBackground}) center center / cover no-repeat;
 
   display: flex;
@@ -147,7 +144,7 @@ const Login = () => {
           border: 1px solid rgba(41, 121, 255, 0.30);
           border-radius: 14px;
           overflow: hidden;
-          animation: boxPulse 3s ease-in-out infinite;
+          // animation: boxPulse 3s ease-in-out infinite;
         }
 
         .login-card {
