@@ -627,7 +627,7 @@ const IncidentByChannel = ({ data = {} }) => {
                           selectedChannel
                         ] ||
                         "#3B5BFF",
-                    }}
+                    }} 
                   />
 
                   <span className="text-[11px] text-slate-500 dark:text-white/40">
@@ -971,8 +971,7 @@ const IncidentByChannel = ({ data = {} }) => {
                       </tbody>
                     </table>
                   )}
-                </div>
-
+                </div>      
                 {/* =================================================
                     PAGINATION
                 ================================================= */}
@@ -1050,3 +1049,14 @@ const IncidentByChannel = ({ data = {} }) => {
 };
 
 export default IncidentByChannel;
+
+
+
+
+
+
+
+
+
+
+

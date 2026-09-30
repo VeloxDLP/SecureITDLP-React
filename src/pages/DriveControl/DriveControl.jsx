@@ -608,6 +608,7 @@ function AddForm({ branches, onAdd }) {
     { value: 'DELETE', label: 'DELETE' },
     { value: 'RENAME', label: 'RENAME' },
     { value: 'CUT', label: 'CUT' },
+    { value: 'PASTE', label: 'PASTE' },
   ]
 
   const set = (key) => (value) => {
@@ -903,7 +904,7 @@ function PolicyTable({ policies, onDelete }) {
       getValue(p, 'drivePath', 'drivepath', 'path')
     ).toLowerCase()
 
-    const func = String(
+    const funcString = String(
       getValue(p, 'function', 'functions', 'FUNCTIONS')
     ).toLowerCase()
 
@@ -913,10 +914,8 @@ function PolicyTable({ policies, onDelete }) {
         device.includes(q) ||
         ipAddress.includes(q) ||
         drivePath.includes(q) ||
-        func.includes(q)) &&
-      (!filterMode ||
-        String(getValue(p, 'function', 'functions', 'FUNCTIONS')).toUpperCase() ===
-          filterMode)
+        funcString.includes(q)) &&
+      (!filterMode || funcString.includes(filterMode.toLowerCase()))
     )
   })
 
@@ -927,39 +926,50 @@ function PolicyTable({ policies, onDelete }) {
     { value: 'DELETE', label: 'DELETE' },
     { value: 'RENAME', label: 'RENAME' },
     { value: 'CUT', label: 'CUT' },
+    { value: 'PASTE', label: 'PASTE' },
   ]
 
   const FunctionBadge = ({ value }) => {
-    const functionName = String(value || '').toUpperCase()
+    let functions = []
 
-    if (!functionName) {
+    if (Array.isArray(value)) {
+      functions = value
+    } else if (typeof value === 'string' && value.trim() !== '') {
+      functions = value.split(',').map((f) => f.trim())
+    }
+
+    const formattedFunctions = functions
+      .filter(Boolean)
+      .map((f) => f.charAt(0).toUpperCase() + f.slice(1).toLowerCase())
+
+    if (formattedFunctions.length === 0) {
       return (
-        <span
-          className="
-            inline-flex items-center justify-center
-            px-3 py-1 rounded-full text-[10px] font-medium
-            bg-slate-500/10 text-slate-400 border border-slate-500/20
-          "
-        >
+        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20">
           N/A
         </span>
       )
     }
 
     return (
-      <button
-        type="button"
-        className="
-          inline-flex items-center justify-center gap-1.5
-          px-3 py-1 rounded-full text-[10px] font-medium capitalize
-          bg-emerald-500/[0.08] text-emerald-400 border border-emerald-500/40
-          hover:bg-emerald-500/[0.14] hover:border-emerald-400/60
-          transition-all duration-200 cursor-default
-        "
-      >
-        <Check size={10} strokeWidth={2.5} />
-        {functionName.charAt(0) + functionName.slice(1).toLowerCase()}
-      </button>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {formattedFunctions.map((func, idx) => (
+          <button
+            key={idx}
+            type="button"
+            className="
+              inline-flex items-center justify-center gap-1.5
+              px-3 py-1 rounded-full text-[10px] font-medium
+              bg-emerald-500/[0.08] text-emerald-400 border border-emerald-500/40
+              hover:bg-emerald-500/[0.14] hover:border-emerald-400/60
+              transition-all duration-200 cursor-default
+              whitespace-nowrap
+            "
+          >
+            <Check size={10} strokeWidth={2.5} />
+            {func}
+          </button>
+        ))}
+      </div>
     )
   }
 
@@ -1061,7 +1071,7 @@ function PolicyTable({ policies, onDelete }) {
                       className={`
                         text-left text-[10px] font-semibold uppercase tracking-wider
                         px-4 py-3
-                        ${i === 0 ? 'w-[55px]' : ''}
+                        ${i === 0 ? 'w-[30px]' : ''}
                         ${isDark ? 'text-slate-600' : 'text-slate-400'}
                       `}
                     >

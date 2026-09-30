@@ -464,7 +464,7 @@ function MultiSelectDropdown({
               : 'bg-white/95 border-slate-200 backdrop-blur-2xl'}
           `}
         >
-       0 
+   
 
           {searchable && (
             <div className={`p-2 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
@@ -834,7 +834,7 @@ function AddForm({ branches, onAdd }) {
             searchable
             error={submitted && form.devices.length === 0}
           />
-          {submitted && form.devices.length === 0 && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
+          {submitted && form.devices.length === 0  && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
 
         {/* Websites */}

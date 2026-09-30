@@ -81,35 +81,82 @@ const CreateNetworkPolicy = () => {
     { name: "Csv", description: "Comma separated values", icon: FileCode },
     { name: "Excel", description: " Worksheet cell data", icon: FileSpreadsheet },
     { name: "Zip", description: "Compressed archive", icon: FileArchive },
-      { name: "7z", description: " A Highly Compressed", icon: FileArchive },
-       { name: "RAR", description: " To Bundle Multiple Files ", icon: FileArchive },
-        { name: "XLS", description: "Microsoft Excel documents", icon: FileSpreadsheet },
+    { name: "7z", description: " A Highly Compressed", icon: FileArchive },
+    { name: "RAR", description: " To Bundle Multiple Files ", icon: FileArchive },
+    { name: "XLS", description: "Microsoft Excel documents", icon: FileSpreadsheet },
 
   ];
 
   const applicationGroups = [
-    { name: "Chrome", description: "Google Search browser", icon: "🌐" },
-    { name: "FireFox", description: "Mozilla Firefox browser", icon: "🌐" },
-    { name: "Safari", description: "a web browser developed by Apple", icon: "🌐" },
-      { name: "Iexplore", description: "Microsoft cloud storage", icon: "🌐" },
-    { name: "Brave", description: "Microsoft Edge browser", icon: "🌐" },
-     { name: "Vivaldi", description: "Microsoft cloud storage", icon: "🌐" },
-    { name: "Edge", description: "Microsoft Edge browser", icon: "🌐" },
-    { name: "Opera", description: "Microsoft Word processor", icon: "🌐" },
-    { name: "WinSCP", description: "Cloud file storage", icon: "🌐" },
-    { name: "Coreftp", description: "Microsoft cloud storage", icon: "🌐" },
-     { name: "Cyberduck", description: "Microsoft cloud storage", icon: "🌐" },
-    { name: "FileZilla", description: "Microsoft email client", icon: "🌐" },
-               
+    {
+      name: "Chrome",
+      description: "Google Chrome web browser",
+      icon: <Globe size={20} />,
+    },
+    {
+      name: "FireFox",
+      description: "Mozilla Firefox web browser",
+      icon: <Globe size={20} />,
+    },
+    {
+      name: "Safari",
+      description: "Apple Safari web browser",
+      icon: <Globe size={20} />,
+    },
+    {
+      name: "Iexplore",
+      description: "Microsoft Internet Explorer web browser",
+      icon: <Globe size={20} />,
+    },
+    {
+      name: "Brave",
+      description: "Brave privacy-focused web browser",
+      icon: <Shield size={20} />,
+    },
+    {
+      name: "Vivaldi",
+      description: "Vivaldi customizable web browser",
+      icon: <Globe size={20} />,
+    },
+    {
+      name: "Edge",
+      description: "Microsoft Edge web browser",
+      icon: <Globe size={20} />,
+    },
+    {
+      name: "Opera",
+      description: "Opera web browser",
+      icon: <Globe size={20} />,
+    },
+    {
+      name: "WinSCP",
+      description: "Secure file transfer application",
+      icon: <Share2 size={20} />,
+    },
+    {
+      name: "Coreftp",
+      description: "FTP and SFTP file transfer client",
+      icon: <Upload size={20} />,
+    },
+    {
+      name: "Cyberduck",
+      description: "File transfer and cloud storage client",
+      icon: <FolderOpen size={20} />,
+    },
+    {
+      name: "FileZilla",
+      description: "FTP and SFTP file transfer client",
+      icon: <Share2 size={20} />,
+    },
   ];
 
   const channelControls = [
-    { name: "Browser Upload", description: "Google Search browser", icon: Upload },
-    { name: "FTP Transfer", description: "Chromium-based browser", icon: Share2 },
-    { name: "Peripheral Transfer", description: "Mozilla Firefox browser", icon: Monitor },
-    { name: "Network Share", description: "Microsoft Edge browser", icon: Network },
-    { name: "Clipboard Copy", description: "Microsoft spreadsheet app", icon: Copy },
-    { name: "Email Shares", description: "Microsoft Word processor", icon: Mail },
+    { name: "Browser Upload", description: "Controls sensitive data uploaded through web browsers", icon: Upload },
+    { name: "FTP Transfer", description: "Controls sensitive data transferred through FTP/SFTP", icon: Share2 },
+    { name: "Peripheral Transfer", description: "Controls sensitive data transferred through USB and removable devices", icon: Monitor },
+    { name: "Network Share", description: "Controls sensitive data transferred through network shares", icon: Network },
+    { name: "Clipboard Copy", description: "Controls copying of sensitive data through the clipboard", icon: Copy },
+    { name: "Email Shares", description: "Controls sensitive data shared through email", icon: Mail },
   ];
 
   const severityLevels = [
@@ -213,7 +260,7 @@ const CreateNetworkPolicy = () => {
 
   // Helper function to check if a step has selections
   const hasSelections = (stepIndex) => {
-    switch(stepIndex) {
+    switch (stepIndex) {
       case 0:
         return policyName || description;
       case 1:
@@ -300,11 +347,10 @@ const CreateNetworkPolicy = () => {
                   value={policyName}
                   onChange={(e) => setPolicyName(e.target.value)}
                   placeholder="Enter Policy Name"
-                  className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 transition-all ${
-                    policyName 
-                      ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' 
-                      : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
-                  }`}
+                  className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 transition-all ${policyName
+                    ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
+                    : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
+                    }`}
                 />
               </div>
             </div>
@@ -315,11 +361,10 @@ const CreateNetworkPolicy = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Description"
-                className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 transition-all ${
-                  description 
-                    ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' 
-                    : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
-                }`}
+                className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 transition-all ${description
+                  ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
+                  : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
+                  }`}
               />
             </div>
           </div>
@@ -345,16 +390,14 @@ const CreateNetworkPolicy = () => {
                   <div
                     key={file.name}
                     onClick={() => toggleFileType(file.name)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      isSelected
-                        ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]"
-                        : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"
-                    }`}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
+                      ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]"
+                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${
-                        isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
-                      }`}>
+                      <div className={`p-2 rounded-lg ${isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
+                        }`}>
                         <Icon size={20} className={isSelected ? "text-blue-600 dark:text-[#5A7BFF]" : "text-slate-400 dark:text-gray-400"} />
                       </div>
                       <div className="flex-1">
@@ -397,16 +440,14 @@ const CreateNetworkPolicy = () => {
                   <div
                     key={app.name}
                     onClick={() => toggleApplication(app.name)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      isSelected
-                        ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]"
-                        : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"
-                    }`}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
+                      ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]"
+                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${
-                        isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
-                      }`}>
+                      <div className={`p-2 rounded-lg ${isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
+                        }`}>
                         <span className="text-xl">{app.icon}</span>
                       </div>
                       <div className="flex-1">
@@ -431,177 +472,169 @@ const CreateNetworkPolicy = () => {
         );
 
       case 3:
-case 3:
-  const isBlockMode = mode === "Block Based";
-  return (
-    <div className="space-y-6">
-      {/* Mode Toggle – larger buttons */}
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-slate-700 dark:text-gray-300">
-          Mode
-        </span>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setMode("Content Based")}
-            className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${
-              mode === "Content Based"
-                ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
-                : "bg-[#0f172a] text-gray-300 border-[#334155] hover:bg-[#1e293b]"
-            }`}
-          >
-            Content Based
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("Block Based")}
-            className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${
-              mode === "Block Based"
-                ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
-                : "bg-[#0f172a] text-gray-300 border-[#334155] hover:bg-[#1e293b]"
-            }`}
-          >
-            Block Based
-          </button>
-        </div>
-      </div>
-
-      {/* Keyword + Regex grid – conditionally disabled */}
-      <div className={`grid grid-cols-2 gap-6 ${isBlockMode ? "opacity-60 pointer-events-none" : ""}`}>
-        {/* Keyword Section */}
-        <div>
-          <label className="text-sm text-slate-600 dark:text-gray-300 mb-2 block">Keyword</label>
-          <div className="relative">
-            <input
-              type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="eg: hello, get lost"
-              disabled={isBlockMode}
-              className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${
-                keyword 
-                  ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' 
-                  : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
-              } ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !isBlockMode) {
-                  addKeyword();
-                }
-              }}
-            />
-            <button
-              onClick={addKeyword}
-              disabled={isBlockMode}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md transition ${
-                isBlockMode ? "opacity-50 cursor-not-allowed" : "hover:bg-[#4a6bff]"
-              }`}
-            >
-              <Plus size={18} className="text-white" />
-            </button>
-          </div>
-
-          {keywords.length > 0 && !isBlockMode && (
-            <div className="flex items-center gap-2 mt-3">
-              <div className="h-0.5 flex-1 bg-gradient-to-r from-[#5A7BFF] to-transparent"></div>
-              <span className="text-xs text-[#5A7BFF] whitespace-nowrap">
-                {keywords.length} keyword(s) added
+      case 3:
+        const isBlockMode = mode === "Block Based";
+        return (
+          <div className="space-y-6">
+            {/* Mode Toggle – larger buttons */}
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-semibold text-slate-700 dark:text-gray-300">
+                Mode
               </span>
-            </div>
-          )}
-
-          <div className="mt-4">
-            <div className="flex flex-wrap gap-2">
-              {keywords.map((item, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition ${
-                    isBlockMode ? "opacity-50" : ""
-                  }`}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMode("Content Based")}
+                  className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${mode === "Content Based"
+                    ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
+                    : "bg-[#0f172a] text-gray-300 border-[#334155] hover:bg-[#1e293b]"
+                    }`}
                 >
-                  <span>{item}</span>
-                  {!isBlockMode && (
-                    <button
-                      onClick={() => removeKeyword(index)}
-                      className="text-slate-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition ml-1"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Regular Expression Section */}
-        <div>
-          <label className="text-sm text-slate-600 dark:text-gray-300 mb-2 block">
-            Regular Expression
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={regularExpression}
-              onChange={(e) => setRegularExpression(e.target.value)}
-              placeholder="eg: ^[a-z]+$"
-              disabled={isBlockMode}
-              className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${
-                regularExpression 
-                  ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' 
-                  : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
-              } ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
-              onKeyPress={(e) => {
-                if (e.key === "Enter" && !isBlockMode) {
-                  addRegularExpression();
-                }
-              }}
-            />
-            <button
-              onClick={addRegularExpression}
-              disabled={isBlockMode}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md transition ${
-                isBlockMode ? "opacity-50 cursor-not-allowed" : "hover:bg-[#4a6bff]"
-              }`}
-            >
-              <Plus size={18} className="text-white" />
-            </button>
-          </div>
-
-          {regularExpressions.length > 0 && !isBlockMode && (
-            <div className="flex items-center gap-2 mt-3">
-              <div className="h-0.5 flex-1 bg-gradient-to-r from-[#5A7BFF] to-transparent"></div>
-              <span className="text-xs text-[#5A7BFF] whitespace-nowrap">
-                {regularExpressions.length} regex(s) added
-              </span>
-            </div>
-          )}
-
-          <div className="mt-4">
-            <div className="flex flex-wrap gap-2">
-              {regularExpressions.map((item, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition ${
-                    isBlockMode ? "opacity-50" : ""
-                  }`}
+                  Content Based
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("Block Based")}
+                  className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${mode === "Block Based"
+                    ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
+                    : "bg-[#0f172a] text-gray-300 border-[#334155] hover:bg-[#1e293b]"
+                    }`}
                 >
-                  <span className="font-mono">{item}</span>
-                  {!isBlockMode && (
-                    <button
-                      onClick={() => removeRegularExpression(index)}
-                      className="text-slate-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition ml-1"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
+                  Block Based
+                </button>
+              </div>
+            </div>
+
+            {/* Keyword + Regex grid – conditionally disabled */}
+            <div className={`grid grid-cols-2 gap-6 ${isBlockMode ? "opacity-60 pointer-events-none" : ""}`}>
+              {/* Keyword Section */}
+              <div>
+                <label className="text-sm text-slate-600 dark:text-gray-300 mb-2 block">Keyword</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    placeholder="eg: hello, get lost"
+                    disabled={isBlockMode}
+                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${keyword
+                      ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
+                      : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
+                      } ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !isBlockMode) {
+                        addKeyword();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={addKeyword}
+                    disabled={isBlockMode}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md transition ${isBlockMode ? "opacity-50 cursor-not-allowed" : "hover:bg-[#4a6bff]"
+                      }`}
+                  >
+                    <Plus size={18} className="text-white" />
+                  </button>
                 </div>
-              ))}
+
+                {keywords.length > 0 && !isBlockMode && (
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="h-0.5 flex-1 bg-gradient-to-r from-[#5A7BFF] to-transparent"></div>
+                    <span className="text-xs text-[#5A7BFF] whitespace-nowrap">
+                      {keywords.length} keyword(s) added
+                    </span>
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <div className="flex flex-wrap gap-2">
+                    {keywords.map((item, index) => (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition ${isBlockMode ? "opacity-50" : ""
+                          }`}
+                      >
+                        <span>{item}</span>
+                        {!isBlockMode && (
+                          <button
+                            onClick={() => removeKeyword(index)}
+                            className="text-slate-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition ml-1"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Regular Expression Section */}
+              <div>
+                <label className="text-sm text-slate-600 dark:text-gray-300 mb-2 block">
+                  Regular Expression
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={regularExpression}
+                    onChange={(e) => setRegularExpression(e.target.value)}
+                    placeholder="eg: ^[a-z]+$"
+                    disabled={isBlockMode}
+                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${regularExpression
+                      ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
+                      : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
+                      } ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" && !isBlockMode) {
+                        addRegularExpression();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={addRegularExpression}
+                    disabled={isBlockMode}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md transition ${isBlockMode ? "opacity-50 cursor-not-allowed" : "hover:bg-[#4a6bff]"
+                      }`}
+                  >
+                    <Plus size={18} className="text-white" />
+                  </button>
+                </div>
+
+                {regularExpressions.length > 0 && !isBlockMode && (
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="h-0.5 flex-1 bg-gradient-to-r from-[#5A7BFF] to-transparent"></div>
+                    <span className="text-xs text-[#5A7BFF] whitespace-nowrap">
+                      {regularExpressions.length} regex(s) added
+                    </span>
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <div className="flex flex-wrap gap-2">
+                    {regularExpressions.map((item, index) => (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition ${isBlockMode ? "opacity-50" : ""
+                          }`}
+                      >
+                        <span className="font-mono">{item}</span>
+                        {!isBlockMode && (
+                          <button
+                            onClick={() => removeRegularExpression(index)}
+                            className="text-slate-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition ml-1"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  );
+        );
       case 4:
         return (
           <div className="space-y-6">
@@ -622,16 +655,14 @@ case 3:
                   <div
                     key={channel.name}
                     onClick={() => toggleChannel(channel.name)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      isSelected
-                        ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]"
-                        : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"
-                    }`}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
+                      ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]"
+                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${
-                        isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
-                      }`}>
+                      <div className={`p-2 rounded-lg ${isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
+                        }`}>
                         <Icon size={20} className={isSelected ? "text-blue-600 dark:text-[#5A7BFF]" : "text-slate-400 dark:text-gray-400"} />
                       </div>
                       <div className="flex-1">
@@ -685,16 +716,14 @@ case 3:
                   <div
                     key={level.name}
                     onClick={() => toggleSeverityLevel(level.name)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      isSelected
-                        ? selectedColorClasses[level.color]
-                        : colorClasses[level.color]
-                    }`}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
+                      ? selectedColorClasses[level.color]
+                      : colorClasses[level.color]
+                      }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${
-                        isSelected ? "bg-white dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
-                      }`}>
+                      <div className={`p-2 rounded-lg ${isSelected ? "bg-white dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
+                        }`}>
                         <Icon size={20} className={isSelected ? iconColorClasses[level.color] : "text-slate-400 dark:text-gray-400"} />
                       </div>
                       <div className="flex-1">
@@ -704,12 +733,11 @@ case 3:
                         <p className="text-sm text-slate-500 dark:text-gray-400">{level.description}</p>
                       </div>
                       {isSelected && (
-                        <div className={`w-5 h-5 rounded-full ${
-                          level.color === "red" ? "bg-red-500" :
+                        <div className={`w-5 h-5 rounded-full ${level.color === "red" ? "bg-red-500" :
                           level.color === "orange" ? "bg-orange-500" :
-                          level.color === "yellow" ? "bg-yellow-500" :
-                          "bg-blue-500"
-                        } flex items-center justify-center flex-shrink-0`}>
+                            level.color === "yellow" ? "bg-yellow-500" :
+                              "bg-blue-500"
+                          } flex items-center justify-center flex-shrink-0`}>
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
@@ -754,7 +782,7 @@ case 3:
 
               {/* Policy Condition */}
               <SummaryCard icon={FileCode} title="Policy Condition">
-                  <SummaryRow label="Mode" values={keywords} tone="orange" emptyText="None" />
+                <SummaryRow label="Mode" values={keywords} tone="orange" emptyText="None" />
                 <SummaryRow label="Keywords" values={keywords} tone="orange" emptyText="None" />
                 <SummaryRow label="Regular Expressions" values={regularExpressions} tone="orange" emptyText="None" />
               </SummaryCard>
@@ -817,27 +845,25 @@ case 3:
                 className="relative z-10 flex flex-col items-center cursor-pointer group"
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                    isActive
-                      ? "bg-[#5A7BFF] border-[#5A7BFF] text-white shadow-lg shadow-[#5A7BFF]/30"
-                      : isCompleted
+                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${isActive
+                    ? "bg-[#5A7BFF] border-[#5A7BFF] text-white shadow-lg shadow-[#5A7BFF]/30"
+                    : isCompleted
                       ? "bg-blue-100 border-[#5A7BFF] text-[#5A7BFF] dark:bg-[#2d3748] dark:text-white"
                       : hasData && !isActive
-                      ? "bg-blue-50 border-[#5A7BFF] text-[#5A7BFF] dark:bg-[#1a2744] dark:text-white"
-                      : "bg-white border-slate-300 text-slate-400 dark:bg-[#0a1628] dark:border-gray-600 dark:text-gray-400"
-                  }`}
+                        ? "bg-blue-50 border-[#5A7BFF] text-[#5A7BFF] dark:bg-[#1a2744] dark:text-white"
+                        : "bg-white border-slate-300 text-slate-400 dark:bg-[#0a1628] dark:border-gray-600 dark:text-gray-400"
+                    }`}
                 >
                   <Icon size={16} />
                 </div>
 
                 <span
-                  className={`mt-3 text-xs transition-colors duration-300 ${
-                    isActive
-                      ? "text-slate-800 font-medium dark:text-white"
-                      : hasData || isCompleted
+                  className={`mt-3 text-xs transition-colors duration-300 ${isActive
+                    ? "text-slate-800 font-medium dark:text-white"
+                    : hasData || isCompleted
                       ? "text-[#5A7BFF]"
                       : "text-slate-400 dark:text-gray-400"
-                  }`}
+                    }`}
                 >
                   {step.title}
                 </span>
@@ -891,9 +917,8 @@ case 3:
 
           <button
             onClick={() => setActiveStep(activeStep > 0 ? activeStep - 1 : 0)}
-            className={`px-6 py-3 border border-slate-200 dark:border-[#1a2a4a] rounded-md flex items-center gap-2 transition ${
-              activeStep === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-50 dark:hover:bg-[#1f2937]"
-            }`}
+            className={`px-6 py-3 border border-slate-200 dark:border-[#1a2a4a] rounded-md flex items-center gap-2 transition ${activeStep === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-50 dark:hover:bg-[#1f2937]"
+              }`}
             disabled={activeStep === 0}
           >
             <ChevronLeft size={16} />
@@ -908,11 +933,10 @@ case 3:
                 setActiveStep(activeStep + 1);
               }
             }}
-            className={`px-8 py-3 rounded-md transition text-white ${
-              activeStep === steps.length - 1 
-                ? "bg-green-600 hover:bg-green-700" 
-                : "bg-[#6b8cff] hover:bg-[#5a7bff]"
-            }`}
+            className={`px-8 py-3 rounded-md transition text-white ${activeStep === steps.length - 1
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-[#6b8cff] hover:bg-[#5a7bff]"
+              }`}
           >
             {activeStep === steps.length - 1 ? "Create Policy" : "Next"}
           </button>
