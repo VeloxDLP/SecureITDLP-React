@@ -757,20 +757,22 @@ function AddForm({ branches, onAdd }) {
     }));
   };
 
-  const isValid = form.branch && form.device && form.mode;
+  const isValid = form.branch && selectedDevices.length > 0 && form.mode;
 
   const handleBranchChange = async (branch) => {
     setForm((prev) => ({
       ...prev,
       branch,
-      device: "",
     }));
 
+    setSelectedDevices([]);
     setFetchedDevices([]);
+
 
     try {
       const response = await dashboardService.getDevicesByBranch(branch);
       setFetchedDevices(response.data || []);
+      // alert(JSON.stringify(response.data));
     } catch (error) {
       console.error("Error loading devices:", error);
       setFetchedDevices([]);
@@ -785,11 +787,11 @@ function AddForm({ branches, onAdd }) {
     try {
       const requestData = {
         branch: form.branch,
-        device: form.device,
+        devices: selectedDevices,
         mode: form.mode,
       };
 
-      // alert("USB request : "+form.branch+" "+form.device+" "+form.device+" "+form.mode)
+      // alert("USB request : "+form.branch+" "+" "+selectedDevices+" "+form.mode)
       const response = await dashboardService.addUSBPolicy(requestData);
 
 
@@ -851,6 +853,7 @@ function AddForm({ branches, onAdd }) {
       mode: "",
     });
 
+    setSelectedDevices([]);
     setFetchedDevices([]);
     setSubmitted(false);
     setSuccess(false);
@@ -902,26 +905,18 @@ function AddForm({ branches, onAdd }) {
             error={submitted && !form.device}
           /> */}
           <MultiSelectDropdown
-              values={form.device}
+              values={selectedDevices}
               // onChange={set("device")}
               onChange={setSelectedDevices}
               options={deviceOptions}
               placeholder={
               form.branch ? "Select Device" : "Select branch first"
             }
-              // placeholder={
-              //   form.branch
-              //     ? deviceLoading
-              //       ? "Loading devices..."
-              //       : "Select Device(s)"
-              //     : "Select branch first"
-              // }
               disabled={!form.branch}
-              error={submitted && !form.device}
               isDark={isDark}
             />
 
-          {submitted && !form.device && (
+          {submitted && !selectedDevices.length == 0 && (
             <p className="text-[10px] text-rose-500 mt-1">Required</p>
           )}
         </div>

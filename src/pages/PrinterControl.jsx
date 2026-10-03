@@ -679,6 +679,7 @@ const [form, setForm] = useState({ branch: '', devices: [], printerType: '', mod
   const [submitted, setSubmitted] = useState(false)
   const [success, setSuccess] = useState(false)
   const [fetchedDevices, setFetchedDevices] = useState([])
+  const [selectedDevices, setSelectedDevices] = useState([]);
 
 const set = k => v =>
   setForm(f => ({ ...f, [k]: v, ...(k === 'branch' ? { devices: [] } : {}) }))
@@ -708,7 +709,7 @@ const set = k => v =>
     { value: 'Allow', label: 'Allow' },
     { value: 'Prevent', label: 'Prevent' },
   ]
-const isValid = form.branch && form.devices.length > 0 && form.mode
+const isValid = form.branch && selectedDevices.length > 0 && form.mode
 
   const handleSubmit = async () => {
     setSubmitted(true)
@@ -716,7 +717,7 @@ const isValid = form.branch && form.devices.length > 0 && form.mode
 
 const requestData = {
   branch: form.branch,
-  device: form.devices.join(','),
+  devices: selectedDevices,
   mode: form.mode,
 }
 
@@ -790,7 +791,7 @@ console.log('🟢 typeof response.data:', typeof response?.data)
   <label className={labelCls}>
     Device Name <span className="text-rose-500 normal-case tracking-normal">*</span>
   </label>
-  <MultiSelectDropdown
+  {/* <MultiSelectDropdown
     values={form.devices}
     onChange={set('devices')}
     options={deviceOptions}
@@ -798,8 +799,20 @@ console.log('🟢 typeof response.data:', typeof response?.data)
     disabled={!form.branch}
     searchable
     error={submitted && form.devices.length === 0}
-  />
-  {submitted && form.devices.length === 0 && (
+  /> */}
+          <MultiSelectDropdown
+            values={selectedDevices}
+            // onChange={set("device")}
+            onChange={setSelectedDevices}
+            options={deviceOptions}
+            placeholder={
+              form.branch ? "Select Device" : "Select branch first"
+            }
+            disabled={!form.branch}
+            isDark={isDark}
+          />
+
+  {submitted && selectedDevices.length === 0 && (
     <p className="text-[10px] text-rose-500 mt-1">Required</p>
   )}
 </div>
