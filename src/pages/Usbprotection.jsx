@@ -16,6 +16,7 @@ import {
 import { useTheme } from "../context/ThemeContext";
 import { alert as showAlert } from "../components/ui/AlertModal";
 import { dashboardService } from "../services/dashboardService";
+import PolicyStatusTracker from "./PolicyStatusTracker/PolicyStatusTracker";
 
 /* =========================================================
    STATUS PILL
@@ -704,6 +705,8 @@ function AddForm({ branches, onAdd }) {
   const [success, setSuccess] = useState(false);
   const [fetchedDevices, setFetchedDevices] = useState([]);
   const [selectedDevices, setSelectedDevices] = useState([]);
+  const [trackedEventIds, setTrackedEventIds] = useState([]);
+  const isTracking = trackedEventIds.length > 0;  
 
   const branchOptions = (branches || [])
     .map((branch) => {
@@ -780,70 +783,46 @@ function AddForm({ branches, onAdd }) {
   };
 
   const handleSubmit = async () => {
-    setSubmitted(true);
+  setSubmitted(true);
+  if (!isValid || isTracking) return;
 
-    if (!isValid) return;
+  try {
+    const response = await dashboardService.addUSBPolicy({
+      branch: form.branch,
+      devices: selectedDevices,
+      mode: form.mode,
+    });
 
-    try {
-      const requestData = {
-        branch: form.branch,
-        devices: selectedDevices,
-        mode: form.mode,
-      };
+    // works whether the service returns the ApiResponse body or the raw axios response
+    const body = response?.data;
+    const eventIds = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
 
-      // alert("USB request : "+form.branch+" "+" "+selectedDevices+" "+form.mode)
-      const response = await dashboardService.addUSBPolicy(requestData);
-
-
-   
-
-
-      if (response.data === "SUCCESS") {
-        setSuccess(true);
-
-        await showAlert({
-          icon: "success",
-          title: "Policy Saved",
-          text: "USB policy successful",
-          timer: 2500,
-          timerProgressBar: true,
-          showConfirmButton: true,
-        });
-
-        setSubmitted(false);
-
-        setForm({
-          branch: "",
-          device: "",
-          printerType: "",
-          mode: "",
-        });
-
-        setFetchedDevices([]);
-        setSuccess(false);
-
-        if (onAdd) {
-          await onAdd();
-        }
-      } else {
-        await showAlert({
-          icon: "error",
-          title: "Policy Failed",
-          text: "Error Sending policy",
-          confirmButtonText: "Cancel",
-        });
-      }
-    } catch (error) {
-      console.error("Error adding printer policy:", error);
-
+    if (eventIds.length > 0) {
+      setTrackedEventIds(eventIds);
+    } else {
       await showAlert({
         icon: "error",
         title: "Policy Failed",
-        text: "Error Sending policy",
+        text: response?.message || "Error sending policy",
         confirmButtonText: "Cancel",
       });
     }
-  };
+  } catch (error) {
+    console.error("Error adding USB policy:", error);
+    await showAlert({
+      icon: "error",
+      title: "Policy Failed",
+      text: error?.response?.data?.message || "Error sending policy",
+      confirmButtonText: "Cancel",
+    });
+  }
+};
+
+const handleTrackerClose = async () => {
+  setTrackedEventIds([]);
+  handleReset();
+  if (onAdd) await onAdd();
+};
 
   const handleReset = () => {
     setForm({
@@ -865,9 +844,11 @@ function AddForm({ branches, onAdd }) {
     ${isDark ? "text-slate-500" : "text-slate-400"}
   `;
 
-  return (
-    <GlassCard className="p-6 mb-5">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+    return (
+    <>
+      <GlassCard className="p-6 mb-5">
+       
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
         {/* Branch */}
         <div>
           <label className={labelCls}>
@@ -894,16 +875,6 @@ function AddForm({ branches, onAdd }) {
             Device Name <span className="text-rose-500">*</span>
           </label>
 
-          {/* <Dropdown
-            value={form.device}
-            onChange={set("device")}
-            options={deviceOptions}
-            placeholder={
-              form.branch ? "Select Device" : "Select branch first"
-            }
-            disabled={!form.branch}
-            error={submitted && !form.device}
-          /> */}
           <MultiSelectDropdown
               values={selectedDevices}
               // onChange={set("device")}
@@ -916,7 +887,7 @@ function AddForm({ branches, onAdd }) {
               isDark={isDark}
             />
 
-          {submitted && !selectedDevices.length == 0 && (
+          {submitted && selectedDevices.length == 0 && (
             <p className="text-[10px] text-rose-500 mt-1">Required</p>
           )}
         </div>
@@ -941,35 +912,35 @@ function AddForm({ branches, onAdd }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-3">
-        <GlassButton
-          onClick={handleReset}
-          variant="default"
-          className="px-4 py-2"
-        >
-          <RotateCcw size={13} />
-          Reset
-        </GlassButton>
+        <div className="flex items-center justify-end gap-3">
+          <GlassButton onClick={handleReset} variant="default" className="px-4 py-2">
+            <RotateCcw size={13} />
+            Reset
+          </GlassButton>
 
-        <GlassButton
-          onClick={handleSubmit}
-          variant={success ? "success" : "primary"}
-          className="px-5 py-2 font-semibold"
-        >
-          {success ? (
-            <>
-              <Check size={13} />
-              Saved!
-            </>
-          ) : (
-            <>
-              <Plus size={13} />
-              Submit
-            </>
-          )}
-        </GlassButton>
-      </div>
-    </GlassCard>
+          <GlassButton
+            onClick={handleSubmit}
+            disabled={isTracking}
+            variant="primary"
+            className="px-5 py-2 font-semibold"
+          >
+            <Plus size={13} />
+            {isTracking ? "Processing…" : "Submit"}
+          </GlassButton>
+        </div>
+      </GlassCard>
+
+      {/* separate card below the form */}
+      {isTracking && (
+        <div className="mb-5" style={{ boxShadow: isDark ? "0 4px 24px rgba(0,0,0,0.5)" : "0 2px 16px rgba(0,0,0,0.08)" }}>
+          <PolicyStatusTracker
+            title="USB Policy"
+            eventIds={trackedEventIds}
+            onClose={handleTrackerClose}
+          />
+        </div>
+      )}
+    </>
   );
 }
 

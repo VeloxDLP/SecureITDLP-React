@@ -43,10 +43,6 @@ const reportsData = {
   "Data Classification": ["Classified Files", "Policy Violations"],
 };
 
-// const branches = ["Mumbai", "Pune", "Delhi", "Bangalore", "Chennai"];
-// const devices = ["DESKTOP-7F2K3L1", "DESKTOP-9A1B2C3", "DESKTOP-5X8Y2Z1", "DESKTOP-4W7Q9T2"];
-// const users = ["All Users", "Admin", "Guest", "Operator"];
-
 const dateRangeOptions = [
   "Today",
   "Last 7 Days",
@@ -68,6 +64,8 @@ export default function ReportCenter() {
   const [fetchedDevices, setFetchedDevices] = useState([]);
   const [fromDate, setFromDate]= useState();
   const [toDate, setToDate]= useState();
+   const [selectedDevices, setSelectedDevices] = useState([]);
+
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -103,10 +101,22 @@ export default function ReportCenter() {
   const handleBranchChange = async (branch) => {
      setBranch(branch);
      setDevice("");
-     const DevicesOfBranches =
-     await dashboardService.getDevicesByBranch(branch);
 
-    setFetchedDevices(DevicesOfBranches.data);
+     setSelectedDevices([]);
+    setFetchedDevices([]);
+
+
+    try {
+      const response = await dashboardService.getDevicesByBranch(branch);
+      setFetchedDevices(response.data || []);
+      // alert(JSON.stringify(response.data));
+    } catch (error) {
+      console.error("Error loading devices:", error);
+      setFetchedDevices([]);
+    }
+
+    //  const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch);
+    // setFetchedDevices(DevicesOfBranches.data);
 
   };
 

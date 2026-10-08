@@ -44,7 +44,8 @@ VIEWDEVICE:{
     GET_DEVICES_ON_BRANCH:"/DeviceManager/DevicesByBranch",
     GET_MODEACESS:"/UsbProtection/modeAccessCount",
     GET_DEVICEDETAIL:"/UsbProtection/deviceDetails",
-    GET_DEVICENAME:"/UsbProtection/devices"
+    GET_DEVICENAME:"/UsbProtection/devices",
+    GET_LIVE_POLICY_STATUS:"/DeviceManager/livePolicyStatus"
 },
 
 PRINTER_CONTROL:{
@@ -58,8 +59,8 @@ APPLICATION_CONTROL:{
   VIEW_APPLICATION_COUNT: "/application-info/GetHostWiseApplicationCount",
   VIEW_APPLICATION_DETAILS:"/application-info/GetHostWiseApplicationDetail",
   APPLICATION_BLACKLISTED:"/application-info/ApplicationBlacklisted",
-    APPLICATION_BY_HOST:"/application-info/GetApplicationByHost",
-    APPLICATION_WHITELISTED: "/application-info/ApplicationWhitelisted",
+  APPLICATION_BY_HOST:"/application-info/GetApplicationByHost",
+  APPLICATION_WHITELISTED: "/application-info/ApplicationWhitelisted",
 },
 
 // APPLICATION_CONTROL: {

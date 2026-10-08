@@ -6,6 +6,7 @@ import {
 import { useTheme } from '../context/ThemeContext'
 import { alert as showAlert } from '../components/ui/AlertModal'
 import { dashboardService } from '../services/dashboardService'
+import PolicyStatusTracker from './PolicyStatusTracker/PolicyStatusTracker'
 
 /* ─────────────────────────────────────────────────────────────
    STATUS PILL
@@ -675,11 +676,13 @@ function AddForm({ branches, onAdd }) {
   }))
 
   const { isDark } = useTheme()
-const [form, setForm] = useState({ branch: '', devices: [], printerType: '', mode: '' })
+  const [form, setForm] = useState({ branch: '', devices: [], printerType: '', mode: '' })
   const [submitted, setSubmitted] = useState(false)
   const [success, setSuccess] = useState(false)
   const [fetchedDevices, setFetchedDevices] = useState([])
   const [selectedDevices, setSelectedDevices] = useState([]);
+  const [trackedEventIds, setTrackedEventIds] = useState([]);
+  const isTracking = trackedEventIds.length > 0;  
 
 const set = k => v =>
   setForm(f => ({ ...f, [k]: v, ...(k === 'branch' ? { devices: [] } : {}) }))
@@ -711,65 +714,132 @@ const set = k => v =>
   ]
 const isValid = form.branch && selectedDevices.length > 0 && form.mode
 
-  const handleSubmit = async () => {
-    setSubmitted(true)
-    if (!isValid) return
+//   const handleSubmit = async () => {
+//     setSubmitted(true)
+//     if (!isValid) return
 
-const requestData = {
-  branch: form.branch,
-  devices: selectedDevices,
-  mode: form.mode,
-}
+// const requestData = {
+//   branch: form.branch,
+//   devices: selectedDevices,
+//   mode: form.mode,
+// }
 
-    const response = await dashboardService.addPrinterPolicy(requestData)
-    console.log('The policy Status IS', response.data)
-    console.log('🟢 requestData:', requestData)
-console.log('🟢 full response:', response)
-console.log('🟢 response.data:', response?.data)
-console.log('🟢 typeof response.data:', typeof response?.data)
+//     const response = await dashboardService.addPrinterPolicy(requestData)
 
-    if (response.data === 'SUCCESS') {
+//     if (response.data === 'SUCCESS') {
+//       await showAlert({
+//         icon: 'success',
+//         title: 'Policy Saved',
+//         text: 'Printer policy successful',
+//         timer: 2500,
+//         timerProgressBar: true,
+//         showConfirmButton: true,
+//       })
+//       setSubmitted(false)
+//      setForm({ branch: '', devices: [], printerType: '', mode: '' })
+//       setFetchedDevices([])
+//     } else {
+//       showAlert({
+//         icon: 'error',
+//         title: 'Policy Failed',
+//         text: 'Error Sending policy',
+//         confirmButtonText: 'Cancel',
+//       })
+//     }
+//   }
+
+    const handleSubmit = async () => {
+    setSubmitted(true);
+    if (!isValid || isTracking) return;
+  
+    try {
+      const response = await dashboardService.addPrinterPolicy({
+        branch: form.branch,
+        devices: selectedDevices,
+        mode: form.mode,
+      });
+  
+      // works whether the service returns the ApiResponse body or the raw axios response
+      const body = response?.data;
+      const eventIds = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
+  
+      if (eventIds.length > 0) {
+        setTrackedEventIds(eventIds);
+      } else {
+        await showAlert({
+          icon: "error",
+          title: "Policy Failed",
+          text: response?.message || "Error sending policy",
+          confirmButtonText: "Cancel",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding USB policy:", error);
       await showAlert({
-        icon: 'success',
-        title: 'Policy Saved',
-        text: 'Printer policy successful',
-        timer: 2500,
-        timerProgressBar: true,
-        showConfirmButton: true,
-      })
-      setSubmitted(false)
-     setForm({ branch: '', devices: [], printerType: '', mode: '' })
-      setFetchedDevices([])
-    } else {
-      showAlert({
-        icon: 'error',
-        title: 'Policy Failed',
-        text: 'Error Sending policy',
-        confirmButtonText: 'Cancel',
-      })
+        icon: "error",
+        title: "Policy Failed",
+        text: error?.response?.data?.message || "Error sending policy",
+        confirmButtonText: "Cancel",
+      });
     }
-  }
+  };
+  
+  const handleTrackerClose = async () => {
+    setTrackedEventIds([]);
+    handleReset();
+    if (onAdd) await onAdd();
+  };
+
+   const handleReset = () => {
+    setForm({
+      branch: "",
+      device: "",
+      printerType: "",
+      mode: "",
+    });
+
+    setSelectedDevices([]);
+    setFetchedDevices([]);
+    setSubmitted(false);
+    setSuccess(false);
+  };
+
 
   const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5
                     ${isDark ? 'text-slate-500' : 'text-slate-400'}`
 
-  const handleBranchChange = async branch => {
-    setForm(f => ({
-      ...f,
-      branch,
-      device: '',
-    }))
+  // const handleBranchChange = async branch => {
+  //   setForm(f => ({
+  //     ...f,
+  //     branch,
+  //     device: '',
+  //   }))
 
-    try {
-      const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch)
-      setFetchedDevices(DevicesOfBranches.data || [])
-    } catch (err) {
-      console.error('Error loading devices:', err)
-      setFetchedDevices([])
-    }
+  //   try {
+  //     const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch)
+  //     setFetchedDevices(DevicesOfBranches.data || [])
+  //   } catch (err) {
+  //     console.error('Error loading devices:', err)
+  //     setFetchedDevices([])
+  //   }
+  // }
+
+  const handleBranchChange = async branch => {
+  setForm(f => ({ ...f, branch }))
+  setSelectedDevices([])
+  setFetchedDevices([])
+
+  try {
+    const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch)
+    setFetchedDevices(DevicesOfBranches.data || [])
+  } catch (err) {
+    console.error('Error loading devices:', err)
+    setFetchedDevices([])
   }
+}
 
   return (
+  <>
     <GlassCard className="p-6 mb-5">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
         <div>
@@ -787,19 +857,11 @@ console.log('🟢 typeof response.data:', typeof response?.data)
           {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1  ">Required</p>}
         </div>
 
-<div>
-  <label className={labelCls}>
-    Device Name <span className="text-rose-500 normal-case tracking-normal">*</span>
-  </label>
-  {/* <MultiSelectDropdown
-    values={form.devices}
-    onChange={set('devices')}
-    options={deviceOptions}
-    placeholder={form.branch ? 'Select Device' : 'Select branch first'}
-    disabled={!form.branch}
-    searchable
-    error={submitted && form.devices.length === 0}
-  /> */}
+        <div>
+          <label className={labelCls}>
+            Device Name <span className="text-rose-500 normal-case tracking-normal">*</span>
+          </label>
+
           <MultiSelectDropdown
             values={selectedDevices}
             // onChange={set("device")}
@@ -812,10 +874,10 @@ console.log('🟢 typeof response.data:', typeof response?.data)
             isDark={isDark}
           />
 
-  {submitted && selectedDevices.length === 0 && (
-    <p className="text-[10px] text-rose-500 mt-1">Required</p>
-  )}
-</div>
+          {submitted && selectedDevices.length === 0 && (
+            <p className="text-[10px] text-rose-500 mt-1">Required</p>
+          )}
+        </div>
 
         <div>
           <label className={labelCls}>
@@ -833,24 +895,33 @@ console.log('🟢 typeof response.data:', typeof response?.data)
       </div>
 
       <div className="flex items-center justify-end gap-3">
-        <GlassButton
-          onClick={() => { setForm({ branch: '', device: '', printerType: '', mode: '' }); setSubmitted(false); setFetchedDevices([]) }}
-          variant="default"
-          className="px-4 py-2"
-        >
+        <GlassButton onClick={handleReset} variant="default" className="px-4 py-2">
           <RotateCcw size={13} /> Reset
         </GlassButton>
 
         <GlassButton
           onClick={handleSubmit}
-          variant={success ? 'success' : 'primary'}
+          disabled={isTracking}
+          variant="primary"
           className="px-5 py-2 font-semibold"
         >
-          {success ? <><Check size={13} /> Saved!</> : <><Plus size={13} /> Submit</>}
+          <Plus size={13} />
+          {isTracking ? 'Processing…' : 'Submit'}
         </GlassButton>
       </div>
     </GlassCard>
-  )
+
+    {isTracking && (
+      <div className="mb-5">
+        <PolicyStatusTracker
+          title="Printer Policy"
+          eventIds={trackedEventIds}
+          onClose={handleTrackerClose}
+        />
+      </div>
+    )}
+  </>
+)
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1037,28 +1108,48 @@ export default function PrinterControl() {
   const [policies, setPolicies] = useState([])
   const [branches, setBranches] = useState([])
 
-const handleAdd = ({ branchName, devices, device, printerType, mode }) => {
-  setPolicies(prev => [
-    ...prev,
-    {
-      id: Date.now(),
-      branch: branchName,
-      device: Array.isArray(devices) ? devices.join(', ') : device,
-      printerType,
-      mode,
-      addedOn: new Date().toISOString().slice(0, 10),
-    },
-  ])
+// const handleAdd = ({ branchName, devices, device, printerType, mode }) => {
+//   setPolicies(prev => [
+//     ...prev,
+//     {
+//       id: Date.now(),
+//       branch: branchName,
+//       device: Array.isArray(devices) ? devices.join(', ') : device,
+//       printerType,
+//       mode,
+//       addedOn: new Date().toISOString().slice(0, 10),
+//     },
+//   ])
+// }
+
+const handleAdd = async () => {
+  await loadPageData()
+  setTab('view')
 }
 
-  const loadPageData = async () => {
+const loadPageData = async () => {
+  try {
     const [ALLBranch, PrinterPolicies] = await Promise.all([
       dashboardService.getBranch(),
       dashboardService.getPrinterPolicies(),
     ])
-    setBranches(ALLBranch.data)
-    setPolicies(PrinterPolicies.data)
+    setBranches(ALLBranch.data || [])
+    setPolicies(Array.isArray(PrinterPolicies.data) ? PrinterPolicies.data : [])
+  } catch (err) {
+    console.error('Error loading printer data:', err)
+    setBranches([])
+    setPolicies([])
   }
+}
+
+  // const loadPageData = async () => {
+  //   const [ALLBranch, PrinterPolicies] = await Promise.all([
+  //     dashboardService.getBranch(),
+  //     dashboardService.getPrinterPolicies(),
+  //   ])
+  //   setBranches(ALLBranch.data)
+  //   setPolicies(PrinterPolicies.data)
+  // }
 
   useEffect(() => {
     loadPageData()
@@ -1108,7 +1199,8 @@ const handleAdd = ({ branchName, devices, device, printerType, mode }) => {
 
       <TabBar active={tab} onChange={setTab} />
 
-      {tab === 'add' && <AddForm branches={branches} onAdd={p => { handleAdd(p); setTab('view') }} />}
+      {/* {tab === 'add' && <AddForm branches={branches} onAdd={p => { handleAdd(p); setTab('view') }} />} */}
+      {tab === 'add' && <AddForm branches={branches} onAdd={handleAdd} />}       
       {tab === 'view' && <PolicyTable policies={policies} onDelete={handleDelete} />}
     </div>
   )

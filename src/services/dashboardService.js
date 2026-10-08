@@ -186,7 +186,7 @@ export const dashboardService = {
     return data;
   },
 
- getTodaysFileUploadIncidents: async () => {
+  getTodaysFileUploadIncidents: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.DASHBOARD.FILE_UPLOAD,
     );
@@ -194,7 +194,7 @@ export const dashboardService = {
     return data;
   },
 
-    getClipboardIncidents: async () => {
+  getClipboardIncidents: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.DASHBOARD.CLIPBOARD_INCIDENT,
     );
@@ -202,7 +202,7 @@ export const dashboardService = {
     return data;
   },
 
-    getPrinterIncidents: async () => {
+  getPrinterIncidents: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.DASHBOARD.PRINTER_INCIDENT,
     );
@@ -210,7 +210,7 @@ export const dashboardService = {
     return data;
   },
 
-    getPrinterModalIncident: async () => {
+  getPrinterModalIncident: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.DASHBOARD.PRINTER_MODALINCIDENT,
     );
@@ -218,7 +218,7 @@ export const dashboardService = {
     return data;
   },
 
-      getIncidentsByChannel: async () => {
+  getIncidentsByChannel: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.DASHBOARD.INCIDENT_BY_CHANNEL,
     );
@@ -226,7 +226,7 @@ export const dashboardService = {
     return data;
   },
 
-    getMailIncident: async () => {
+  getMailIncident: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.DASHBOARD.MAIL_INCIDENT,
     );
@@ -234,7 +234,7 @@ export const dashboardService = {
     return data;
   },
 
-      getOrganizationIncident: async () => {
+  getOrganizationIncident: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.DASHBOARD.ORGANIZATION_INCIDENT,
     );
@@ -242,7 +242,7 @@ export const dashboardService = {
     return data;
   },
 
-        getLatestIncident: async () => {
+  getLatestIncident: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.DASHBOARD.LATEST_INCIDENT,
     );
@@ -250,7 +250,7 @@ export const dashboardService = {
     return data;
   },
 
-          getPreventedApplication: async () => {
+  getPreventedApplication: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.DASHBOARD.PREVENTED_APPLICATION,
     );
@@ -265,6 +265,16 @@ export const dashboardService = {
     return data;
   },
 
+  getLivePolicyStatus: async (eventIds) => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.VIEWDEVICE.GET_LIVE_POLICY_STATUS,
+      {
+        params: { eventIds }, 
+      },
+    );
+    return data;
+  },
+
   getBranch: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.VIEWDEVICE.GET_BRANCH,
@@ -273,7 +283,7 @@ export const dashboardService = {
     return data;
   },
 
-    getModeAcess: async () => {
+  getModeAcess: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.VIEWDEVICE.GET_MODEACESS,
     );
@@ -281,8 +291,7 @@ export const dashboardService = {
     return data;
   },
 
-  
-    getdevicedetail: async () => {
+  getdevicedetail: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.VIEWDEVICE.GET_DEVICEDETAIL,
     );
@@ -298,190 +307,200 @@ export const dashboardService = {
   },
 
   //[USB API]
-getUSBPolicies: async () => {
-  const { data } = await axiosInstance.get(API_ENDPOINTS.USB_Policy.USB_Policy)
-  return data
-},
-// [Drive API]
-getDrivePolicies: async () => {
-  const { data } = await axiosInstance.get(API_ENDPOINTS.Drive_Control.Drive_Policy)
-  return data
-},
+  getUSBPolicies: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.USB_Policy.USB_Policy,
+    );
+    return data;
+  },
+  // [Drive API]
+  getDrivePolicies: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.Drive_Control.Drive_Policy,
+    );
+    return data;
+  },
   //[Printer API]
 
   getPrinterPolicies: async () => {
-    const { data } = await axiosInstance.get(API_ENDPOINTS.PRINTER_CONTROL.ALL_PRINTER_POLICIES,);
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.PRINTER_CONTROL.ALL_PRINTER_POLICIES,
+    );
     return data;
   },
 
   addPrinterPolicy: async (requestData) => {
-    const { data } = await axiosInstance.post(API_ENDPOINTS.PRINTER_CONTROL.ADD_PRINTER_POLICY,requestData);
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.PRINTER_CONTROL.ADD_PRINTER_POLICY,
+      requestData,
+    );
     return data;
   },
 
-    addUSBPolicy: async (requestData) => {
-    const { data } = await axiosInstance.post(API_ENDPOINTS.USB_Policy.ADD_USB_POLICY,requestData);
+  addUSBPolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.USB_Policy.ADD_USB_POLICY,
+      requestData,
+    );
     return data;
   },
-  
-  
 
-  
   //[Post APIS]//
 
-    CreateApplicationUser: async (UserData) => {
-  const { data } = await axiosInstance.post(
-    API_ENDPOINTS.AUTH.SIGNUP,UserData
-  );
-  return data;
-},
-
-GetApplicationUser: async () => {
-  const { data } = await axiosInstance.get(
-    API_ENDPOINTS.AUTH.APPLICATIONUSERS
-  );
-  return data;
-},
-    GetReports: async (UserData) => {
-  const { data } = await axiosInstance.post(
-    API_ENDPOINTS.REPORTS.GET_REPORTS,UserData);
-  return data;
-},
- 
-  getDevicesByBranch: async (branch) => {
-  const { data } = await axiosInstance.get(
-    `${API_ENDPOINTS.VIEWDEVICE.GET_DEVICES_ON_BRANCH}/${branch}`
-  );
-  return data;
-},
-
-
- getIncidentByChannelModal: async (channel) => {
-  const { data } = await axiosInstance.post(
-    `${API_ENDPOINTS.DASHBOARD.INCIDENT_BY_CHANNEL_MODAL}/${channel}`
-  );
-
-  return data;
-},
-
-
- getIncidentByFileTypeModal: async (filetype) => {
-  const { data } = await axiosInstance.post(
-    `${API_ENDPOINTS.DASHBOARD.INCIDENT_BY_FILE_TYPE}/${filetype}`
-  );
-
-  return data;
-},
-
-getFileUploadModal: async (requestData) => {
-    const { data } = await axiosInstance.post(API_ENDPOINTS.DASHBOARD.FILE_UPLOAD_MODAL,requestData);
+  CreateApplicationUser: async (UserData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.AUTH.SIGNUP,
+      UserData,
+    );
     return data;
   },
 
+  GetApplicationUser: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.AUTH.APPLICATIONUSERS,
+    );
+    return data;
+  },
+  GetReports: async (UserData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.REPORTS.GET_REPORTS,
+      UserData,
+    );
+    return data;
+  },
 
-getClipboardModal: async (date) => {
-  const { data } = await axiosInstance.post(
-    `${API_ENDPOINTS.DASHBOARD.CLIPBOARD_INCIDENT_MODAL}/${date}`
-  );
+  getDevicesByBranch: async (branch) => {
+    const { data } = await axiosInstance.get(
+      `${API_ENDPOINTS.VIEWDEVICE.GET_DEVICES_ON_BRANCH}/${branch}`,
+    );
+    return data;
+  },
 
-  return data;
-},
+  getIncidentByChannelModal: async (channel) => {
+    const { data } = await axiosInstance.post(
+      `${API_ENDPOINTS.DASHBOARD.INCIDENT_BY_CHANNEL_MODAL}/${channel}`,
+    );
 
-getPreventedApplicationData: async (date) => {
-  const { data } = await axiosInstance.post(
-    `${API_ENDPOINTS.DASHBOARD.PREVENTED_APPLICATIONDATA}/${date}`
-  ); 
+    return data;
+  },
 
-  return data;
-},
+  getIncidentByFileTypeModal: async (filetype) => {
+    const { data } = await axiosInstance.post(
+      `${API_ENDPOINTS.DASHBOARD.INCIDENT_BY_FILE_TYPE}/${filetype}`,
+    );
 
+    return data;
+  },
+
+  getFileUploadModal: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.DASHBOARD.FILE_UPLOAD_MODAL,
+      requestData,
+    );
+    return data;
+  },
+
+  getClipboardModal: async (date) => {
+    const { data } = await axiosInstance.post(
+      `${API_ENDPOINTS.DASHBOARD.CLIPBOARD_INCIDENT_MODAL}/${date}`,
+    );
+
+    return data;
+  },
+
+  getPreventedApplicationData: async (date) => {
+    const { data } = await axiosInstance.post(
+      `${API_ENDPOINTS.DASHBOARD.PREVENTED_APPLICATIONDATA}/${date}`,
+    );
+
+    return data;
+  },
 
   getMailIncidentData: async (date) => {
     const { data } = await axiosInstance.post(
-      `${API_ENDPOINTS.DASHBOARD.EMAIL_INCIDENT_DATA}/${date}`
+      `${API_ENDPOINTS.DASHBOARD.EMAIL_INCIDENT_DATA}/${date}`,
     );
 
     return data;
   },
 
-getApplicationPolicies: async () => {
-  const { data } = await axiosInstance.get(
-    API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_CONTROLDATA   // 👈 corrected
-  );
-  return data;
-},
-
-getApplicationCount: async (requestData) => {
-    const { data } = await axiosInstance.post(API_ENDPOINTS.APPLICATION_CONTROL.VIEW_APPLICATION_COUNT,requestData);
+  getApplicationPolicies: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_CONTROLDATA, // 👈 corrected
+    );
     return data;
   },
 
-getApplicationDetails: async (hostname) => {
-  const { data } = await axiosInstance.get(
-    `${API_ENDPOINTS.APPLICATION_CONTROL.VIEW_APPLICATION_DETAILS}/${encodeURIComponent(hostname)}`
-  );
+  getApplicationCount: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.APPLICATION_CONTROL.VIEW_APPLICATION_COUNT,
+      requestData,
+    );
+    return data;
+  },
 
-  return data;
-},
+  getApplicationDetails: async (hostname) => {
+    const { data } = await axiosInstance.get(
+      `${API_ENDPOINTS.APPLICATION_CONTROL.VIEW_APPLICATION_DETAILS}/${encodeURIComponent(hostname)}`,
+    );
 
-getApplicationBlacklisted: async (requestData) => {
-  const { data } = await axiosInstance.get( API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BLACKLISTED,requestData);
-  return data;
-},
+    return data;
+  },
 
-getApplicationsByHost: async (devices) => {
-  const { data } = await axiosInstance.post(
-    API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BY_HOST,
-    {
-      device: devices,
-    }
-  );
+  getApplicationBlacklisted: async (requestData) => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BLACKLISTED,
+      requestData,
+    );
+    return data;
+  },
 
-  return data;
-},
+  getApplicationsByHost: async (devices) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BY_HOST,
+      {
+        device: devices,
+      },
+    );
 
+    return data;
+  },
 
+  getApplicationWhitelisted: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_WHITELISTED,
+    );
+    return data;
+  },
 
-getApplicationWhitelisted: async () => {
-  const { data } = await axiosInstance.get(
-    API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_WHITELISTED
-  );
-  return data;
-},
+  getAllNetworkPolicy: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.NETWORK_POLICY.GETNETWORKPOLICY,
+    );
+    return data;
+  },
 
-getAllNetworkPolicy: async () => {
-  const { data } = await axiosInstance.get(
-    API_ENDPOINTS.NETWORK_POLICY.GETNETWORKPOLICY
-  );
-  return data;
-},
+  getPolicyByName: async (policyName) => {
+    const { data } = await axiosInstance.get(
+      `${API_ENDPOINTS.NETWORK_POLICY.GETPOLICYBYNAME}/${encodeURIComponent(policyName)}`,
+    );
 
-getPolicyByName: async (policyName) => {
-  const { data } = await axiosInstance.get(
-    `${API_ENDPOINTS.NETWORK_POLICY.GETPOLICYBYNAME}/${encodeURIComponent(policyName)}`
-  );
+    return data;
+  },
 
-  return data;
-},
-
-
-getActiveNetworkPolicy: async () => {
-  const { data } = await axiosInstance.get(
-    API_ENDPOINTS.NETWORK_POLICY.GETACTIVEDISTINCTPOLICY
-  );
-  return data;
-},
+  getActiveNetworkPolicy: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.NETWORK_POLICY.GETACTIVEDISTINCTPOLICY,
+    );
+    return data;
+  },
 
   getActivePolicyModal: async (policyName) => {
     const { data } = await axiosInstance.get(
-      `${API_ENDPOINTS.NETWORK_POLICY.GETACTIVE_DISTINCTPOLICY_MODAL}/${encodeURIComponent(policyName)}`
+      `${API_ENDPOINTS.NETWORK_POLICY.GETACTIVE_DISTINCTPOLICY_MODAL}/${encodeURIComponent(policyName)}`,
     );
     return data;
   },
-
-
-
-
 };
 
 
