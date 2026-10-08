@@ -463,19 +463,6 @@ export default function ActivePolicy() {
                 </div>
               ) : policyDetails ? (
                 <div className="space-y-7">
-
-                  {/* ---------- POLICY NAME (full width) ---------- */}
-                  {/* <FieldBlock
-                    icon={<ShieldCheck size={20} className="text-[#7094FF]" />}
-                    label="Policy Name"
-                    value={
-                      policyDetails.policyName ||
-                      policyDetails.policy_name ||
-                      selectedPolicy.name
-                    }
-                    highlight
-                  /> */}
-
                   {/* ---------- 2-COLUMN GRID ---------- */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-7">
                     <FieldBlock
@@ -485,25 +472,21 @@ export default function ActivePolicy() {
                         policyDetails.ipAddress || policyDetails.ipaddress
                       }
                     />
-
                     <FieldBlock
                       icon={<Braces size={20} className="text-[#7094FF]" />}
                       label="Regex"
                       value={policyDetails.regex}
                     />
-
                     <FieldBlock
                       icon={<Tag size={20} className="text-[#7094FF]" />}
                       label="Keywords"
                       value={policyDetails.keywords}
                     />
-
                     <FieldBlock
                       icon={<Share2 size={20} className="text-[#7094FF]" />}
                       label="Channels"
                       value={policyDetails.channels}
                     />
-
                     <FieldBlock
                       icon={<FileText size={20} className="text-[#7094FF]" />}
                       label="File Types"
@@ -511,7 +494,6 @@ export default function ActivePolicy() {
                         policyDetails.fileTypes || policyDetails.file_types
                       }
                     />
-
                     <FieldBlock
                       icon={<Grid2X2 size={20} className="text-[#7094FF]" />}
                       label="Applications"
@@ -527,27 +509,12 @@ export default function ActivePolicy() {
                 </div>
               )}
             </div>
-
             {/* =================================================
                 MODAL FOOTER
             ================================================= */}
 
             <div className="flex justify-end  border-[#1E293B] px-7 py-5">
-              {/* <button
-                type="button"
-                onClick={handleCloseModal}
-                className="
-                  min-w-[145px] rounded-lg
-                  border border-[#3154A6]
-                  bg-[#061126]
-                  px-6 py-3
-                  text-sm font-medium text-[#7094FF]
-                  hover:bg-[#0D1B3A] hover:text-white
-                  transition
-                "
-              >
-                Close
-              </button> */}
+ 
             </div>
           </div>
         </div>
