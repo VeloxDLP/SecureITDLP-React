@@ -190,7 +190,7 @@ function Dropdown({ value, onChange, options, placeholder = 'Select…', disable
   );
 }
 
-// ─── MultiSelect Dropdown ──────────────────────────────────────
+// ─── MultiSelect Dropdown (with search) ────────────────────────
 function MultiSelectDropdown({
   values = [],
   onChange,
@@ -198,9 +198,11 @@ function MultiSelectDropdown({
   placeholder = 'Select…',
   disabled = false,
   error = false,
+  searchable = false,
 }) {
   const { isDark } = useTheme();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const containerRef = useRef(null);
 
   const normalised = options.map(o =>
@@ -208,6 +210,12 @@ function MultiSelectDropdown({
       ? { value: o, label: o, status: null }
       : { status: null, ...o }
   );
+
+  const filtered = searchable && query
+    ? normalised.filter(o =>
+        o.label.toLowerCase().includes(query.toLowerCase())
+      )
+    : normalised;
 
   const allSelected =
     normalised.length > 0 &&
@@ -240,6 +248,7 @@ function MultiSelectDropdown({
     const handler = e => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setOpen(false);
+        setQuery('');
       }
     };
     if (open) document.addEventListener('mousedown', handler);
@@ -301,6 +310,27 @@ function MultiSelectDropdown({
             WebkitBackdropFilter: 'blur(32px) saturate(180%)',
           }}
         >
+          {/* SEARCH BAR */}
+          {searchable && (
+            <div className={`px-3 py-2 border-b ${isDark ? 'border-white/[0.07]' : 'border-slate-100'}`}>
+              <div className="relative flex items-center">
+                <Search size={12} className={`absolute left-2.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder="Search devices…"
+                  className={`w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none border transition-all duration-150 ${isDark ? 'bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]' : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'}`}
+                />
+                {query && (
+                  <button onClick={() => setQuery('')} className="absolute right-2 text-slate-400 hover:text-slate-200">
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* SELECT ALL */}
           <div className={`px-3 py-2 border-b ${isDark ? 'border-white/[0.07]' : 'border-slate-100'}`}>
             <button
@@ -339,12 +369,12 @@ function MultiSelectDropdown({
 
           {/* DEVICE LIST */}
           <div className="max-h-52 overflow-y-auto py-1">
-            {normalised.length === 0 ? (
+            {filtered.length === 0 ? (
               <p className={`px-4 py-3 text-[12px] text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-                No devices available
+                {normalised.length === 0 ? 'No devices available' : 'No results'}
               </p>
             ) : (
-              normalised.map((o, index) => {
+              filtered.map((o, index) => {
                 const isSelected = values.includes(o.value);
 
                 return (
@@ -617,7 +647,7 @@ function AddForm({ branches, onAdd }) {
           {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
 
-        {/* Device (MULTI SELECT) */}
+        {/* Device (MULTI SELECT + SEARCH) */}
         <div>
           <label className={labelCls}>Device Name <span className="text-rose-500 normal-case tracking-normal">*</span></label>
           <MultiSelectDropdown
@@ -626,6 +656,7 @@ function AddForm({ branches, onAdd }) {
             options={deviceOptions}
             placeholder={form.branch ? 'Select Devices' : 'Select branch first'}
             disabled={!form.branch}
+            searchable
             error={submitted && form.device.length === 0}
           />
           {submitted && form.device.length === 0 && <p className="text-[10px] text-rose-500 mt-1">Required</p>}

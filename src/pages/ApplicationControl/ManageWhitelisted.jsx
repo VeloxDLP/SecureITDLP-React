@@ -58,6 +58,11 @@ function ManageWhitelisted() {
   const [deviceOpen, setDeviceOpen] = useState(false);
   const [applicationOpen, setApplicationOpen] = useState(false);
 
+  // search queries for the dropdowns
+  const [branchQuery, setBranchQuery] = useState("");
+  const [deviceQuery, setDeviceQuery] = useState("");
+  const [applicationQuery, setApplicationQuery] = useState("");
+
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [applicationLoading, setApplicationLoading] = useState(false);
 
@@ -163,8 +168,11 @@ function ManageWhitelisted() {
     setCurrentPage(1);
 
     setBranchOpen(false);
+    setBranchQuery("");
     setDeviceOpen(false);
+    setDeviceQuery("");
     setApplicationOpen(false);
+    setApplicationQuery("");
 
     if (!branchValue) return;
 
@@ -252,6 +260,7 @@ function ManageWhitelisted() {
     });
 
     setApplicationOpen(false);
+    setApplicationQuery("");
 
     setWhitelistedApplications([]);
     setSelectedTableRows([]);
@@ -263,6 +272,12 @@ function ManageWhitelisted() {
   // DEVICE VALUES
   // ============================================================
   const filteredDevices = devices.map((item) => getDeviceValue(item)).filter(Boolean);
+
+  const filteredDevicesByQuery = deviceQuery
+    ? filteredDevices.filter((d) =>
+        String(d).toLowerCase().includes(deviceQuery.toLowerCase())
+      )
+    : filteredDevices;
 
   // ============================================================
   // SELECT ALL DEVICES
@@ -290,6 +305,7 @@ function ManageWhitelisted() {
 
     setSelectedApplications([]);
     setApplicationOpen(false);
+    setApplicationQuery("");
   };
 
   // ============================================================
@@ -310,6 +326,12 @@ function ManageWhitelisted() {
   const applicationValues = applications
     .map((item) => getApplicationValue(item))
     .filter(Boolean);
+
+  const filteredApplicationValues = applicationQuery
+    ? applicationValues.filter((a) =>
+        String(a).toLowerCase().includes(applicationQuery.toLowerCase())
+      )
+    : applicationValues;
 
   const allApplicationsSelected =
     applicationValues.length > 0 &&
@@ -339,6 +361,17 @@ function ManageWhitelisted() {
   };
 
   // ============================================================
+  // BRANCH FILTER (for search)
+  // ============================================================
+  const filteredBranches = branchQuery
+    ? branches.filter((item) =>
+        String(getBranchValue(item))
+          .toLowerCase()
+          .includes(branchQuery.toLowerCase())
+      )
+    : branches;
+
+  // ============================================================
   // RESET
   // ============================================================
   const handleReset = () => {
@@ -358,6 +391,10 @@ function ManageWhitelisted() {
     setBranchOpen(false);
     setDeviceOpen(false);
     setApplicationOpen(false);
+
+    setBranchQuery("");
+    setDeviceQuery("");
+    setApplicationQuery("");
 
     setSubmitted(false);
 
@@ -423,10 +460,12 @@ function ManageWhitelisted() {
     const handleClickOutside = (event) => {
       if (branchRef.current && !branchRef.current.contains(event.target)) {
         setBranchOpen(false);
+        setBranchQuery("");
       }
 
       if (deviceRef.current && !deviceRef.current.contains(event.target)) {
         setDeviceOpen(false);
+        setDeviceQuery("");
       }
 
       if (
@@ -434,6 +473,7 @@ function ManageWhitelisted() {
         !applicationRef.current.contains(event.target)
       ) {
         setApplicationOpen(false);
+        setApplicationQuery("");
       }
     };
 
@@ -638,7 +678,7 @@ function ManageWhitelisted() {
       {/* FORM CARD */}
       <div className="rounded-2xl border p-6" style={cardStyle}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          {/* BRANCH NAME */}
+          {/* BRANCH NAME (with search) */}
           <div ref={branchRef} className="relative">
             <label className={labelClass}>
               Branch Name <span className="text-rose-500">*</span>
@@ -649,7 +689,9 @@ function ManageWhitelisted() {
               onClick={() => {
                 setBranchOpen((prev) => !prev);
                 setDeviceOpen(false);
+                setDeviceQuery("");
                 setApplicationOpen(false);
+                setApplicationQuery("");
               }}
               className={`
                 ${inputClass}
@@ -695,17 +737,60 @@ function ManageWhitelisted() {
                   }
                 `}
               >
+                {/* BRANCH SEARCH */}
+                <div
+                  className={`
+                    px-3 py-2 border-b
+                    ${isDark ? "border-white/[0.07]" : "border-slate-100"}
+                  `}
+                >
+                  <div className="relative flex items-center">
+                    <Search
+                      size={12}
+                      className={`absolute left-2.5 ${
+                        isDark ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    />
+                    <input
+                      autoFocus
+                      value={branchQuery}
+                      onChange={(e) => setBranchQuery(e.target.value)}
+                      placeholder="Search branch…"
+                      className={`
+                        w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg
+                        outline-none border transition-all duration-150
+                        ${
+                          isDark
+                            ? "bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]"
+                            : "bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400"
+                        }
+                      `}
+                    />
+                    {branchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setBranchQuery("")}
+                        className="absolute right-2 text-slate-400 hover:text-slate-200"
+                      >
+                        <X size={11} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <div className="max-h-52 overflow-y-auto py-1">
-                  {branches.length === 0 ? (
+                  {filteredBranches.length === 0 ? (
                     <div
                       className={`px-4 py-3 text-[12px] text-center ${
                         isDark ? "text-slate-600" : "text-slate-400"
                       }`}
                     >
-                      No branches found
+                      {branches.length === 0
+                        ? "No branches found"
+                        : "No results"}
                     </div>
                   ) : (
-                    branches.map((item, index) => {
+                    filteredBranches.map((item, index) => {
                       const value = getBranchValue(item);
 
                       return (
@@ -744,7 +829,7 @@ function ManageWhitelisted() {
             )}
           </div>
 
-          {/* DEVICE NAME */}
+          {/* DEVICE NAME (with search) */}
           <div ref={deviceRef} className="relative">
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-[rgb(100,116,139)]">
               DEVICE NAME{" "}
@@ -758,7 +843,9 @@ function ManageWhitelisted() {
                 if (!branch || deviceLoading) return;
                 setDeviceOpen((prev) => !prev);
                 setBranchOpen(false);
+                setBranchQuery("");
                 setApplicationOpen(false);
+                setApplicationQuery("");
               }}
               className={`
                 w-full h-[42px] rounded-xl border px-3 text-[13px]
@@ -810,10 +897,40 @@ function ManageWhitelisted() {
                   shadow-[0_16px_48px_rgba(0,0,0,0.35)] overflow-hidden
                 "
               >
+                {/* DEVICE SEARCH */}
+                <div className="px-3 py-2 border-b border-white/[0.07]">
+                  <div className="relative flex items-center">
+                    <Search
+                      size={12}
+                      className="absolute left-2.5 text-slate-500"
+                    />
+                    <input
+                      autoFocus
+                      value={deviceQuery}
+                      onChange={(e) => setDeviceQuery(e.target.value)}
+                      placeholder="Search devices…"
+                      className="
+                        w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg
+                        outline-none border border-white/[0.08]
+                        bg-[#111827] text-[#d0d0d0] placeholder-[#555]
+                      "
+                    />
+                    {deviceQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setDeviceQuery("")}
+                        className="absolute right-2 text-slate-400 hover:text-slate-200"
+                      >
+                        <X size={11} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <div className="max-h-[187px] overflow-y-auto py-1">
-                  {devices.length === 0 ? (
+                  {filteredDevicesByQuery.length === 0 ? (
                     <div className="px-3 py-3 text-[12px] text-slate-500">
-                      No devices found
+                      {devices.length === 0 ? "No devices found" : "No results"}
                     </div>
                   ) : (
                     <>
@@ -872,9 +989,13 @@ function ManageWhitelisted() {
                       </button>
 
                       {/* DEVICE LIST */}
-                      {devices.map((item, index) => {
-                        const value = getDeviceValue(item);
-                        const status = getAgentStatus(item);
+                      {filteredDevicesByQuery.map((value, index) => {
+                        const originalItem = devices.find(
+                          (d) => getDeviceValue(d) === value
+                        );
+                        const status = originalItem
+                          ? getAgentStatus(originalItem)
+                          : null;
                         const isSelected = selectedDevices.includes(value);
 
                         return (
@@ -919,7 +1040,7 @@ function ManageWhitelisted() {
             )}
           </div>
 
-          {/* APPLICATION NAME - MULTI SELECT */}
+          {/* APPLICATION NAME - MULTI SELECT (with search) */}
           <div ref={applicationRef} className="relative">
             <label className={labelClass}>
               Application Name <span className="text-rose-500">*</span>
@@ -934,7 +1055,9 @@ function ManageWhitelisted() {
                 if (selectedDevices.length === 0 || applicationLoading) return;
                 setApplicationOpen((prev) => !prev);
                 setBranchOpen(false);
+                setBranchQuery("");
                 setDeviceOpen(false);
+                setDeviceQuery("");
               }}
               className={`
                 ${inputClass}
@@ -992,10 +1115,42 @@ function ManageWhitelisted() {
                     shadow-[0_16px_48px_rgba(0,0,0,0.35)] overflow-hidden
                   "
                 >
+                  {/* APPLICATION SEARCH */}
+                  <div className="px-3 py-2 border-b border-white/[0.07]">
+                    <div className="relative flex items-center">
+                      <Search
+                        size={12}
+                        className="absolute left-2.5 text-slate-500"
+                      />
+                      <input
+                        autoFocus
+                        value={applicationQuery}
+                        onChange={(e) => setApplicationQuery(e.target.value)}
+                        placeholder="Search applications…"
+                        className="
+                          w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg
+                          outline-none border border-white/[0.08]
+                          bg-[#111827] text-[#d0d0d0] placeholder-[#555]
+                        "
+                      />
+                      {applicationQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setApplicationQuery("")}
+                          className="absolute right-2 text-slate-400 hover:text-slate-200"
+                        >
+                          <X size={11} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="max-h-[187px] overflow-y-auto py-1">
-                    {applicationValues.length === 0 ? (
+                    {filteredApplicationValues.length === 0 ? (
                       <div className="px-4 py-3 text-[12px] text-slate-500 text-center">
-                        No applications found
+                        {applicationValues.length === 0
+                          ? "No applications found"
+                          : "No results"}
                       </div>
                     ) : (
                       <>
@@ -1032,7 +1187,7 @@ function ManageWhitelisted() {
                           <span>Select all</span>
                         </button>
 
-                        {applicationValues.map((application, index) => {
+                        {filteredApplicationValues.map((application, index) => {
                           const isSelected =
                             selectedApplications.includes(application);
 
@@ -1169,7 +1324,8 @@ function ManageWhitelisted() {
               />
 
               {searchTerm && (
-                <button                  type="button"
+                <button
+                  type="button"
                   onClick={() => {
                     setSearchTerm("");
                     setCurrentPage(1);

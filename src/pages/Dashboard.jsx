@@ -216,6 +216,8 @@ function IncidentModal({
   category,
   data,
   isDark,
+  loading = false,
+  error = '',
 }) {
   const [search, setSearch] = useState('')
   const [pageSize, setPageSize] = useState(10)
@@ -242,26 +244,12 @@ function IncidentModal({
   const safeData = Array.isArray(data) ? data : []
 
   const incidentColumns = [
-    {
-      accessor: 'ipAddress',
-      header: 'IP ADDRESS',
-    },
-    {
-      accessor: 'username',
-      header: 'USERNAME',
-    },
-    {
-      accessor: 'eventType',
-      header: 'EVENT TYPE',
-    },
-    {
-      accessor: 'fileDetails',
-      header: 'FILE DETAILS',
-    },
-    {
-      accessor: 'timestamp',
-      header: 'TIMESTAMP',
-    },
+    { accessor: 'ipAddress', header: 'IP ADDRESS' },
+    { accessor: 'hostname', header: 'HOSTNAME' },
+    { accessor: 'eventType', header: 'EVENT TYPE' },
+    { accessor: 'fileName', header: 'FILE DETAILS' },
+    { accessor: 'action', header: 'ACTION' },
+    { accessor: 'timestamp', header: 'TIMESTAMP' },
   ]
 
   const filteredRows = useMemo(() => {
@@ -420,64 +408,47 @@ function IncidentModal({
                 </thead>
 
                 <tbody>
-                  {paginatedRows.length > 0 ? (
+                  {loading ? (
+                    <tr>
+                      <td colSpan={incidentColumns.length} className="px-3 py-10 text-center text-slate-400 dark:text-white/40">
+                        Loading incident data...
+                      </td>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan={incidentColumns.length} className="px-3 py-10 text-center text-red-500">
+                        {error}
+                      </td>
+                    </tr>
+                  ) : paginatedRows.length > 0 ? (
                     paginatedRows.map((row, index) => (
                       <tr
-                        key={index}
-                        className="
-                          bg-white transition
-                          hover:bg-[#7094ff]/5
-                          dark:bg-transparent
-                          dark:hover:bg-white/[0.03]
-                        "
+                        key={row.id ?? row.srNo ?? index}
+                        className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
                       >
                         <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
                           {row.ipAddress || 'NA'}
                         </td>
-
                         <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
-                          {row.username || 'NA'}
+                          {row.hostname || 'NA'}
                         </td>
-
                         <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
                           {row.eventType || 'NA'}
                         </td>
-
-                        <td
-                          className="
-                            max-w-[360px] truncate
-                            border-b border-slate-100
-                            px-4 py-3 text-slate-400
-                            dark:border-white/[0.05]
-                            dark:text-white/30
-                          "
-                          title={row.fileDetails}
-                        >
-                          {row.fileDetails || 'NA'}
+                        <td title={row.fileName || ''} className="max-w-[360px] truncate border-b border-slate-100 px-4 py-3 text-slate-500 dark:border-white/[0.05] dark:text-white/50">
+                          {row.fileName || 'NA'}
                         </td>
-
-                        <td className="
-                          whitespace-nowrap
-                          border-b border-slate-100
-                          px-4 py-3 text-right
-                          text-slate-400
-                          dark:border-white/[0.05]
-                          dark:text-white/40
-                        ">
-                          {row.timestamp || 'NA'}
+                        <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
+                          {row.action || 'NA'}
+                        </td>
+                        <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-500 dark:border-white/[0.05] dark:text-white/50">
+                          {row.timestamp ? String(row.timestamp).replace('T', ' ') : 'NA'}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td
-                        colSpan={incidentColumns.length}
-                        className="
-                          px-3 py-10 text-center
-                          text-slate-400
-                          dark:text-white/30
-                        "
-                      >
+                      <td colSpan={incidentColumns.length} className="px-3 py-10 text-center text-slate-400 dark:text-white/30">
                         No records found
                       </td>
                     </tr>
@@ -486,6 +457,7 @@ function IncidentModal({
               </table>
             </div>
 
+            {!loading && !error && (
             <div
               className="
                 flex shrink-0 flex-col gap-3
@@ -599,6 +571,7 @@ function IncidentModal({
                 </button>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>
@@ -1404,6 +1377,8 @@ export default function Dashboard() {
     title: '',
     category: '',
     data: [],
+    loading: false,
+    error: '',
   })
 
 
@@ -1419,7 +1394,7 @@ export default function Dashboard() {
   })
 
 
-  const  openModal = (
+  const openModal = (
     title,
     category,
     data
@@ -1429,6 +1404,8 @@ export default function Dashboard() {
       title,
       category,
       data: data || [],
+      loading: false,
+      error: '',
     })
   }
 
@@ -1439,7 +1416,113 @@ export default function Dashboard() {
       title: '',
       category: '',
       data: [],
+      loading: false,
+      error: '',
     })
+  }
+
+  const openEventWiseModal = async (category, eventTypes) => {
+    setModalState({
+      show: true,
+      title: 'Incident Details',
+      category,
+      data: [],
+      loading: true,
+      error: '',
+    })
+
+    try {
+      const types = Array.isArray(eventTypes)
+        ? eventTypes
+        : [eventTypes]
+
+      // Fetch actual incident records for the selected event type(s).
+      const responses = await Promise.all(
+        types.map((eventType) =>
+          dashboardService.getEventWiseModalData(eventType)
+        )
+      )
+
+      // Debugging: inspect the exact response returned by the backend.
+      console.log('[EventWiseModalData] Requested event types:', types)
+      console.log('[EventWiseModalData] Complete API responses:', responses)
+
+      const extractRows = (response) => {
+        if (Array.isArray(response)) return response
+        if (!response) return []
+
+        const candidates = [
+          response.data,
+          response.content,
+          response.result,
+          response.records,
+          response.rows,
+          response.list,
+          response.incidents,
+          response.data?.data,
+          response.data?.content,
+          response.data?.result,
+          response.data?.records,
+          response.data?.rows,
+          response.data?.list,
+          response.data?.incidents,
+          response.result?.data,
+          response.result?.content,
+          response.result?.records,
+          response.result?.rows,
+        ]
+
+        const found = candidates.find(Array.isArray)
+        if (found) return found
+
+        // Some APIs return one incident object instead of an array.
+        if (
+          response.ipAddress || response.ip_address || response.IP_ADDRESS ||
+          response.hostname || response.HOSTNAME || response.eventType ||
+          response.event_type || response.EVENT_TYPE
+        ) {
+          return [response]
+        }
+
+        return []
+      }
+
+      const rows = responses.flatMap((response) => extractRows(response))
+      console.log('[EventWiseModalData] Extracted incident rows:', rows)
+
+      const formattedRows = rows.map((row) => ({
+        ...row,
+        ipAddress:
+          row.ipAddress ?? row.ip_address ?? row.IP_ADDRESS ?? row.ip ?? '',
+        hostname:
+          row.hostname ?? row.hostName ?? row.HOSTNAME ?? row.host_name ?? '',
+        eventType:
+          row.eventType ?? row.event_type ?? row.EVENT_TYPE ?? row.event ?? '',
+        fileName:
+          row.fileName ?? row.file_name ?? row.FILE_NAME ?? row.fileDetails ?? row.file_details ?? '',
+        action:
+          row.action ?? row.ACTION ?? row.status ?? '',
+        timestamp:
+          row.timestamp ?? row.timeStamp ?? row.TIMESTAMP ?? row.eventTime ?? row.event_time ?? row.createdAt ?? '',
+      }))
+
+      setModalState((previous) => ({
+        ...previous,
+        data: formattedRows,
+        loading: false,
+        error: '',
+      }))
+    } catch (apiError) {
+      console.error('Event-wise incident API error:', apiError)
+      console.error('API response:', apiError.response?.data)
+
+      setModalState((previous) => ({
+        ...previous,
+        data: [],
+        loading: false,
+        error: 'Failed to load incidents. Please check the API response.',
+      }))
+    }
   }
 
 
@@ -1472,142 +1555,6 @@ export default function Dashboard() {
       category: '',
     })
   }
-
-
-  /* ─────────────────────────────────────────────────────────
-     Hardcoded Web Incident Data
-  ───────────────────────────────────────────────────────── */
-
-  const webIncidentData = [
-    {
-      ipAddress: '192.168.0.41',
-      username: 'VELOX',
-      eventType: 'WEB UPLOAD',
-      fileDetails: 'document.pdf',
-      timestamp: '2024-01-15 10:30:00',
-    },
-    {
-      ipAddress: '192.168.0.42',
-      username: 'Admin',
-      eventType: 'WEB UPLOAD',
-      fileDetails: 'report.docx',
-      timestamp: '2024-01-15 11:15:00',
-    },
-    {
-      ipAddress: '192.168.0.43',
-      username: 'User1',
-      eventType: 'WEB DOWNLOAD',
-      fileDetails: 'image.png',
-      timestamp: '2024-01-15 12:00:00',
-    },
-    {
-      ipAddress: '192.168.0.44',
-      username: 'VELOX',
-      eventType: 'WEB UPLOAD',
-      fileDetails: 'data.xlsx',
-      timestamp: '2024-01-15 13:30:00',
-    },
-    {
-      ipAddress: '192.168.0.45',
-      username: 'Kiran_Tester',
-      eventType: 'WEB UPLOAD',
-      fileDetails: 'presentation.pptx',
-      timestamp: '2024-01-15 14:45:00',
-    },
-    {
-      ipAddress: '192.168.0.46',
-      username: 'VELOX',
-      eventType: 'WEB DOWNLOAD',
-      fileDetails: 'backup.zip',
-      timestamp: '2024-01-15 15:20:00',
-    },
-    {
-      ipAddress: '192.168.0.47',
-      username: 'User2',
-      eventType: 'WEB UPLOAD',
-      fileDetails: 'script.js',
-      timestamp: '2024-01-15 16:10:00',
-    },
-    {
-      ipAddress: '192.168.0.48',
-      username: 'VELOX',
-      eventType: 'WEB DOWNLOAD',
-      fileDetails: 'style.css',
-      timestamp: '2024-01-15 17:00:00',
-    },
-    {
-      ipAddress: '192.168.0.49',
-      username: 'Kira_Tester',
-      eventType: 'WEB UPLOAD',
-      fileDetails: 'index.html',
-      timestamp: '2024-01-15 18:30:00',
-    },
-    {
-      ipAddress: '192.168.0.50',
-      username: 'VELOX',
-      eventType: 'WEB DOWNLOAD',
-      fileDetails: 'config.json',
-      timestamp: '2024-01-15 19:45:00',
-    },
-  ]
-
-
-  /* ─────────────────────────────────────────────────────────
-     Network Incident Data
-  ───────────────────────────────────────────────────────── */
-
-  const networkIncidentData = [
-   
-    {
-      ipAddress: '192.168.0.46',
-      username: 'VELOX',
-      eventType: 'NETWORK DOWNLOAD',
-      fileDetails: 'firmware.bin',
-      timestamp: '2024-01-15 15:20:00',
-    },
-        {
-      ipAddress: '192.168.0.46',
-      username: 'VELOX',
-      eventType: 'NETWORK DOWNLOAD',
-      fileDetails: 'firmware.bin',
-      timestamp: '2024-01-15 15:20:00',
-    },
-        {
-      ipAddress: '192.168.0.46',
-      username: 'VELOX',
-      eventType: 'NETWORK DOWNLOAD',
-      fileDetails: 'firmware.bin',
-      timestamp: '2024-01-15 15:20:00',
-    },
-    {
-      ipAddress: '192.168.0.47',
-      username: 'User2',
-      eventType: 'NETWORK UPLOAD',
-      fileDetails: 'metrics_data.bin',
-      timestamp: '2024-01-15 16:10:00',
-    },
-    {
-      ipAddress: '192.168.0.48',
-      username: 'VELOX',
-      eventType: 'NETWORK DOWNLOAD',
-      fileDetails: 'security_patch.bin',
-      timestamp: '2024-01-15 17:00:00',
-    },
-    {
-      ipAddress: '192.168.0.49',
-      username: 'Kira_Tester',
-      eventType: 'NETWORK UPLOAD',
-      fileDetails: 'debug_log.bin',
-      timestamp: '2024-01-15 18:30:00',
-    },
-    {
-      ipAddress: '192.168.0.50',
-      username: 'VELOX',
-      eventType: 'NETWORK DOWNLOAD',
-      fileDetails: 'profile_data.bin',
-      timestamp: '2024-01-15 19:45:00',
-    },
-  ]
 
 
   /* ─────────────────────────────────────────────────────────
@@ -1685,57 +1632,6 @@ export default function Dashboard() {
     //   fileDetails: 'Source_Code.js',
     //   timestamp: '2024-01-15 19:45:00',
     // },
-  ]
-
-
-  /* ─────────────────────────────────────────────────────────
-     Peripheral Incident Data
-  ───────────────────────────────────────────────────────── */
-
-  const peripheralIncidentData = [
-  
-    {
-      ipAddress: '192.168.0.45',
-      username: 'Kiran_Tester',
-      eventType: 'USB TRANSFER',
-      fileDetails: 'test_data.bin',
-      timestamp: '2024-01-15 14:45:00',
-    },
-    {
-      ipAddress: '192.168.0.46',
-      username: 'VELOX',
-      eventType: 'DVD BURN',
-      fileDetails: 'media_backup.iso',
-      timestamp: '2024-01-15 15:20:00',
-    },
-    {
-      ipAddress: '192.168.0.47',
-      username: 'User2',
-      eventType: 'USB TRANSFER',
-      fileDetails: 'flash_drive_data.zip',
-      timestamp: '2024-01-15 16:10:00',
-    },
-    {
-      ipAddress: '192.168.0.48',
-      username: 'VELOX',
-      eventType: 'DVD BURN',
-      fileDetails: 'archive_dvd.iso',
-      timestamp: '2024-01-15 17:00:00',
-    },
-    {
-      ipAddress: '192.168.0.49',
-      username: 'Kira_Tester',
-      eventType: 'USB TRANSFER',
-      fileDetails: 'external_hdd_data.bin',
-      timestamp: '2024-01-15 18:30:00',
-    },
-    {
-      ipAddress: '192.168.0.50',
-      username: 'VELOX',
-      eventType: 'DVD BURN',
-      fileDetails: 'backup_dvd.iso',
-      timestamp: '2024-01-15 19:45:00',
-    },
   ]
 
 
@@ -2154,13 +2050,7 @@ export default function Dashboard() {
             justify-between gap-3
           "
           clickable={true}
-          onClick={() =>
-            openModal(
-              'Incident Details',
-              'Web Incidents',
-              webIncidentData
-            )
-          }
+          onClick={() => openEventWiseModal('Web Incidents', 'WEB UPLOAD')}
         >
 
           <div>
@@ -2230,13 +2120,7 @@ export default function Dashboard() {
             justify-between gap-3
           "
           clickable={true}
-          onClick={() =>
-            openModal(
-              'Incident Details',
-              'Network Incidents',
-              networkIncidentData
-            )
-          }
+          onClick={() => openEventWiseModal('Network Incidents', 'NETWORK UPLOAD')}
         >
 
           <div>
@@ -2380,13 +2264,7 @@ export default function Dashboard() {
             justify-between gap-3
           "
           clickable={true}
-          onClick={() =>
-            openModal(
-              'Incident Details',
-              'Peripheral Incidents',
-              peripheralIncidentData
-            )
-          }
+          onClick={() => openEventWiseModal('Peripheral Incidents', ['USB TRANSFER', 'DVD BURN'])}
         >
 
           <div>
@@ -2636,6 +2514,8 @@ export default function Dashboard() {
         category={modalState.category}
         data={modalState.data}
         isDark={isDark}
+        loading={modalState.loading}
+        error={modalState.error}
       />
 
 

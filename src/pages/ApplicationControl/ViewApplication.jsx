@@ -42,7 +42,7 @@ function StatusPill({ status }) {
 }
 
 /* =========================================================
-   MULTI SELECT DROPDOWN
+   MULTI SELECT DROPDOWN (with search)
 ========================================================= */
 function MultiSelectDropdown({
   values = [],
@@ -51,8 +51,10 @@ function MultiSelectDropdown({
   placeholder = "Select...",
   disabled = false,
   isDark = false,
+  searchable = false,
 }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -62,6 +64,7 @@ function MultiSelectDropdown({
         !containerRef.current.contains(event.target)
       ) {
         setOpen(false);
+        setQuery("");
       }
     };
 
@@ -101,6 +104,13 @@ function MultiSelectDropdown({
       return { value, label, status };
     })
     .filter((item) => item.value !== "");
+
+  const filteredOptions =
+    searchable && query
+      ? normalizedOptions.filter((item) =>
+          item.label.toLowerCase().includes(query.toLowerCase())
+        )
+      : normalizedOptions;
 
   const allSelected =
     normalizedOptions.length > 0 &&
@@ -196,6 +206,55 @@ function MultiSelectDropdown({
             }
           `}
         >
+          {/* SEARCH BAR */}
+          {searchable && (
+            <div
+              className={`
+                px-3 py-2 border-b
+                ${
+                  isDark
+                    ? "border-white/[0.06]"
+                    : "border-slate-100"
+                }
+              `}
+            >
+              <div className="relative flex items-center">
+                <Search
+                  size={12}
+                  className={`absolute left-2.5 ${
+                    isDark ? "text-slate-500" : "text-slate-400"
+                  }`}
+                />
+
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search devices…"
+                  className={`
+                    w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg
+                    outline-none border transition-all duration-150
+                    ${
+                      isDark
+                        ? "bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]"
+                        : "bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400"
+                    }
+                  `}
+                />
+
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    className="absolute right-2 text-slate-400 hover:text-slate-200"
+                  >
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* SELECT ALL */}
           <div
             className={`
@@ -246,7 +305,6 @@ function MultiSelectDropdown({
                 {allSelected ? "Deselect all" : "Select all"}
               </span>
 
-              {/* UP / DOWN COUNTS */}
               <span
                 className={`text-[10px] ${
                   isDark ? "text-slate-500" : "text-slate-400"
@@ -259,17 +317,19 @@ function MultiSelectDropdown({
 
           {/* DEVICE LIST */}
           <div className="max-h-52 overflow-y-auto py-1">
-            {normalizedOptions.length === 0 ? (
+            {filteredOptions.length === 0 ? (
               <p
                 className={`
                   px-4 py-3 text-[12px] text-center
                   ${isDark ? "text-slate-600" : "text-slate-400"}
                 `}
               >
-                No devices available
+                {normalizedOptions.length === 0
+                  ? "No devices available"
+                  : "No results"}
               </p>
             ) : (
-              normalizedOptions.map((option) => {
+              filteredOptions.map((option) => {
                 const selected = values.includes(option.value);
 
                 return (
@@ -317,7 +377,7 @@ function MultiSelectDropdown({
 }
 
 /* =========================================================
-   SINGLE DROPDOWN
+   SINGLE DROPDOWN (with search)
 ========================================================= */
 function Dropdown({
   value,
@@ -326,8 +386,10 @@ function Dropdown({
   placeholder = "Select...",
   disabled = false,
   isDark = false,
+  searchable = false,
 }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -337,6 +399,7 @@ function Dropdown({
         !containerRef.current.contains(event.target)
       ) {
         setOpen(false);
+        setQuery("");
       }
     };
 
@@ -369,6 +432,13 @@ function Dropdown({
       return { value, label };
     })
     .filter((item) => item.value !== "");
+
+  const filteredOptions =
+    searchable && query
+      ? normalizedOptions.filter((item) =>
+          item.label.toLowerCase().includes(query.toLowerCase())
+        )
+      : normalizedOptions;
 
   const selected = normalizedOptions.find((item) => item.value === value);
 
@@ -428,18 +498,69 @@ function Dropdown({
             }
           `}
         >
+          {/* SEARCH BAR */}
+          {searchable && (
+            <div
+              className={`
+                px-3 py-2 border-b
+                ${
+                  isDark
+                    ? "border-white/[0.06]"
+                    : "border-slate-100"
+                }
+              `}
+            >
+              <div className="relative flex items-center">
+                <Search
+                  size={12}
+                  className={`absolute left-2.5 ${
+                    isDark ? "text-slate-500" : "text-slate-400"
+                  }`}
+                />
+
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search branch…"
+                  className={`
+                    w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg
+                    outline-none border transition-all duration-150
+                    ${
+                      isDark
+                        ? "bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]"
+                        : "bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400"
+                    }
+                  `}
+                />
+
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    className="absolute right-2 text-slate-400 hover:text-slate-200"
+                  >
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="max-h-52 overflow-y-auto py-1">
-            {normalizedOptions.length === 0 ? (
+            {filteredOptions.length === 0 ? (
               <p
                 className={`
                   px-4 py-3 text-[12px] text-center
                   ${isDark ? "text-slate-600" : "text-slate-400"}
                 `}
               >
-                No options available
+                {normalizedOptions.length === 0
+                  ? "No options available"
+                  : "No results"}
               </p>
             ) : (
-              normalizedOptions.map((option) => {
+              filteredOptions.map((option) => {
                 const selectedOption = option.value === value;
 
                 return (
@@ -449,6 +570,7 @@ function Dropdown({
                     onClick={() => {
                       onChange(option.value);
                       setOpen(false);
+                      setQuery("");
                     }}
                     className={`
                       w-full text-left px-4 py-2.5
@@ -826,7 +948,7 @@ export default function ViewApplication() {
         }`}
       >
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          {/* BRANCH */}
+          {/* BRANCH — now searchable */}
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-[rgb(100,116,139)]">
               BRANCH NAME <span className="text-rose-500">*</span>
@@ -838,10 +960,11 @@ export default function ViewApplication() {
               options={branches}
               placeholder="Select Branch"
               isDark={isDark}
+              searchable
             />
           </div>
 
-          {/* DEVICE */}
+          {/* DEVICE — now searchable */}
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-[rgb(100,116,139)]">
               DEVICE NAME <span className="text-rose-500">*</span>
@@ -860,6 +983,7 @@ export default function ViewApplication() {
               }
               disabled={!selectedBranch || deviceLoading}
               isDark={isDark}
+              searchable
             />
           </div>
         </div>
@@ -1446,4 +1570,4 @@ export default function ViewApplication() {
       )}
     </div>
   );
-}          
+}

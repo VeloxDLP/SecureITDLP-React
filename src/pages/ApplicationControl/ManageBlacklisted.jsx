@@ -54,6 +54,10 @@ function ManageBlacklisted() {
   const [branchOpen, setBranchOpen] = useState(false);
   const [deviceOpen, setDeviceOpen] = useState(false);
 
+  // search queries for the dropdowns
+  const [branchQuery, setBranchQuery] = useState("");
+  const [deviceQuery, setDeviceQuery] = useState("");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -124,7 +128,9 @@ function ManageBlacklisted() {
     setSelectedApplications([]);
 
     setBranchOpen(false);
+    setBranchQuery("");
     setDeviceOpen(false);
+    setDeviceQuery("");
 
     if (!branchValue) return;
 
@@ -203,6 +209,25 @@ function ManageBlacklisted() {
   };
 
   // ============================================================
+  // FILTERED BRANCHES / DEVICES (for search)
+  // ============================================================
+  const filteredBranches = branchQuery
+    ? branches.filter((item) =>
+        String(getBranchValue(item))
+          .toLowerCase()
+          .includes(branchQuery.toLowerCase())
+      )
+    : branches;
+
+  const filteredDevices = deviceQuery
+    ? devices.filter((item) =>
+        String(getDeviceValue(item))
+          .toLowerCase()
+          .includes(deviceQuery.toLowerCase())
+      )
+    : devices;
+
+  // ============================================================
   // RESET
   // ============================================================
   const handleReset = () => {
@@ -217,6 +242,8 @@ function ManageBlacklisted() {
 
     setBranchOpen(false);
     setDeviceOpen(false);
+    setBranchQuery("");
+    setDeviceQuery("");
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -266,9 +293,11 @@ function ManageBlacklisted() {
     const handleClickOutside = (event) => {
       if (branchRef.current && !branchRef.current.contains(event.target)) {
         setBranchOpen(false);
+        setBranchQuery("");
       }
       if (deviceRef.current && !deviceRef.current.contains(event.target)) {
         setDeviceOpen(false);
+        setDeviceQuery("");
       }
     };
 
@@ -363,7 +392,7 @@ function ManageBlacklisted() {
   );
 
   // ============================================================
-  // STYLES (same as ManageWhitelisted)
+  // STYLES
   // ============================================================
   const cardStyle = {
     background: isDark ? "#020617" : "rgba(255,255,255,0.95)",
@@ -434,7 +463,7 @@ function ManageBlacklisted() {
       {/* FORM CARD */}
       <div className="rounded-2xl border p-6" style={cardStyle}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          {/* BRANCH */}
+          {/* BRANCH (with search) */}
           <div ref={branchRef} className="relative">
             <label className={labelClass}>
               Branch Name <span className="text-rose-500">*</span>
@@ -445,6 +474,7 @@ function ManageBlacklisted() {
               onClick={() => {
                 setBranchOpen((prev) => !prev);
                 setDeviceOpen(false);
+                setDeviceQuery("");
               }}
               className={`
                 ${inputClass}
@@ -489,17 +519,64 @@ function ManageBlacklisted() {
                   }
                 `}
               >
+                {/* BRANCH SEARCH */}
+                <div
+                  className={`
+                    px-3 py-2 border-b
+                    ${
+                      isDark
+                        ? "border-white/[0.07]"
+                        : "border-slate-100"
+                    }
+                  `}
+                >
+                  <div className="relative flex items-center">
+                    <Search
+                      size={12}
+                      className={`absolute left-2.5 ${
+                        isDark ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    />
+                    <input
+                      autoFocus
+                      value={branchQuery}
+                      onChange={(e) => setBranchQuery(e.target.value)}
+                      placeholder="Search branch…"
+                      className={`
+                        w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg
+                        outline-none border transition-all duration-150
+                        ${
+                          isDark
+                            ? "bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]"
+                            : "bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400"
+                        }
+                      `}
+                    />
+                    {branchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setBranchQuery("")}
+                        className="absolute right-2 text-slate-400 hover:text-slate-200"
+                      >
+                        <X size={11} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <div className="max-h-52 overflow-y-auto py-1">
-                  {branches.length === 0 ? (
+                  {filteredBranches.length === 0 ? (
                     <div
                       className={`px-4 py-3 text-[12px] text-center ${
                         isDark ? "text-slate-600" : "text-slate-400"
                       }`}
                     >
-                      No branches found
+                      {branches.length === 0
+                        ? "No branches found"
+                        : "No results"}
                     </div>
                   ) : (
-                    branches.map((item, index) => {
+                    filteredBranches.map((item, index) => {
                       const value = getBranchValue(item);
                       return (
                         <button
@@ -532,7 +609,7 @@ function ManageBlacklisted() {
             )}
           </div>
 
-          {/* DEVICE */}
+          {/* DEVICE (with search) */}
           <div ref={deviceRef} className="relative">
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-[rgb(100,116,139)]">
               DEVICE NAME{" "}
@@ -546,6 +623,7 @@ function ManageBlacklisted() {
                 if (!branch || deviceLoading) return;
                 setDeviceOpen((prev) => !prev);
                 setBranchOpen(false);
+                setBranchQuery("");
               }}
               className={`
                 w-full h-[42px] rounded-xl border px-3 text-[13px]
@@ -589,10 +667,42 @@ function ManageBlacklisted() {
                   shadow-[0_16px_48px_rgba(0,0,0,0.35)] overflow-hidden
                 "
               >
+                {/* DEVICE SEARCH */}
+                <div className="px-3 py-2 border-b border-white/[0.07]">
+                  <div className="relative flex items-center">
+                    <Search
+                      size={12}
+                      className="absolute left-2.5 text-slate-500"
+                    />
+                    <input
+                      autoFocus
+                      value={deviceQuery}
+                      onChange={(e) => setDeviceQuery(e.target.value)}
+                      placeholder="Search devices…"
+                      className="
+                        w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg
+                        outline-none border border-white/[0.08]
+                        bg-[#111827] text-[#d0d0d0] placeholder-[#555]
+                      "
+                    />
+                    {deviceQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setDeviceQuery("")}
+                        className="absolute right-2 text-slate-400 hover:text-slate-200"
+                      >
+                        <X size={11} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <div className="max-h-[187px] overflow-y-auto py-1">
-                  {devices.length === 0 ? (
+                  {filteredDevices.length === 0 ? (
                     <div className="px-3 py-3 text-[12px] text-slate-500">
-                      No devices found
+                      {devices.length === 0
+                        ? "No devices found"
+                        : "No results"}
                     </div>
                   ) : (
                     <>
@@ -648,14 +758,14 @@ function ManageBlacklisted() {
                         </span>
                       </button>
 
-                      {devices.map((item, index) => {
+                      {filteredDevices.map((item, index) => {
                         const value = getDeviceValue(item);
                         const status = getAgentStatus(item);
                         const isSelected = device.includes(value);
 
                         return (
                           <button
-                            key={index}
+                            key={`${value}-${index}`}
                             type="button"
                             onClick={() => handleDeviceChange(value)}
                             className={`

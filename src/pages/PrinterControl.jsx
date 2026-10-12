@@ -58,7 +58,7 @@ const DUMMY_POLICIES = [
 ]
 
 /* ─────────────────────────────────────────────────────────────
-   CUSTOM DROPDOWN
+   CUSTOM DROPDOWN (single-select, searchable)
 ───────────────────────────────────────────────────────────── */
 function Dropdown({
   value,
@@ -299,11 +299,7 @@ function Dropdown({
 }
 
 /* ─────────────────────────────────────────────────────────────
-   GLASS BUTTON
-───────────────────────────────────────────────────────────── */
-
-/* ─────────────────────────────────────────────────────────────
-   MULTI SELECT DROPDOWN
+   MULTI SELECT DROPDOWN (with search)
 ───────────────────────────────────────────────────────────── */
 function MultiSelectDropdown({
   values = [],
@@ -432,25 +428,7 @@ function MultiSelectDropdown({
             WebkitBackdropFilter: 'blur(32px) saturate(180%)',
           }}
         >
-          {/* -<div className={`px-3 py-2.5 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}> */}
-            {/* <button
-              type="button"
-              onClick={toggleSelectAll}
-              className={`w-full flex items-center gap-2 text-left text-[12px]
-                          ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              {allSelected ? (
-                <>
-                  <X size={14} className="text-red-400" /> Deselect all
-                </>
-              ) : (
-                <>
-                  <Check size={14} className="text-[#7094ff]" /> Select all
-                </>
-              )}
-            </button> */}
-          {/* </div> */}
-
+          {/* SEARCH BAR */}
           {searchable && (
             <div className={`px-3 py-2 border-b ${isDark ? 'border-white/[0.07]' : 'border-slate-100'}`}>
               <div className="relative flex items-center">
@@ -462,7 +440,7 @@ function MultiSelectDropdown({
                   autoFocus
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  placeholder="Search…"
+                  placeholder="Search devices…"
                   className={`
                     w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg outline-none
                     border transition-all duration-150
@@ -484,17 +462,40 @@ function MultiSelectDropdown({
             </div>
           )}
 
+          {/* SELECT ALL */}
+          <div className={`px-3 py-2 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className={`w-full flex items-center justify-between gap-2 text-left text-[12px]
+                          ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              <span className="flex items-center gap-2">
+                <span
+                  className={`h-4 w-4 rounded border flex items-center justify-center
+                    ${allSelected
+                      ? 'bg-[#7094ff] border-[#7094ff]'
+                      : isDark ? 'border-slate-500' : 'border-slate-300'
+                    }`}
+                >
+                  {allSelected && <Check size={11} className="text-white" />}
+                </span>
+                {allSelected ? 'Deselect all' : 'Select all'}
+              </span>
+            </button>
+          </div>
+
           <div className="max-h-56 overflow-y-auto py-1">
             {filtered.length === 0 ? (
               <p className={`px-4 py-3 text-[12px] text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-                No results
+                {normalized.length === 0 ? 'No devices available' : 'No results'}
               </p>
             ) : (
-              filtered.map(o => {
+              filtered.map((o, index) => {
                 const isSelected = values.includes(o.value)
                 return (
                   <button
-                    key={o.value}
+                    key={`${o.value}-${index}`}
                     type="button"
                     onClick={() => toggleValue(o.value)}
                     className={`
@@ -524,9 +525,9 @@ function MultiSelectDropdown({
   )
 }
 
-
-
-
+/* ─────────────────────────────────────────────────────────────
+   GLASS BUTTON
+───────────────────────────────────────────────────────────── */
 function GlassButton({
   children, onClick, variant = 'default',
   className = '', disabled = false, type = 'button',
@@ -682,10 +683,10 @@ function AddForm({ branches, onAdd }) {
   const [fetchedDevices, setFetchedDevices] = useState([])
   const [selectedDevices, setSelectedDevices] = useState([]);
   const [trackedEventIds, setTrackedEventIds] = useState([]);
-  const isTracking = trackedEventIds.length > 0;  
+  const isTracking = trackedEventIds.length > 0;
 
-const set = k => v =>
-  setForm(f => ({ ...f, [k]: v, ...(k === 'branch' ? { devices: [] } : {}) }))
+  const set = k => v =>
+    setForm(f => ({ ...f, [k]: v, ...(k === 'branch' ? { devices: [] } : {}) }))
 
   const deviceOptions = (fetchedDevices || []).map(device => {
     if (typeof device === 'string' || typeof device === 'number') {
@@ -712,57 +713,22 @@ const set = k => v =>
     { value: 'Allow', label: 'Allow' },
     { value: 'Prevent', label: 'Prevent' },
   ]
-const isValid = form.branch && selectedDevices.length > 0 && form.mode
+  const isValid = form.branch && selectedDevices.length > 0 && form.mode
 
-//   const handleSubmit = async () => {
-//     setSubmitted(true)
-//     if (!isValid) return
-
-// const requestData = {
-//   branch: form.branch,
-//   devices: selectedDevices,
-//   mode: form.mode,
-// }
-
-//     const response = await dashboardService.addPrinterPolicy(requestData)
-
-//     if (response.data === 'SUCCESS') {
-//       await showAlert({
-//         icon: 'success',
-//         title: 'Policy Saved',
-//         text: 'Printer policy successful',
-//         timer: 2500,
-//         timerProgressBar: true,
-//         showConfirmButton: true,
-//       })
-//       setSubmitted(false)
-//      setForm({ branch: '', devices: [], printerType: '', mode: '' })
-//       setFetchedDevices([])
-//     } else {
-//       showAlert({
-//         icon: 'error',
-//         title: 'Policy Failed',
-//         text: 'Error Sending policy',
-//         confirmButtonText: 'Cancel',
-//       })
-//     }
-//   }
-
-    const handleSubmit = async () => {
+  const handleSubmit = async () => {
     setSubmitted(true);
     if (!isValid || isTracking) return;
-  
+
     try {
       const response = await dashboardService.addPrinterPolicy({
         branch: form.branch,
         devices: selectedDevices,
         mode: form.mode,
       });
-  
-      // works whether the service returns the ApiResponse body or the raw axios response
+
       const body = response?.data;
       const eventIds = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
-  
+
       if (eventIds.length > 0) {
         setTrackedEventIds(eventIds);
       } else {
@@ -783,14 +749,14 @@ const isValid = form.branch && selectedDevices.length > 0 && form.mode
       });
     }
   };
-  
+
   const handleTrackerClose = async () => {
     setTrackedEventIds([]);
     handleReset();
     if (onAdd) await onAdd();
   };
 
-   const handleReset = () => {
+  const handleReset = () => {
     setForm({
       branch: "",
       device: "",
@@ -804,128 +770,111 @@ const isValid = form.branch && selectedDevices.length > 0 && form.mode
     setSuccess(false);
   };
 
-
   const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5
                     ${isDark ? 'text-slate-500' : 'text-slate-400'}`
 
-  // const handleBranchChange = async branch => {
-  //   setForm(f => ({
-  //     ...f,
-  //     branch,
-  //     device: '',
-  //   }))
-
-  //   try {
-  //     const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch)
-  //     setFetchedDevices(DevicesOfBranches.data || [])
-  //   } catch (err) {
-  //     console.error('Error loading devices:', err)
-  //     setFetchedDevices([])
-  //   }
-  // }
-
   const handleBranchChange = async branch => {
-  setForm(f => ({ ...f, branch }))
-  setSelectedDevices([])
-  setFetchedDevices([])
-
-  try {
-    const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch)
-    setFetchedDevices(DevicesOfBranches.data || [])
-  } catch (err) {
-    console.error('Error loading devices:', err)
+    setForm(f => ({ ...f, branch }))
+    setSelectedDevices([])
     setFetchedDevices([])
+
+    try {
+      const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch)
+      setFetchedDevices(DevicesOfBranches.data || [])
+    } catch (err) {
+      console.error('Error loading devices:', err)
+      setFetchedDevices([])
+    }
   }
-}
 
   return (
-  <>
-    <GlassCard className="p-6 mb-5">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
-        <div>
-          <label className={labelCls}>
-            Branch Name <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
-          <Dropdown
-            value={form.branch}
-            onChange={handleBranchChange}
-            options={branchOptions}
-            placeholder="Select Branch"
-            searchable
-            error={submitted && !form.branch}
-          />
-          {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1  ">Required</p>}
+    <>
+      <GlassCard className="p-6 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+          <div>
+            <label className={labelCls}>
+              Branch Name <span className="text-rose-500 normal-case tracking-normal">*</span>
+            </label>
+            <Dropdown
+              value={form.branch}
+              onChange={handleBranchChange}
+              options={branchOptions}
+              placeholder="Select Branch"
+              searchable
+              error={submitted && !form.branch}
+            />
+            {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1  ">Required</p>}
+          </div>
+
+          <div>
+            <label className={labelCls}>
+              Device Name <span className="text-rose-500 normal-case tracking-normal">*</span>
+            </label>
+
+            <MultiSelectDropdown
+              values={selectedDevices}
+              onChange={setSelectedDevices}
+              options={deviceOptions}
+              placeholder={
+                form.branch ? "Select Device" : "Select branch first"
+              }
+              disabled={!form.branch}
+              searchable
+              error={submitted && selectedDevices.length === 0}
+            />
+
+            {submitted && selectedDevices.length === 0 && (
+              <p className="text-[10px] text-rose-500 mt-1">Required</p>
+            )}
+          </div>
+
+          <div>
+            <label className={labelCls}>
+              Mode of Access <span className="text-rose-500 normal-case tracking-normal">*</span>
+            </label>
+            <Dropdown
+              value={form.mode}
+              onChange={set('mode')}
+              options={modeOptions}
+              placeholder="Select Mode"
+              error={submitted && !form.mode}
+            />
+            {submitted && !form.mode && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
+          </div>
         </div>
 
-        <div>
-          <label className={labelCls}>
-            Device Name <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
+        <div className="flex items-center justify-end gap-3">
+          <GlassButton onClick={handleReset} variant="default" className="px-4 py-2">
+            <RotateCcw size={13} /> Reset
+          </GlassButton>
 
-          <MultiSelectDropdown
-            values={selectedDevices}
-            // onChange={set("device")}
-            onChange={setSelectedDevices}
-            options={deviceOptions}
-            placeholder={
-              form.branch ? "Select Device" : "Select branch first"
-            }
-            disabled={!form.branch}
-            isDark={isDark}
-          />
-
-          {submitted && selectedDevices.length === 0 && (
-            <p className="text-[10px] text-rose-500 mt-1">Required</p>
-          )}
+          <GlassButton
+            onClick={handleSubmit}
+            disabled={isTracking}
+            variant="primary"
+            className="px-5 py-2 font-semibold"
+          >
+            <Plus size={13} />
+            {isTracking ? 'Processing…' : 'Submit'}
+          </GlassButton>
         </div>
+      </GlassCard>
 
-        <div>
-          <label className={labelCls}>
-            Mode of Access <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
-          <Dropdown
-            value={form.mode}
-            onChange={set('mode')}
-            options={modeOptions}
-            placeholder="Select Mode"
-            error={submitted && !form.mode}
+      {isTracking && (
+        <div className="mb-5">
+          <PolicyStatusTracker
+            title="Printer Policy"
+            eventIds={trackedEventIds}
+            onClose={handleTrackerClose}
           />
-          {submitted && !form.mode && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
-      </div>
-
-      <div className="flex items-center justify-end gap-3">
-        <GlassButton onClick={handleReset} variant="default" className="px-4 py-2">
-          <RotateCcw size={13} /> Reset
-        </GlassButton>
-
-        <GlassButton
-          onClick={handleSubmit}
-          disabled={isTracking}
-          variant="primary"
-          className="px-5 py-2 font-semibold"
-        >
-          <Plus size={13} />
-          {isTracking ? 'Processing…' : 'Submit'}
-        </GlassButton>
-      </div>
-    </GlassCard>
-
-    {isTracking && (
-      <div className="mb-5">
-        <PolicyStatusTracker
-          title="Printer Policy"
-          eventIds={trackedEventIds}
-          onClose={handleTrackerClose}
-        />
-      </div>
-    )}
-  </>
-)
+      )}
+    </>
+  )
 }
 
 /* ─────────────────────────────────────────────────────────────
-   POLICY TABLE — shows 5 rows, scrolls beyond
+   POLICY TABLE
 ───────────────────────────────────────────────────────────── */
 function PolicyTable({ policies, onDelete }) {
   const { isDark } = useTheme()
@@ -1108,48 +1057,25 @@ export default function PrinterControl() {
   const [policies, setPolicies] = useState([])
   const [branches, setBranches] = useState([])
 
-// const handleAdd = ({ branchName, devices, device, printerType, mode }) => {
-//   setPolicies(prev => [
-//     ...prev,
-//     {
-//       id: Date.now(),
-//       branch: branchName,
-//       device: Array.isArray(devices) ? devices.join(', ') : device,
-//       printerType,
-//       mode,
-//       addedOn: new Date().toISOString().slice(0, 10),
-//     },
-//   ])
-// }
-
-const handleAdd = async () => {
-  await loadPageData()
-  setTab('view')
-}
-
-const loadPageData = async () => {
-  try {
-    const [ALLBranch, PrinterPolicies] = await Promise.all([
-      dashboardService.getBranch(),
-      dashboardService.getPrinterPolicies(),
-    ])
-    setBranches(ALLBranch.data || [])
-    setPolicies(Array.isArray(PrinterPolicies.data) ? PrinterPolicies.data : [])
-  } catch (err) {
-    console.error('Error loading printer data:', err)
-    setBranches([])
-    setPolicies([])
+  const handleAdd = async () => {
+    await loadPageData()
+    setTab('view')
   }
-}
 
-  // const loadPageData = async () => {
-  //   const [ALLBranch, PrinterPolicies] = await Promise.all([
-  //     dashboardService.getBranch(),
-  //     dashboardService.getPrinterPolicies(),
-  //   ])
-  //   setBranches(ALLBranch.data)
-  //   setPolicies(PrinterPolicies.data)
-  // }
+  const loadPageData = async () => {
+    try {
+      const [ALLBranch, PrinterPolicies] = await Promise.all([
+        dashboardService.getBranch(),
+        dashboardService.getPrinterPolicies(),
+      ])
+      setBranches(ALLBranch.data || [])
+      setPolicies(Array.isArray(PrinterPolicies.data) ? PrinterPolicies.data : [])
+    } catch (err) {
+      console.error('Error loading printer data:', err)
+      setBranches([])
+      setPolicies([])
+    }
+  }
 
   useEffect(() => {
     loadPageData()
@@ -1199,8 +1125,7 @@ const loadPageData = async () => {
 
       <TabBar active={tab} onChange={setTab} />
 
-      {/* {tab === 'add' && <AddForm branches={branches} onAdd={p => { handleAdd(p); setTab('view') }} />} */}
-      {tab === 'add' && <AddForm branches={branches} onAdd={handleAdd} />}       
+      {tab === 'add' && <AddForm branches={branches} onAdd={handleAdd} />}
       {tab === 'view' && <PolicyTable policies={policies} onDelete={handleDelete} />}
     </div>
   )
