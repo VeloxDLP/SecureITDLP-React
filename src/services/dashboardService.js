@@ -376,6 +376,13 @@ export const dashboardService = {
     return data;
   },
 
+  getEventWiseModalData: async (eventType) => {
+  const { data } = await axiosInstance.get(
+    `${API_ENDPOINTS.DASHBOARD.EVENT_WISE_MODAL_DATA}/${encodeURIComponent(eventType)}`,
+  );
+  return data;
+},
+
   getIncidentByChannelModal: async (channel) => {
     const { data } = await axiosInstance.post(
       `${API_ENDPOINTS.DASHBOARD.INCIDENT_BY_CHANNEL_MODAL}/${channel}`,

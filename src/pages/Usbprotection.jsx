@@ -53,6 +53,7 @@ function MultiSelectDropdown({
   isDark = false,
 }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const containerRef = useRef(null);
 
   useEffect(() => {

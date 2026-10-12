@@ -1049,14 +1049,3 @@ const IncidentByChannel = ({ data = {} }) => {
 };
 
 export default IncidentByChannel;
-
-
-
-
-
-
-
-
-
-
-

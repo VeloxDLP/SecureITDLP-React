@@ -1419,7 +1419,7 @@ export default function Dashboard() {
   })
 
 
-  const openModal = (
+  const  openModal = (
     title,
     category,
     data

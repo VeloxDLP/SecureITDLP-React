@@ -17,10 +17,6 @@ import {
 import { useTheme } from '../../context/ThemeContext'
 import { alert as showAlert } from '../../components/ui/AlertModal'
 import { dashboardService } from '../../services/dashboardService'
-
-/* ─────────────────────────────────────────────────────────────
-   STATUS PILL
-───────────────────────────────────────────────────────────── */
 function StatusPill({ status }) {
   if (!status) return null
 
@@ -42,10 +38,6 @@ function StatusPill({ status }) {
     </span>
   )
 }
-
-/* ─────────────────────────────────────────────────────────────
-   CUSTOM DROPDOWN (with status pills + keyboard nav)
-───────────────────────────────────────────────────────────── */
 function Dropdown({
   value,
   onChange,
@@ -328,7 +320,7 @@ function Dropdown({
                       {o.status && <StatusPill status={o.status} />}
                       {isSelected && (
                         <Check
-                          size={13}
+                          size={30}
                           className="text-[#7094ff] flex-shrink-0"
                         />
                       )}
@@ -343,10 +335,6 @@ function Dropdown({
     </div>
   )
 }
-
-/* ─────────────────────────────────────────────────────────────
-   GLASS BUTTON
-───────────────────────────────────────────────────────────── */
 function GlassButton({
   children,
   onClick,
@@ -504,9 +492,6 @@ function GlassCard({ children, className = '' }) {
   )
 }
 
-/* ─────────────────────────────────────────────────────────────
-   SAFE DEVICE LABEL EXTRACTOR — guarantees a non-empty label
-───────────────────────────────────────────────────────────── */
 function extractDeviceLabel(device, index) {
   if (device === null || device === undefined) {
     return `Device ${index + 1}`
@@ -863,9 +848,6 @@ function AddForm({ branches, onAdd }) {
   )
 }
 
-/* ─────────────────────────────────────────────────────────────
-   POLICY TABLE
-───────────────────────────────────────────────────────────── */
 function PolicyTable({ policies, onDelete }) {
   const { isDark } = useTheme()
 
@@ -1216,9 +1198,6 @@ function PolicyTable({ policies, onDelete }) {
   )
 }
 
-/* ─────────────────────────────────────────────────────────────
-   TAB BAR
-───────────────────────────────────────────────────────────── */
 function TabBar({ active, onChange }) {
   const { isDark } = useTheme()
 
@@ -1262,9 +1241,6 @@ function TabBar({ active, onChange }) {
   )
 }
 
-/* ─────────────────────────────────────────────────────────────
-   PAGE
-───────────────────────────────────────────────────────────── */
 export default function DriveControl() {
   const { isDark } = useTheme()
 

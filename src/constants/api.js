@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
 
   DASHBOARD: {
     ENDPOINT_STATUS: "/DeviceManager/agentStatusCounts",
+  EVENT_WISE_MODAL_DATA: '/NetworkDLP/EventWiseModalData',
     INCIDENT_SUMMARY: "/NetworkDLP/eventWiseCount",
     ORGANIZATION_INCIDENT: "/Dashboard/organizationIncident",
     FILE_TYPE_INCIDENT: "/NetworkDLP/extensionCounts",
