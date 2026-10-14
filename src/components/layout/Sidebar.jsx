@@ -88,7 +88,7 @@ const NAV = [
   },
 
   {
-    label: 'DLP Security Policy',
+    label: 'Security Policy',
     icon: FolderSearch,
     scope: '/networkpolicy',
     children: [

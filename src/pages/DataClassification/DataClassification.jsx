@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Calendar,
   Filter,
@@ -8,8 +8,6 @@ import {
   FileText,
   ShieldAlert,
   Hand,
-  Gavel,
-  TriangleAlert,
   Search,
 } from "lucide-react";
 import {
@@ -27,24 +25,30 @@ import {
   Area,
 } from "recharts";
 import { useTheme } from "../../context/ThemeContext"; // ✅ fixed path
+import ClassificationFilesModal from "./ClassificationFilesModal";
+import {
+  classificationFiles,
+  extensionCounts,
+  getFilesByCategory,
+  getFilesByExtension,
+  getFilesByLabel,
+  getLabelColor,
+  labelCounts,
+} from "./classificationData";
 
 // ─── Data ──────────────────────────────────────────────────────────
-const sensitivityData = [
-  { name: "Business Data", value: 267, color: "#22c55e" },
-  { name: "Financial", value: 117, color: "#3b82f6" },
-  { name: "Personal", value: 135, color: "#f59e0b" },
-  { name: "Code", value: 398, color: "#ef4444" },
-];
+// Both charts are counted from classificationFiles, so their totals
+// always equal the Total Scanned Files card.
+const sensitivityData = labelCounts;
 
-const fileTypeData = [
-  { name: "png", value: 1245, color: "#2f80ed" },
-  { name: "xlsx", value: 1102, color: "#2f70ed" },
-  { name: "pdf", value: 856, color: "#4b7cff" },
-  { name: "doc", value: 642, color: "#4b6cff" },
-  { name: "jpg", value: 458, color: "#4b8cff" },
-  { name: "xls", value: 156, color: "#4b5cff" },
-  { name: "docx", value: 88, color: "#4b4cff" },
-];
+const fileTypeColors = ["#2f80ed", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#94a3b8"];
+
+const fileTypeData = extensionCounts.map((item, index) => ({
+  ...item,
+  color: fileTypeColors[index % fileTypeColors.length],
+}));
+
+const shortLabel = (name) => (name === "Business Documents" ? "Business" : name);
 
 const networkData = [
   { name: "WEB UPLOAD", value: 20 },
@@ -56,118 +60,65 @@ const networkData = [
 
 const fileTotal = fileTypeData.reduce((sum, item) => sum + item.value, 0);
 
-const classificationFiles = [
-  {
-    srNo: 1,
-    fileName: "new_Bulk_Upload.xlsx",
-    filePath: "K:\\Softwares\\sts-4.14.0.RELEASE\\new_Bulk_Upload.xlsx",
-    extension: "xlsx",
-    label: "Code",
-    riskLevel: "High",
-    detectedOn: "May 26, 2024 10:21 AM",
-  },
-  {
-    srNo: 2,
-    fileName: "newfile.xlsx",
-    filePath: "K:\\Softwares\\sts-4.14.0.RELEASE\\newfile.xlsx",
-    extension: "xlsx",
-    label: "Code",
-    riskLevel: "High",
-    detectedOn: "May 26, 2024 10:18 AM",
-  },
-  {
-    srNo: 3,
-    fileName: "IDBI_Bulk_Upload_Demo.xlsx",
-    filePath: "K:\\Softwares\\sts-4.14.0.RELEASE\\IDBI_Bulk_Upload_Demo.xlsx",
-    extension: "xlsx",
-    label: "Code",
-    riskLevel: "High",
-    detectedOn: "May 26, 2024 10:15 AM",
-  },
-  {
-    srNo: 4,
-    fileName: "bean-config.png",
-    filePath: "K:\\Softwares\\sts-4.14.0.RELEASE\\configuration\\org.eclipse.osgi\\8...",
-    extension: "png",
-    label: "Unknown",
-    riskLevel: "Medium",
-    detectedOn: "May 26, 2024 10:12 AM",
-  },
-  {
-    srNo: 5,
-    fileName: "live-beans-graph.png",
-    filePath: "K:\\Softwares\\sts-4.14.0.RELEASE\\configuration\\org.eclipse.osgi\\7...",
-    extension: "png",
-    label: "Unknown",
-    riskLevel: "Medium",
-    detectedOn: "May 26, 2024 10:10 AM",
-  },
-];
-
-const getRiskColor = (risk) => {
-  switch (risk) {
-    case "High": return "text-red-400";
-    case "Medium": return "text-yellow-400";
-    case "Low": return "text-green-400";
-    default: return "text-gray-400";
-  }
-};
-
-const getLabelColor = (label) => {
-  switch (label) {
-    case "Code": return "bg-red-500/20 text-red-400";
-    case "Unknown": return "bg-gray-500/20 text-gray-400";
-    default: return "bg-blue-500/20 text-blue-400";
-  }
-};
-
 // ─── Main Component ──────────────────────────────────────────────
 export default function DataClassification() {
   const { isDark } = useTheme();
 
+  const [modalState, setModalState] = useState({ show: false, title: "", data: [] });
+
+  const openModal = (card) => {
+    setModalState({ show: true, title: card.modalTitle, data: getFilesByCategory(card.category) });
+  };
+
+  const openLabelModal = (label) => {
+    if (!label) return;
+    setModalState({ show: true, title: `${label} Files`, data: getFilesByLabel(label) });
+  };
+
+  const openExtensionModal = (extension) => {
+    if (!extension) return;
+    setModalState({
+      show: true,
+      title: `${extension.toUpperCase()} Files`,
+      data: getFilesByExtension(extension),
+    });
+  };
+
+  const closeModal = useCallback(() => {
+    setModalState((previous) => ({ ...previous, show: false }));
+  }, []);
+
   const cards = [
     {
       title: "TOTAL SCANNED FILES",
-      value: "4,547",
+      category: "total",
+      modalTitle: "Total Scanned Files",
+      value: getFilesByCategory("total").length.toLocaleString(),
       status: "↑ 12.5% from last week",
       statusColor: isDark ? "text-emerald-400" : "text-emerald-600",
       icon: FileText,
       iconColor: isDark ? "text-cyan-400" : "text-blue-600",
     },
     {
-      title: "HIGH RISK FILES",
-      value: "3,754",
-      status: "↑ 8.3% from last week",
-      statusColor: isDark ? "text-red-400" : "text-red-600",
-      icon: ShieldAlert,
-      iconColor: isDark ? "text-red-500" : "text-red-600",
-    },
-    {
       title: "BLOCKED FILES",
-      value: "156",
+      category: "blocked",
+      modalTitle: "Blocked Files",
+      value: getFilesByCategory("blocked").length.toLocaleString(),
       status: "↑ 3.7% from last week",
       statusColor: isDark ? "text-yellow-400" : "text-yellow-600",
       icon: Hand,
       iconColor: isDark ? "text-yellow-400" : "text-yellow-600",
     },
     {
-      title: "POLICY RULES",
-      value: "22",
-      status: "No change",
-      statusColor: isDark ? "text-gray-400" : "text-gray-500",
-      icon: Gavel,
-      iconColor: isDark ? "text-violet-500" : "text-purple-600",
-    },
-    {
-      title: "POLICY VIOLATIONS",
-      value: "84",
-      status: "↑ 15.2% from last week",
+      title: "HIGH RISK FILES",
+      category: "highRisk",
+      modalTitle: "High Risk Files",
+      value: getFilesByCategory("highRisk").length.toLocaleString(),
+      status: "↑ 8.3% from last week",
       statusColor: isDark ? "text-red-400" : "text-red-600",
-      icon: TriangleAlert,
+      icon: ShieldAlert,
       iconColor: isDark ? "text-red-500" : "text-red-600",
     },
-
-    
   ];
 
   return (
@@ -175,14 +126,20 @@ export default function DataClassification() {
       <div className="h-full overflow-y-auto">
         {/* ─── Dashboard Cards ─── */}
         <div className="p-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {cards.map((card, index) => {
               const Icon = card.icon;
               return (
                 <div
                   key={index}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openModal(card)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") openModal(card);
+                  }}
                   className={`
-                    border rounded-lg h-[90px] px-3 flex items-center justify-between
+                    border rounded-lg h-[90px] px-3 flex items-center justify-between cursor-pointer
                     transition-all duration-300 hover:scale-[1.02] hover:shadow-lg
                     ${isDark ? 'border-[#1A2136] bg-[#020617]' : 'border-gray-200 bg-white'}
                   `}
@@ -232,14 +189,18 @@ export default function DataClassification() {
                         dataKey="name"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: isDark ? "#5F6B87" : "#6b7280", fontSize: 11 }}
+                        interval={0}
+                        angle={-35}
+                        textAnchor="end"
+                        height={45}
+                        tickFormatter={shortLabel}
+                        tick={{ fill: isDark ? "#5F6B87" : "#6b7280", fontSize: 9 }}
                       />
                       <YAxis
                         axisLine={false}
                         tickLine={false}
+                        allowDecimals={false}
                         tick={{ fill: isDark ? "#5F6B87" : "#6b7280", fontSize: 11 }}
-                        domain={[0, 800]}
-                        ticks={[0, 200, 400, 600, 800]}
                       />
                       <Tooltip
                         cursor={{ fill: isDark ? "rgba(134,162,255,0.08)" : "rgba(0,0,0,0.05)" }}
@@ -250,7 +211,15 @@ export default function DataClassification() {
                           color: isDark ? "#fff" : "#000",
                         }}
                       />
-                      <Bar dataKey="value" fill="#86A2FF" radius={[6, 6, 0, 0]} barSize={18} />
+                      <Bar
+                        dataKey="value"
+                        name="Files"
+                        fill="#86A2FF"
+                        radius={[6, 6, 0, 0]}
+                        barSize={18}
+                        cursor="pointer"
+                        onClick={(entry) => openLabelModal(entry?.payload?.name ?? entry?.name)}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -299,6 +268,8 @@ export default function DataClassification() {
               <Cell
                 key={`file-type-${index}`}
                 fill={entry.color}
+                cursor="pointer"
+                onClick={() => openExtensionModal(entry.name)}
               />
             ))}
           </Pie>
@@ -331,11 +302,15 @@ export default function DataClassification() {
 
     {/* File Type Names */}
 {/* File Type Names */}
-<div className="flex w-[110px] flex-col gap-4">
+<div className="flex w-[110px] flex-col gap-2.5">
   {fileTypeData.map((item, index) => (
-    <div
+    <button
+      type="button"
       key={`file-type-name-${index}`}
-      className="flex items-center gap-2"
+      onClick={() => openExtensionModal(item.name)}
+      className={`flex items-center gap-2 rounded px-1 py-0.5 text-left transition ${
+        isDark ? "hover:bg-white/[0.06]" : "hover:bg-gray-100"
+      }`}
     >
       {/* Color Dot */}
       <span
@@ -360,7 +335,7 @@ export default function DataClassification() {
       >
         {item.value}
       </span>
-    </div>
+    </button>
   ))}
 </div>
   </div>
@@ -548,11 +523,10 @@ export default function DataClassification() {
           {/* Column Widths */}
           <colgroup>
             <col className="w-[6%]" />
-            <col className="w-[17%]" />
-            <col className="w-[31%]" />
-            <col className="w-[10%]" />
-            <col className="w-[10%]" />
-            <col className="w-[10%]" />
+            <col className="w-[20%]" />
+            <col className="w-[36%]" />
+            <col className="w-[9%]" />
+            <col className="w-[13%]" />
             <col className="w-[16%]" />
           </colgroup>
 
@@ -616,22 +590,14 @@ export default function DataClassification() {
                   isDark ? "text-gray-400" : "text-gray-500"
                 }`}
               >
-                RISK LEVEL
-              </th>
-
-              <th
-                className={`px-3 py-2 text-left text-[9px] uppercase tracking-wider font-semibold whitespace-nowrap ${
-                  isDark ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
-                DETECTED ON
+                HOST NAME
               </th>
             </tr>
           </thead>
 
           {/* Body */}
           <tbody>
-            {classificationFiles.map((file) => (
+            {classificationFiles.map((file, index) => (
               <tr
                 key={file.srNo}
                 className={`h-[34px] border-b transition-colors ${
@@ -646,7 +612,7 @@ export default function DataClassification() {
                     isDark ? "text-blue-400" : "text-blue-600"
                   }`}
                 >
-                  {file.srNo}
+                  {index + 1}
                 </td>
 
                 {/* FILE NAME */}
@@ -689,24 +655,14 @@ export default function DataClassification() {
                   </span>
                 </td>
 
-                {/* RISK */}
-                <td className="px-3 py-2">
-                  <span
-                    className={`text-[9px] font-semibold whitespace-nowrap ${getRiskColor(
-                      file.riskLevel
-                    )}`}
-                  >
-                    {file.riskLevel}
-                  </span>
-                </td>
-
-                {/* DETECTED ON */}
+                {/* HOST NAME */}
                 <td
-                  className={`px-3 py-2 text-[9px] whitespace-nowrap ${
+                  className={`px-3 py-2 text-[9px] whitespace-nowrap truncate ${
                     isDark ? "text-gray-400" : "text-gray-500"
                   }`}
+                  title={file.hostName}
                 >
-                  {file.detectedOn}
+                  {file.hostName}
                 </td>
               </tr>
             ))}
@@ -714,7 +670,7 @@ export default function DataClassification() {
             {classificationFiles.length === 0 && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className={`py-10 text-center text-xs ${
                     isDark
                       ? "text-gray-400"
@@ -732,6 +688,14 @@ export default function DataClassification() {
   </div>
 </div>
       </div>
+
+      {/* ─── Card Detail Modal ─── */}
+      <ClassificationFilesModal
+        show={modalState.show}
+        onClose={closeModal}
+        title={modalState.title}
+        data={modalState.data}
+      />
     </div>
   );
 }

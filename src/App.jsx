@@ -25,6 +25,7 @@ import ApplyNetworkPolicy from './pages/NetworkPolicy/ApplyNetworkPolicy.jsx'
 import DriveDetail from './pages/ViewDevice/DeviceDetail.jsx'
 import ManageBlacklisted from './pages/ApplicationControl/ManageBlacklisted.jsx'
 import ManageWhitelisted from './pages/ApplicationControl/ManageWhitelisted.jsx'
+import SecurityRing from './pages/SecurityRing.jsx'
 
 // import ViewApplication from "./pages/ViewApplication/ViewApplication.jsx";
 // import DriveControl from './pages/DriveControl.jsx'
@@ -87,6 +88,8 @@ function AppRoutes() {
        <Route path="DeviceDetails" element={<DriveDetail></DriveDetail>}/>
          <Route path="Reports"         element={<Reports></Reports>}/>
             <Route path="Setting" element={<Setting></Setting>} />
+            <Route path="SecurityRing" element={<SecurityRing></SecurityRing>} />
+
         <Route path="remediation" element={<PlaceholderPage title="File Remediation" />} />
 
         <Route path="rollback" element={<PlaceholderPage title="Policy Roll Back" />} />
