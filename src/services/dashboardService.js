@@ -313,6 +313,7 @@ export const dashboardService = {
     );
     return data;
   },
+
   // [Drive API]
   getDrivePolicies: async () => {
     const { data } = await axiosInstance.get(
@@ -320,6 +321,15 @@ export const dashboardService = {
     );
     return data;
   },
+
+   addDrivePolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.Drive_Control.ADD_DRIVE_POLICY,
+      requestData,
+    );
+    return data;
+  },
+
   //[Printer API]
 
   getPrinterPolicies: async () => {

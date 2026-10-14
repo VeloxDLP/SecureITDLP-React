@@ -75,6 +75,7 @@ USB_Policy: {
 
 Drive_Control: {
   Drive_Policy: "/DrivePolicy/getDrivePolicies",
+  ADD_DRIVE_POLICY:"/DrivePolicy/addDrivePolicy"
 },
 
 

@@ -592,8 +592,6 @@ function AddForm({ branches, onAdd }) {
     { value: 'MODIFY', label: 'MODIFY' },
     { value: 'DELETE', label: 'DELETE' },
     { value: 'RENAME', label: 'RENAME' },
-    { value: 'CUT', label: 'CUT' },
-    { value: 'PASTE', label: 'PASTE' },
   ]
 
   const set = (key) => (value) => {
@@ -651,9 +649,9 @@ function AddForm({ branches, onAdd }) {
     }
 
     try {
-      console.log('Selected Values:', requestData)
+      // alert("Selected Values : "+ JSON.stringify(requestData));
 
-      const response = await dashboardService.addPrinterPolicy(requestData)
+      const response = await dashboardService.addDrivePolicy(requestData);
 
       console.log('Add Drive Policy Response:', response)
 

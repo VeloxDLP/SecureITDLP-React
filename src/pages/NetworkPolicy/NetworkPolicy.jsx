@@ -812,7 +812,7 @@ const CreateNetworkPolicy = () => {
       <div className="w-full bg-white border border-slate-200 text-slate-800 dark:bg-[#020617] dark:border-[#2d2e30] dark:text-white rounded-xl p-6">
 
         <h2 className="text-xl font-semibold">
-          Create Network Policy
+          Create Security Policy
         </h2>
 
         <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">

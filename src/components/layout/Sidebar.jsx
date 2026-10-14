@@ -88,17 +88,17 @@ const NAV = [
   },
 
   {
-    label: 'Network Policy',
+    label: 'Security Policy',
     icon: FolderSearch,
     scope: '/networkpolicy',
     children: [
       {
-        label: 'Create Network Policy',
+        label: 'Create Security Policy',
         icon: FolderSearch,
         path: '/NetworkPolicy',
       },
       {
-        label: 'Apply Network Policy',
+        label: 'Apply Security Policy',
         icon: FolderSearch,
         path: '/ApplyNetworkPolicy',
       },

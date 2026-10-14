@@ -8,6 +8,7 @@ import DashboardBackground from "../assets/DashboardBackground.png";
 import feature from "../assets/Network-Protection.gif";
 import Footer from "../assets/Footer.png";
 import SecurityAnimation from "./SecurityAnimation";
+import SecurityRing from "./SecurityRing";
 // import { loginApi } from "../api/authApi";
 
 
@@ -566,8 +567,8 @@ const Login = () => {
                 alt="Network-Protection.gif"
                 className="login-right-image"
               />
-
-              <SecurityAnimation></SecurityAnimation>
+              {/* <SecurityRing></SecurityRing> */}
+              {/* <SecurityAnimation></SecurityAnimation> */}
             </div>
           </div>
 

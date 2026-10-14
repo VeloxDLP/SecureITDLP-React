@@ -418,7 +418,7 @@ function ApplyNetworkPolicy() {
                 isDark ? "text-slate-100" : "text-slate-800"
               }`}
             >
-              Apply Network Policy
+              Apply Security Policy
             </h2>
 
             <p
