@@ -35,15 +35,24 @@ export default function OrganisationIncident({
   gridColor,
   Tip,
 }) {
-  const [showModal, setShowModal] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState("");
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Lock body scroll when modal is open
+  // Animate modal entrance after it has mounted.
   useEffect(() => {
-    if (showModal) {
+    if (!isMounted) return undefined;
+
+    const frame = requestAnimationFrame(() => setIsOpen(true));
+    return () => cancelAnimationFrame(frame);
+  }, [isMounted]);
+
+  // Lock body scroll for the full time the modal is mounted, including closing.
+  useEffect(() => {
+    if (isMounted) {
       document.body.style.overflow = "hidden";
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
@@ -58,7 +67,7 @@ export default function OrganisationIncident({
       document.body.style.position = "";
       document.body.style.width = "";
     };
-  }, [showModal]);
+  }, [isMounted]);
 
   // Hardcoded modal data for organisation incidents
   const modalData = [
@@ -204,11 +213,11 @@ export default function OrganisationIncident({
     setSelectedSlot(slot);
     setSearch("");
     setCurrentPage(1);
-    setShowModal(true);
+    setIsMounted(true);
   };
 
   const closeModal = () => {
-    setShowModal(false);
+    setIsOpen(false);
     setSearch("");
     setCurrentPage(1);
   };
@@ -315,9 +324,22 @@ export default function OrganisationIncident({
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
-          <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-[#020617]">
+      {isMounted && (
+        <div
+          className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 ease-out ${
+            isOpen ? "bg-slate-950/55 opacity-100" : "bg-slate-950/0 opacity-0"
+          }`}
+          onTransitionEnd={(event) => {
+            if (event.target === event.currentTarget && !isOpen) {
+              setIsMounted(false);
+            }
+          }}
+        >
+          <div
+            className={`flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-[opacity,transform] duration-300 ease-out dark:border-white/[0.08] dark:bg-[#020617] ${
+              isOpen ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.98] opacity-0"
+            }`}
+          >
 
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">

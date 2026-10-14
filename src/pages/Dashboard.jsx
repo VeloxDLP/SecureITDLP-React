@@ -207,6 +207,7 @@ function STitle({ children }) {
 
 /* ─────────────────────────────────────────────────────────────
    Generic Incident Modal
+   ── Columns: HOSTNAME | IP | EVENTS | FILE DETAILS | ACTIONS | TIMESTAMP
 ───────────────────────────────────────────────────────────── */
 
 function IncidentModal({
@@ -222,9 +223,20 @@ function IncidentModal({
   const [search, setSearch] = useState('')
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
+  const [isMounted, setIsMounted] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     if (show) {
+      setIsMounted(true)
+      requestAnimationFrame(() => setIsOpen(true))
+    } else if (isMounted) {
+      setIsOpen(false)
+    }
+  }, [show])
+
+  useEffect(() => {
+    if (isMounted) {
       document.body.style.overflow = 'hidden'
       document.body.style.position = 'fixed'
       document.body.style.width = '100%'
@@ -239,16 +251,21 @@ function IncidentModal({
       document.body.style.position = ''
       document.body.style.width = ''
     }
-  }, [show])
+  }, [isMounted])
+
+  const handleModalTransitionEnd = (event) => {
+    if (event.target !== event.currentTarget) return
+    if (!show && !isOpen) setIsMounted(false)
+  }
 
   const safeData = Array.isArray(data) ? data : []
 
   const incidentColumns = [
+    { accessor: 'hostname',  header: 'HOSTNAME' },
     { accessor: 'ipAddress', header: 'IP ADDRESS' },
-    { accessor: 'hostname', header: 'HOSTNAME' },
-    { accessor: 'eventType', header: 'EVENT TYPE' },
-    { accessor: 'fileName', header: 'FILE DETAILS' },
-    { accessor: 'action', header: 'ACTION' },
+    { accessor: 'eventType', header: 'EVENTS' },
+    { accessor: 'fileName',  header: 'FILE DETAILS' },
+    { accessor: 'action',    header: 'ACTIONS' },
     { accessor: 'timestamp', header: 'TIMESTAMP' },
   ]
 
@@ -297,19 +314,27 @@ function IncidentModal({
     filteredRows.length
   )
 
-  if (!show) {
+  if (!isMounted) {
     return null
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+    <div
+      onTransitionEnd={handleModalTransitionEnd}
+      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
+        isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+      }`}
+    >
       <div
-        className="
-          flex h-[80vh] w-full max-w-6xl flex-col
+        className={`
+          flex h-[80vh] w-full max-w-6xl flex-col transition-all duration-300 ease-in-out ${
+            isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+          }
+
           overflow-hidden rounded-xl border border-slate-200
           bg-white shadow-2xl
           dark:border-white/[0.08] dark:bg-[#020617]
-        "
+        `}
       >
         <div
           className="
@@ -426,21 +451,35 @@ function IncidentModal({
                         key={row.id ?? row.srNo ?? index}
                         className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
                       >
+                        {/* HOSTNAME */}
+                        <td className="border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/80">
+                          {row.hostname || 'NA'}
+                        </td>
+
+                        {/* IP ADDRESS */}
                         <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
                           {row.ipAddress || 'NA'}
                         </td>
-                        <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
-                          {row.hostname || 'NA'}
-                        </td>
+
+                        {/* EVENTS */}
                         <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
                           {row.eventType || 'NA'}
                         </td>
-                        <td title={row.fileName || ''} className="max-w-[360px] truncate border-b border-slate-100 px-4 py-3 text-slate-500 dark:border-white/[0.05] dark:text-white/50">
+
+                        {/* FILE DETAILS */}
+                        <td
+                          title={row.fileName || ''}
+                          className="max-w-[360px] truncate border-b border-slate-100 px-4 py-3 text-slate-500 dark:border-white/[0.05] dark:text-white/50"
+                        >
                           {row.fileName || 'NA'}
                         </td>
+
+                        {/* ACTIONS */}
                         <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
                           {row.action || 'NA'}
                         </td>
+
+                        {/* TIMESTAMP */}
                         <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-500 dark:border-white/[0.05] dark:text-white/50">
                           {row.timestamp ? String(row.timestamp).replace('T', ' ') : 'NA'}
                         </td>
@@ -581,9 +620,7 @@ function IncidentModal({
 
 
 /* ─────────────────────────────────────────────────────────────
-   ENDPOINT STATUS MODAL – CORRECTED FIELD MAPPING
-   Uses actual UpDownDetails API data:
-   branchName, ipAddress (hostname), deviceIp (IP), userName, agentStatus, agentCommunication
+   ENDPOINT STATUS MODAL
 ───────────────────────────────────────────────────────────── */
 
 function EndpointStatusModal({
@@ -596,9 +633,20 @@ function EndpointStatusModal({
   const [search, setSearch] = useState('')
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
+  const [isMounted, setIsMounted] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     if (show) {
+      setIsMounted(true)
+      requestAnimationFrame(() => setIsOpen(true))
+    } else if (isMounted) {
+      setIsOpen(false)
+    }
+  }, [show])
+
+  useEffect(() => {
+    if (isMounted) {
       document.body.style.overflow = 'hidden'
       document.body.style.position = 'fixed'
       document.body.style.width = '100%'
@@ -613,9 +661,13 @@ function EndpointStatusModal({
       document.body.style.position = ''
       document.body.style.width = ''
     }
-  }, [show])
+  }, [isMounted])
 
-  // Helper to get first non-empty value from a list of possible fields
+  const handleModalTransitionEnd = (event) => {
+    if (event.target !== event.currentTarget) return
+    if (!show && !isOpen) setIsMounted(false)
+  }
+
   const getValue = (row, fields) => {
     for (const field of fields) {
       if (
@@ -629,7 +681,6 @@ function EndpointStatusModal({
     return ''
   }
 
-  // Normalize status to UP / DOWN
   const getStatus = (row) => {
     const status = getValue(row, [
       'agentStatus',
@@ -672,7 +723,6 @@ function EndpointStatusModal({
     return String(status || 'UNKNOWN').toUpperCase()
   }
 
-  // ─── FIXED: correct mapping for your API fields ───
   const normalizedData = useMemo(() => {
     if (!Array.isArray(data)) {
       return []
@@ -688,7 +738,6 @@ function EndpointStatusModal({
         row?.srno ??
         index,
 
-      // Branch – from branchName
       _branch: getValue(row, [
         'branchName',
         'branch',
@@ -696,7 +745,6 @@ function EndpointStatusModal({
         'zone',
       ]),
 
-      // Hostname – from ipAddress (it's the computer name)
       _host: getValue(row, [
         'ipAddress',
         'host',
@@ -708,7 +756,6 @@ function EndpointStatusModal({
         'pc_name',
       ]),
 
-      // IP Address – from deviceIp
       _ip: getValue(row, [
         'deviceIp',
         'ip',
@@ -718,7 +765,6 @@ function EndpointStatusModal({
         'clientIp',
       ]),
 
-      // Username – from userName
       _user: getValue(row, [
         'userName',
         'user',
@@ -726,10 +772,8 @@ function EndpointStatusModal({
         'user_name',
       ]),
 
-      // Status – from agentStatus
       _status: getStatus(row),
 
-      // Last Communication – from agentCommunication
       _lastComm: getValue(row, [
         'agentCommunication',
         'lastComm',
@@ -742,7 +786,6 @@ function EndpointStatusModal({
     }))
   }, [data])
 
-  // ─── Filter by category (Total / Active / Inactive) ───
   const statusFilteredData = useMemo(() => {
     if (category === 'Active Devices') {
       return normalizedData.filter(
@@ -759,7 +802,6 @@ function EndpointStatusModal({
     return normalizedData
   }, [normalizedData, category])
 
-  // ─── Search ───
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase()
 
@@ -812,23 +854,30 @@ function EndpointStatusModal({
     filteredRows.length
   )
 
-  if (!show) {
+  if (!isMounted) {
     return null
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+    <div
+      onTransitionEnd={handleModalTransitionEnd}
+      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
+        isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+      }`}
+    >
       <div
-        className="
+        className={`
           flex h-[80vh] w-full max-w-6xl
-          flex-col overflow-hidden rounded-xl
+          flex-col overflow-hidden rounded-xl transition-all duration-300 ease-in-out ${
+            isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+          }
+
           border border-slate-200 bg-white
           shadow-2xl
           dark:border-white/[0.08]
           dark:bg-[#020617]
-        "
+        `}
       >
-        {/* HEADER */}
         <div
           className="
             flex shrink-0 items-center
@@ -860,11 +909,6 @@ function EndpointStatusModal({
                 {category}
               </span>
             </h2>
-
-            {/* <p className="mt-0.5 text-[10px] text-slate-400 dark:text-white/30">
-              Showing {filteredRows.length} device
-              {filteredRows.length !== 1 ? 's' : ''}
-            </p> */}
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -922,7 +966,6 @@ function EndpointStatusModal({
           </div>
         </div>
 
-        {/* TABLE */}
         <div className="min-h-0 flex-1 overflow-hidden p-4">
           <div
             className="
@@ -942,70 +985,22 @@ function EndpointStatusModal({
                   "
                 >
                   <tr className="text-left text-slate-500 dark:text-white/50">
-                    <th
-                      className="
-                        border-b border-slate-200
-                        px-4 py-3 text-[11px]
-                        font-semibold uppercase
-                        tracking-wide
-                        dark:border-white/[0.08]
-                      "
-                    >
+                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       BRANCH
                     </th>
-                    <th
-                      className="
-                        border-b border-slate-200
-                        px-4 py-3 text-[11px]
-                        font-semibold uppercase
-                        tracking-wide
-                        dark:border-white/[0.08]
-                      "
-                    >
+                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       HOSTNAME
                     </th>
-                    <th
-                      className="
-                        border-b border-slate-200
-                        px-4 py-3 text-[11px]
-                        font-semibold uppercase
-                        tracking-wide
-                        dark:border-white/[0.08]
-                      "
-                    >
+                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       IP ADDRESS
                     </th>
-                    <th
-                      className="
-                        border-b border-slate-200
-                        px-4 py-3 text-[11px]
-                        font-semibold uppercase
-                        tracking-wide
-                        dark:border-white/[0.08]
-                      "
-                    >
+                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       USERNAME
                     </th>
-                    <th
-                      className="
-                        border-b border-slate-200
-                        px-4 py-3 text-[11px]
-                        font-semibold uppercase
-                        tracking-wide
-                        dark:border-white/[0.08]
-                      "
-                    >
+                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       STATUS
                     </th>
-                    <th
-                      className="
-                        border-b border-slate-200
-                        px-4 py-3 text-[11px]
-                        font-semibold uppercase
-                        tracking-wide
-                        dark:border-white/[0.08]
-                      "
-                    >
+                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       LAST COMMUNICATION
                     </th>
                   </tr>
@@ -1023,63 +1018,23 @@ function EndpointStatusModal({
                           dark:hover:bg-white/[0.03]
                         "
                       >
-                        <td
-                          className="
-                            border-b border-slate-100
-                            px-4 py-3
-                            text-slate-700
-                            dark:border-white/[0.05]
-                            dark:text-white/80
-                          "
-                        >
+                        <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
                           {row._branch || 'NA'}
                         </td>
 
-                        <td
-                          className="
-                            border-b border-slate-100
-                            px-4 py-3
-                            font-medium
-                            text-slate-700
-                            dark:border-white/[0.05]
-                            dark:text-white/80
-                          "
-                        >
+                        <td className="border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/80">
                           {row._host || 'NA'}
                         </td>
 
-                        <td
-                          className="
-                            border-b border-slate-100
-                            px-4 py-3
-                            font-medium
-                            text-sky-600
-                            dark:border-white/[0.05]
-                            dark:text-sky-400
-                          "
-                        >
+                        <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
                           {row._ip || 'NA'}
                         </td>
 
-                        <td
-                          className="
-                            border-b border-slate-100
-                            px-4 py-3
-                            text-slate-700
-                            dark:border-white/[0.05]
-                            dark:text-white/80
-                          "
-                        >
+                        <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
                           {row._user || 'NA'}
                         </td>
 
-                        <td
-                          className="
-                            border-b border-slate-100
-                            px-4 py-3
-                            dark:border-white/[0.05]
-                          "
-                        >
+                        <td className="border-b border-slate-100 px-4 py-3 dark:border-white/[0.05]">
                           <span
                             className={`
                               inline-flex
@@ -1087,19 +1042,10 @@ function EndpointStatusModal({
                               rounded-full px-2.5 py-1
                               text-[10px] font-semibold
                               ${row._status === 'UP'
-                                ? `
-                                    bg-green-500/10
-                                    text-green-500
-                                  `
+                                ? `bg-green-500/10 text-green-500`
                                 : row._status === 'DOWN'
-                                  ? `
-                                      bg-red-500/10
-                                      text-red-500
-                                    `
-                                  : `
-                                      bg-slate-500/10
-                                      text-slate-500
-                                    `
+                                  ? `bg-red-500/10 text-red-500`
+                                  : `bg-slate-500/10 text-slate-500`
                               }
                             `}
                           >
@@ -1119,16 +1065,7 @@ function EndpointStatusModal({
                           </span>
                         </td>
 
-                        <td
-                          className="
-                            whitespace-nowrap
-                            border-b border-slate-100
-                            px-4 py-3
-                            text-slate-400
-                            dark:border-white/[0.05]
-                            dark:text-white/40
-                          "
-                        >
+                        <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/40">
                           {row._lastComm || 'NA'}
                         </td>
                       </tr>
@@ -1152,7 +1089,6 @@ function EndpointStatusModal({
               </table>
             </div>
 
-            {/* PAGINATION */}
             <div
               className="
                 flex shrink-0 flex-col gap-3
@@ -1165,14 +1101,8 @@ function EndpointStatusModal({
                 sm:justify-between
               "
             >
-              <span
-                className="
-                  text-[12px]
-                  text-slate-500
-                  dark:text-white/40
-                "
-              >
-                 {startRecord}-{endRecord} of{' '}
+              <span className="text-[12px] text-slate-500 dark:text-white/40">
+                {startRecord}-{endRecord} of{' '}
                 {filteredRows.length}
               </span>
 
@@ -1212,10 +1142,7 @@ function EndpointStatusModal({
                   disabled={safePage === 1}
                   onClick={() =>
                     setCurrentPage((prev) =>
-                      Math.max(
-                        1,
-                        prev - 1
-                      )
+                      Math.max(1, prev - 1)
                     )
                   }
                   className="
@@ -1259,9 +1186,7 @@ function EndpointStatusModal({
 
                 <button
                   type="button"
-                  disabled={
-                    safePage === totalPages
-                  }
+                  disabled={safePage === totalPages}
                   onClick={() =>
                     setCurrentPage((prev) =>
                       Math.min(
@@ -1274,8 +1199,7 @@ function EndpointStatusModal({
                     inline-flex h-8
                     items-center gap-1
                     rounded-lg
-                    border border-slate-200
-                    bg-white px-2.5
+                    border border-slate-200                    bg-white px-2.5
                     text-[12px]
                     font-medium
                     text-slate-700
@@ -1362,16 +1286,10 @@ export default function Dashboard() {
   const [preventedApplicationData, setPreventedApplicationData] =
     useState([])
 
-  /*
-   * ACTUAL DEVICE DATA
-   */
   const [UpDownDetailsData, setUpDownDetailsData] =
     useState([])
 
 
-  /*
-   * Generic incident modal
-   */
   const [modalState, setModalState] = useState({
     show: false,
     title: '',
@@ -1382,9 +1300,6 @@ export default function Dashboard() {
   })
 
 
-  /*
-   * Endpoint status modal
-   */
   const [
     endpointModalState,
     setEndpointModalState,
@@ -1436,14 +1351,12 @@ export default function Dashboard() {
         ? eventTypes
         : [eventTypes]
 
-      // Fetch actual incident records for the selected event type(s).
       const responses = await Promise.all(
         types.map((eventType) =>
           dashboardService.getEventWiseModalData(eventType)
         )
       )
 
-      // Debugging: inspect the exact response returned by the backend.
       console.log('[EventWiseModalData] Requested event types:', types)
       console.log('[EventWiseModalData] Complete API responses:', responses)
 
@@ -1475,7 +1388,6 @@ export default function Dashboard() {
         const found = candidates.find(Array.isArray)
         if (found) return found
 
-        // Some APIs return one incident object instead of an array.
         if (
           response.ipAddress || response.ip_address || response.IP_ADDRESS ||
           response.hostname || response.HOSTNAME || response.eventType ||
@@ -1526,21 +1438,6 @@ export default function Dashboard() {
   }
 
 
-  /*
-   * THIS IS THE IMPORTANT PART
-   *
-   * Clicking:
-   *
-   * Total Endpoints
-   *    -> ALL API DEVICES
-   *
-   * Active Devices
-   *    -> UP DEVICES ONLY
-   *
-   * Inactive Devices
-   *    -> DOWN DEVICES ONLY
-   */
-
   const openEndpointModal = (category) => {
     setEndpointModalState({
       show: true,
@@ -1558,81 +1455,10 @@ export default function Dashboard() {
 
 
   /* ─────────────────────────────────────────────────────────
-     Mail Incident Data
+     Mail Incident Data (placeholder)
   ───────────────────────────────────────────────────────── */
 
-  const mailIncidentData = [
-    // {
-    //   ipAddress: '192.168.0.41',
-    //   username: 'VELOX',
-    //   eventType: 'MAIL SENT',
-    //   fileDetails: 'Invoice_2024.pdf',
-    //   timestamp: '2024-01-15 10:30:00',
-    // },
-    // {
-    //   ipAddress: '192.168.0.42',
-    //   username: 'Admin',
-    //   eventType: 'MAIL RECEIVED',
-    //   fileDetails: 'Report.docx',
-    //   timestamp: '2024-01-15 11:15:00',
-    // },
-    // {
-    //   ipAddress: '192.168.0.43',
-    //   username: 'User1',
-    //   eventType: 'MAIL SENT',
-    //   fileDetails: 'Presentation.pptx',
-    //   timestamp: '2024-01-15 12:00:00',
-    // },
-    // {
-    //   ipAddress: '192.168.0.44',
-    //   username: 'VELOX',
-    //   eventType: 'MAIL RECEIVED',
-    //   fileDetails: 'Contract.pdf',
-    //   timestamp: '2024-01-15 13:30:00',
-    // },
-    // {
-    //   ipAddress: '192.168.0.45',
-    //   username: 'Kiran_Tester',
-    //   eventType: 'MAIL SENT',
-    //   fileDetails: 'Data_Export.xlsx',
-    //   timestamp: '2024-01-15 14:45:00',
-    // },
-    // {
-    //   ipAddress: '192.168.0.46',
-    //   username: 'VELOX',
-    //   eventType: 'MAIL RECEIVED',
-    //   fileDetails: 'Meeting_Notes.txt',
-    //   timestamp: '2024-01-15 15:20:00',
-    // },
-    // {
-    //   ipAddress: '192.168.0.47',
-    //   username: 'User2',
-    //   eventType: 'MAIL SENT',
-    //   fileDetails: 'Image_01.png',
-    //   timestamp: '2024-01-15 16:10:00',
-    // },
-    // {
-    //   ipAddress: '192.168.0.48',
-    //   username: 'VELOX',
-    //   eventType: 'MAIL RECEIVED',
-    //   fileDetails: 'Report_2024.pdf',
-    //   timestamp: '2024-01-15 17:00:00',
-    // },
-    // {
-    //   ipAddress: '192.168.0.49',
-    //   username: 'Kira_Tester',
-    //   eventType: 'MAIL SENT',
-    //   fileDetails: 'Backup.zip',
-    //   timestamp: '2024-01-15 18:30:00',
-    // },
-    // {
-    //   ipAddress: '192.168.0.50',
-    //   username: 'VELOX',
-    //   eventType: 'MAIL RECEIVED',
-    //   fileDetails: 'Source_Code.js',
-    //   timestamp: '2024-01-15 19:45:00',
-    // },
-  ]
+  const mailIncidentData = []
 
 
   /* ─────────────────────────────────────────────────────────
@@ -1765,6 +1591,7 @@ export default function Dashboard() {
 
   /* ─────────────────────────────────────────────────────────
      Clipboard
+     ✅ FIXED: x now keeps the FULL date (YYYY-MM-DD)
   ───────────────────────────────────────────────────────── */
 
   const transformedClipboardData =
@@ -1774,12 +1601,19 @@ export default function Dashboard() {
         return []
       }
 
-      return clipboardData.map(
+      // Debug — remove after verifying
+      console.log('🔎 RAW clipboardData:', clipboardData)
+
+      const mapped = clipboardData.map(
         (item) => ({
-          x: item[0]?.split('-')[2],
+          x: item[0],   // ✅ FULL date, e.g. "2026-10-11"
           v: item[1],
         })
       )
+
+      console.log('🔎 transformedClipboardData:', mapped)
+
+      return mapped
 
     }, [clipboardData])
 
@@ -1837,9 +1671,6 @@ export default function Dashboard() {
 
         dashboardService.getPreventedApplication(),
 
-        /*
-         * ACTUAL DEVICE API
-         */
         dashboardService.getViewDevice(),
 
       ])
@@ -1894,9 +1725,6 @@ export default function Dashboard() {
       )
 
 
-      /*
-       * Store actual endpoint/device data.
-       */
       setUpDownDetailsData(
         Array.isArray(UpDownDetails?.data)
           ? UpDownDetails.data
@@ -1930,10 +1758,6 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-5 gap-4">
 
-
-        {/* ─────────────────────────────────────────────────────
-            Endpoint Status
-        ───────────────────────────────────────────────────── */}
 
         <DCard className="col-span-1">
 
@@ -1970,18 +1794,11 @@ export default function Dashboard() {
 
               <div
                 key={item.label}
-
-                /*
-                 * NO ALERT NOW
-                 *
-                 * Open actual device modal.
-                 */
                 onClick={() =>
                   openEndpointModal(
                     item.label
                   )
                 }
-
                 className="
                   cursor-pointer
                   rounded-lg
@@ -2039,10 +1856,6 @@ export default function Dashboard() {
 
         </DCard>
 
-
-        {/* ─────────────────────────────────────────────────────
-            Web Incident
-        ───────────────────────────────────────────────────── */}
 
         <DCard
           className="
@@ -2110,10 +1923,6 @@ export default function Dashboard() {
         </DCard>
 
 
-        {/* ─────────────────────────────────────────────────────
-            Network Incident
-        ───────────────────────────────────────────────────── */}
-
         <DCard
           className="
             flex items-center
@@ -2178,10 +1987,6 @@ export default function Dashboard() {
 
         </DCard>
 
-
-        {/* ─────────────────────────────────────────────────────
-            Mail Incident
-        ───────────────────────────────────────────────────── */}
 
         <DCard
           className="
@@ -2253,10 +2058,6 @@ export default function Dashboard() {
 
         </DCard>
 
-
-        {/* ─────────────────────────────────────────────────────
-            Peripheral Incident
-        ───────────────────────────────────────────────────── */}
 
         <DCard
           className="
@@ -2520,7 +2321,7 @@ export default function Dashboard() {
 
 
       {/* ═══════════════════════════════════════════════════════
-          ENDPOINT STATUS MODAL – uses actual UpDownDetailsData
+          ENDPOINT STATUS MODAL
       ═══════════════════════════════════════════════════════ */}
 
       <EndpointStatusModal

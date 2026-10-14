@@ -31,7 +31,6 @@ const CHANNEL_COLORS = {
 /* =========================================================
    CHANNEL API VALUES
 ========================================================= */
-
 const CHANNEL_API_VALUES = {
   Email: "Email",
   Network: "Network",
@@ -46,14 +45,11 @@ const CHANNEL_API_VALUES = {
 ========================================================= */
 const formatTimestamp = (value) => {
   if (!value) return "NA";
-
   try {
     const date = new Date(value);
-
     if (Number.isNaN(date.getTime())) {
       return String(value).trim();
     }
-
     return date.toLocaleString();
   } catch {
     return String(value).trim();
@@ -65,32 +61,25 @@ const formatTimestamp = (value) => {
 ========================================================= */
 const getChannelValue = (data, channel) => {
   if (!data || typeof data !== "object") return 0;
-
   const keys = Object.keys(data);
-
   const normalizedChannel = channel
     .replace(/[_\-\s]/g, "")
     .toLowerCase();
-
   const matchedKey = keys.find((key) => {
     const normalizedKey = String(key)
       .replace(/[_\-\s]/g, "")
       .toLowerCase();
-
     return (
       normalizedKey === normalizedChannel ||
       normalizedKey.includes(normalizedChannel)
     );
   });
-
   if (!matchedKey) return 0;
-
   return Number(data[matchedKey] || 0);
 };
 
 /* =========================================================
    CUSTOM TOOLTIP
-   Tooltip stays OUTSIDE the pie circle.
 ========================================================= */
 const CustomTooltip = ({
   active,
@@ -101,11 +90,8 @@ const CustomTooltip = ({
   if (!active || !payload || !payload.length) {
     return null;
   }
-
   const item = payload[0]?.payload;
-
   if (!item) return null;
-
   return (
     <div
       className={`pointer-events-none rounded-lg border px-3 py-2 text-xs shadow-xl ${
@@ -127,7 +113,6 @@ const CustomTooltip = ({
       <p className="font-semibold">
         {item.name}
       </p>
-
       <p
         className={`mt-1 ${
           isDark
@@ -150,20 +135,15 @@ const CustomTooltip = ({
 const IncidentByChannel = ({ data = {} }) => {
   const { isDark } = useTheme();
 
-  /* =======================================================
-     MODAL TRANSITION STATES
-  ======================================================= */
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-
   const [selectedChannel, setSelectedChannel] = useState("");
   const [modalData, setModalData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState("");
-
   const rowsPerPage = 10;
 
   /* =======================================================
@@ -242,16 +222,13 @@ const IncidentByChannel = ({ data = {} }) => {
         `${channel} API ERROR:`,
         err
       );
-
       setError(
         err?.response?.data?.message ||
           `Unable to load ${channel} data.`
       );
-
       setModalData([]);
     } finally {
       setLoading(false);
-
       requestAnimationFrame(() => {
         setIsOpen(true);
       });
@@ -263,7 +240,6 @@ const IncidentByChannel = ({ data = {} }) => {
   ======================================================= */
   const closeModal = () => {
     if (!isOpen) return;
-
     setIsClosing(true);
     setIsOpen(false);
   };
@@ -364,9 +340,6 @@ const IncidentByChannel = ({ data = {} }) => {
     });
   }, [modalData, search]);
 
-  /* =======================================================
-     RESET PAGE WHEN SEARCH CHANGES
-  ======================================================= */
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
@@ -408,21 +381,57 @@ const IncidentByChannel = ({ data = {} }) => {
      TABLE HEADERS
   ======================================================= */
   const getTableHeaders = () => {
-    if (selectedChannel === "Drive") {
+    // 👇 EMAIL: BRANCH → HOSTNAME → IP → EVENT → TIMESTAMP
+    if (selectedChannel === "Email") {
       return [
         "BRANCH",
-        "IP ADDRESS",
-        "PC NAME",
+        "HOSTNAME",
+        "IP",
+        "EVENT",
+        "TIMESTAMP",
+      ];
+    }
+
+    // 👇 PRINTER
+    if (selectedChannel === "Printer") {
+      return [
+        "BRANCH",
+        "HOSTNAME",
+        "DOCUMENT",
+        "JOB STATUS",
         "DATE",
       ];
     }
 
-    if (selectedChannel === "Printer") {
+    // 👇 DRIVE
+    if (selectedChannel === "Drive") {
       return [
         "BRANCH",
-        "DATE",
         "HOST NAME",
-        "JOB STATUS",
+        "FILE PATH",
+        "FILE TYPE",
+        "TIMESTAMP",
+      ];
+    }
+
+    // 👇 CLIPBOARD
+    if (selectedChannel === "Clipboard") {
+      return [
+        "BRANCH",
+        "HOSTNAME",
+        "IP ADDRESS",
+        "KEYWORD",
+      ];
+    }
+
+    // 👇 NETWORK
+    if (selectedChannel === "Network") {
+      return [
+        "BRANCH",
+        "EVENTS",
+        "HOSTNAME",
+        "FILE PATH",
+        "DATE",
       ];
     }
 
@@ -440,14 +449,8 @@ const IncidentByChannel = ({ data = {} }) => {
   ======================================================= */
   return (
     <>
-      {/* =====================================================
-          PIE CHART + LEGEND
-      ===================================================== */}
+      {/* PIE CHART + LEGEND */}
       <div className="flex w-full items-center justify-between gap-5">
-        {/* =================================================
-            PIE CHART
-            SIZE IS UNCHANGED
-        ================================================= */}
         <div className="relative h-[190px] w-[190px] shrink-0">
           <ResponsiveContainer
             width="100%"
@@ -485,11 +488,6 @@ const IncidentByChannel = ({ data = {} }) => {
                   )
                 )}
               </Pie>
-
-              {/* ==========================================
-                  TOOLTIP
-                  OUTSIDE PIE
-              ========================================== */}
               <Tooltip
                 content={
                   <CustomTooltip
@@ -512,9 +510,6 @@ const IncidentByChannel = ({ data = {} }) => {
             </PieChart>
           </ResponsiveContainer>
 
-          {/* =================================================
-              CENTER LABEL
-          ================================================= */}
           <div
             className="pointer-events-none absolute left-1/2 top-1/2 flex h-[96px] w-[96px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full"
             style={{
@@ -526,16 +521,12 @@ const IncidentByChannel = ({ data = {} }) => {
             <span className="text-[24px] font-bold text-slate-800 dark:text-white">
               {totalIncidents}
             </span>
-
             <span className="text-[10px] text-slate-400">
               Incidents
             </span>
           </div>
         </div>
 
-        {/* =================================================
-            LEGEND
-        ================================================= */}
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           {channelData.map((item) => (
             <button
@@ -556,12 +547,10 @@ const IncidentByChannel = ({ data = {} }) => {
                       item.color,
                   }}
                 />
-
                 <span className="text-[11px] text-slate-600 dark:text-white/60">
                   {item.name}
                 </span>
               </div>
-
               <span className="text-[11px] font-semibold text-slate-700 dark:text-white/80">
                 {item.value}
               </span>
@@ -570,9 +559,7 @@ const IncidentByChannel = ({ data = {} }) => {
         </div>
       </div>
 
-      {/* =====================================================
-          MODAL
-      ===================================================== */}
+      {/* MODAL */}
       {isMounted && (
         <div
           className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
@@ -592,9 +579,6 @@ const IncidentByChannel = ({ data = {} }) => {
             }
           }}
         >
-          {/* =================================================
-              MODAL CONTAINER
-          ================================================= */}
           <div
             className={`flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-all duration-300 ease-in-out dark:border-white/[0.08] dark:bg-[#020617] ${
               isOpen
@@ -602,50 +586,24 @@ const IncidentByChannel = ({ data = {} }) => {
                 : "scale-95 opacity-0"
             }`}
           >
-            {/* =================================================
-                HEADER
-            ================================================= */}
+            {/* HEADER (sub-label removed) */}
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
-              <div className="min-w-0">
-                <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
-                  Incident By Channel –{" "}
-                  {selectedChannel}
-
-                  {loading && (
-                    <span className="ml-2 text-sm text-slate-400">
-                      Loading...
-                    </span>
-                  )}
-                </h2>
-
-                <div className="mt-1 flex items-center gap-2">
-                  <span
-                    className="h-[8px] w-[8px] rounded-full"
-                    style={{
-                      backgroundColor:
-                        CHANNEL_COLORS[
-                          selectedChannel
-                        ] ||
-                        "#3B5BFF",
-                    }} 
-                  />
-
-                  <span className="text-[11px] text-slate-500 dark:text-white/40">
-                    {selectedChannel}
+              <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
+                Incident By Channel –{" "}
+                {selectedChannel}
+                {loading && (
+                  <span className="ml-2 text-sm text-slate-400">
+                    Loading...
                   </span>
-                </div>
-              </div>
+                )}
+              </h2>
 
-              {/* =================================================
-                  SEARCH + CLOSE
-              ================================================= */}
               <div className="flex shrink-0 items-center gap-2">
                 <div className="relative w-[220px] sm:w-[260px]">
                   <Search
                     size={14}
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30"
                   />
-
                   <input
                     type="text"
                     value={search}
@@ -658,7 +616,6 @@ const IncidentByChannel = ({ data = {} }) => {
                     className="h-9 w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-[12px] text-slate-700 outline-none transition focus:border-[#7094ff] focus:ring-2 focus:ring-[#7094ff]/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/80"
                   />
                 </div>
-
                 <button
                   type="button"
                   onClick={closeModal}
@@ -669,22 +626,16 @@ const IncidentByChannel = ({ data = {} }) => {
               </div>
             </div>
 
-            {/* =================================================
-                TABLE SECTION
-            ================================================= */}
+            {/* TABLE SECTION */}
             <div className="min-h-0 flex-1 overflow-hidden p-4">
               <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
                 <div className="min-h-0 flex-1 overflow-auto">
-                  {/* ===========================================
-                      LOADING
-                  =========================================== */}
                   {loading ? (
                     <div className="flex h-full min-h-[300px] flex-col items-center justify-center gap-3">
                       <Loader2
                         size={25}
                         className="animate-spin text-[#7094ff]"
                       />
-
                       <span className="text-[11px] text-slate-400 dark:text-white/30">
                         Loading{" "}
                         {selectedChannel}{" "}
@@ -692,14 +643,10 @@ const IncidentByChannel = ({ data = {} }) => {
                       </span>
                     </div>
                   ) : error ? (
-                    /* =========================================
-                       ERROR
-                    ========================================= */
                     <div className="flex h-full min-h-[300px] flex-col items-center justify-center">
                       <span className="text-[12px] text-red-400">
                         {error}
                       </span>
-
                       <button
                         type="button"
                         onClick={() =>
@@ -713,9 +660,6 @@ const IncidentByChannel = ({ data = {} }) => {
                       </button>
                     </div>
                   ) : (
-                    /* =========================================
-                       TABLE
-                    ========================================= */
                     <table className="w-full text-[13px]">
                       <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
                         <tr className="text-left text-slate-500 dark:text-white/50">
@@ -731,14 +675,86 @@ const IncidentByChannel = ({ data = {} }) => {
                           )}
                         </tr>
                       </thead>
-
                       <tbody>
-                        {currentRows.length >
-                        0 ? (
+                        {currentRows.length > 0 ? (
                           currentRows.map(
                             (row, index) => {
                               /* =================================
+                                 EMAIL
+                                 BRANCH → HOSTNAME → IP → EVENT → TIMESTAMP
+                              ================================= */
+                              if (
+                                selectedChannel ===
+                                "Email"
+                              ) {
+                                const branch =
+                                  Array.isArray(row)
+                                    ? row[0]
+                                    : row?.branchName ??
+                                      row?.branch ??
+                                      "NA";
+                                const hostname =
+                                  Array.isArray(row)
+                                    ? row[1]
+                                    : row?.hostname ??
+                                      row?.hostName ??
+                                      "NA";
+                                const ip =
+                                  Array.isArray(row)
+                                    ? row[2]
+                                    : row?.ip ??
+                                      row?.ipaddress ??
+                                      row?.ipAddress ??
+                                      "NA";
+                                const event =
+                                  Array.isArray(row)
+                                    ? row[3]
+                                    : row?.event ??
+                                      row?.eventType ??
+                                      "NA";
+                                const timestamp =
+                                  Array.isArray(row)
+                                    ? row[4]
+                                    : row?.timestamp ??
+                                      row?.cdate ??
+                                      null;
+
+                                return (
+                                  <tr
+                                    key={`email-${index}-${hostname}-${timestamp}`}
+                                    className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
+                                  >
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/75">
+                                      {branch}
+                                    </td>
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
+                                      {hostname}
+                                    </td>
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/60">
+                                      {ip}
+                                    </td>
+                                    <td className="max-w-[430px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/45">
+                                      <div
+                                        className="truncate"
+                                        title={String(
+                                          event
+                                        )}
+                                      >
+                                        {event}
+                                      </div>
+                                    </td>
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-right text-slate-400 dark:border-white/[0.05] dark:text-white/40">
+                                      {formatTimestamp(
+                                        timestamp
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              /* =================================
                                  PRINTER
+                                 BRANCH → HOSTNAME → DOCUMENT → JOB STATUS → DATE
                               ================================= */
                               if (
                                 selectedChannel ===
@@ -748,20 +764,21 @@ const IncidentByChannel = ({ data = {} }) => {
                                   row?.branch ??
                                   row?.branchName ??
                                   "NA";
-
-                                const date =
-                                  row?.date ??
-                                  row?.cdate ??
-                                  "NA";
-
                                 const hostName =
                                   row?.hostName ??
                                   row?.hostname ??
                                   "NA";
-
+                                const document =
+                                  row?.document ??
+                                  row?.documentName ??
+                                  "NA";
                                 const jobStatus =
                                   row?.jobStatus ??
                                   row?.jobstatus ??
+                                  "NA";
+                                const date =
+                                  row?.date ??
+                                  row?.cdate ??
                                   "NA";
 
                                 const isBlocked =
@@ -795,13 +812,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                     <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/75">
                                       {branch}
                                     </td>
-
-                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/40">
-                                      {formatTimestamp(
-                                        date
-                                      )}
-                                    </td>
-
                                     <td className="max-w-[300px] truncate border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
                                       <div
                                         className="truncate"
@@ -812,7 +822,16 @@ const IncidentByChannel = ({ data = {} }) => {
                                         {hostName}
                                       </div>
                                     </td>
-
+                                    <td className="max-w-[300px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/45">
+                                      <div
+                                        className="truncate"
+                                        title={String(
+                                          document
+                                        )}
+                                      >
+                                        {document}
+                                      </div>
+                                    </td>
                                     <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 dark:border-white/[0.05]">
                                       <span
                                         className={`inline-flex rounded-full px-2.5 py-1 text-[9px] font-semibold ${
@@ -826,31 +845,46 @@ const IncidentByChannel = ({ data = {} }) => {
                                         }
                                       </span>
                                     </td>
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/40">
+                                      {formatTimestamp(
+                                        date
+                                      )}
+                                    </td>
                                   </tr>
                                 );
                               }
 
                               /* =================================
                                  DRIVE
+                                 BRANCH → HOST NAME → FILE PATH → FILE TYPE → TIMESTAMP
                               ================================= */
                               if (
                                 selectedChannel ===
                                 "Drive"
                               ) {
                                 const branch =
-                                  row?.branchName ||
+                                  row?.branchName ??
+                                  row?.branch ??
                                   "NA";
-
-                                const ipAddress =
-                                  row?.ipAddress ||
+                                const hostName =
+                                  row?.hostName ??
+                                  row?.hostname ??
                                   "NA";
-
-                                const pcName =
-                                  row?.pcName ||
+                                const filePath =
+                                  row?.filePath ??
+                                  row?.filepath ??
+                                  row?.rstPath ??
+                                  row?.rstpath ??
                                   "NA";
-
+                                const fileType =
+                                  row?.fileType ??
+                                  row?.filetype ??
+                                  row?.rstType ??
+                                  row?.rsttype ??
+                                  "NA";
                                 const cdate =
-                                  row?.cdate ||
+                                  row?.cdate ??
+                                  row?.timestamp ??
                                   null;
 
                                 return (
@@ -861,17 +895,22 @@ const IncidentByChannel = ({ data = {} }) => {
                                     <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/75">
                                       {branch}
                                     </td>
-
-                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/60">
-                                      {
-                                        ipAddress
-                                      }
-                                    </td>
-
                                     <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
-                                      {pcName}
+                                      {hostName}
                                     </td>
-
+                                    <td className="max-w-[300px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/45">
+                                      <div
+                                        className="truncate"
+                                        title={String(
+                                          filePath
+                                        )}
+                                      >
+                                        {filePath}
+                                      </div>
+                                    </td>
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/60">
+                                      {fileType}
+                                    </td>
                                     <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/40">
                                       {formatTimestamp(
                                         cdate
@@ -882,40 +921,163 @@ const IncidentByChannel = ({ data = {} }) => {
                               }
 
                               /* =================================
-                                 OTHER CHANNELS
+                                 CLIPBOARD
+                                 BRANCH → HOSTNAME → IP ADDRESS → KEYWORD
+                              ================================= */
+                              if (
+                                selectedChannel ===
+                                "Clipboard"
+                              ) {
+                                const branch =
+                                  row?.branch ??
+                                  row?.branchName ??
+                                  "NA";
+                                const hostname =
+                                  row?.hostname ??
+                                  row?.hostName ??
+                                  "NA";
+                                const ipaddress =
+                                  row?.ipaddress ??
+                                  row?.ipAddress ??
+                                  "NA";
+                                const keyword =
+                                  row?.keyword ??
+                                  "NA";
+                                return (
+                                  <tr
+                                    key={`clipboard-${index}-${hostname}-${ipaddress}`}
+                                    className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
+                                  >
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/75">
+                                      {branch}
+                                    </td>
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
+                                      {hostname}
+                                    </td>
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/60">
+                                      {ipaddress}
+                                    </td>
+                                    <td className="max-w-[430px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/45">
+                                      <div
+                                        className="truncate"
+                                        title={String(
+                                          keyword
+                                        )}
+                                      >
+                                        {keyword}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              /* =================================
+                                 NETWORK
+                                 BRANCH → EVENTS → HOSTNAME → FILE PATH → DATE
+                              ================================= */
+                              if (
+                                selectedChannel ===
+                                "Network"
+                              ) {
+                                const branch =
+                                  Array.isArray(row)
+                                    ? row[0]
+                                    : row?.branchName ??
+                                      row?.branch ??
+                                      "NA";
+                                const eventType =
+                                  Array.isArray(row)
+                                    ? row[1]
+                                    : row?.eventType ??
+                                      row?.event ??
+                                      "NA";
+                                const hostName =
+                                  Array.isArray(row)
+                                    ? row[2]
+                                    : row?.hostName ??
+                                      row?.hostname ??
+                                      "NA";
+                                const filePath =
+                                  Array.isArray(row)
+                                    ? row[3]
+                                    : row?.filePath ??
+                                      row?.filepath ??
+                                      "NA";
+                                const date =
+                                  Array.isArray(row)
+                                    ? row[4]
+                                    : row?.cdate ??
+                                      row?.date ??
+                                      null;
+
+                                return (
+                                  <tr
+                                    key={`network-${index}-${date}-${hostName}`}
+                                    className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
+                                  >
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/75">
+                                      {branch}
+                                    </td>
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
+                                      {eventType}
+                                    </td>
+                                    <td className="max-w-[300px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/45">
+                                      <div
+                                        className="truncate"
+                                        title={hostName}
+                                      >
+                                        {hostName}
+                                      </div>
+                                    </td>
+                                    <td className="max-w-[300px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/45">
+                                      <div
+                                        className="truncate"
+                                        title={String(
+                                          filePath
+                                        )}
+                                      >
+                                        {filePath}
+                                      </div>
+                                    </td>
+                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/40">
+                                      {formatTimestamp(
+                                        date
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              /* =================================
+                                 OTHER CHANNELS (Peripherals, fallback)
                               ================================= */
                               const branch =
                                 Array.isArray(row)
                                   ? row[0]
                                   : row?.branchName ||
                                     "NA";
-
                               const username =
                                 Array.isArray(row)
                                   ? row[3]
                                   : row?.username ||
                                     "NA";
-
                               const eventType =
                                 Array.isArray(row)
                                   ? row[1]
                                   : row?.eventType ||
                                     "NA";
-
                               const device =
                                 Array.isArray(row)
                                   ? row[2]
                                   : row?.deviceName ||
                                     row?.ipAddress ||
                                     "NA";
-
                               const timestamp =
                                 Array.isArray(row)
                                   ? row[4]
                                   : row?.cdate ||
                                     row?.timestamp ||
                                     null;
-
                               return (
                                 <tr
                                   key={`other-${index}-${timestamp}`}
@@ -924,15 +1086,12 @@ const IncidentByChannel = ({ data = {} }) => {
                                   <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/75">
                                     {branch}
                                   </td>
-
                                   <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/60">
                                     {username}
                                   </td>
-
                                   <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
                                     {eventType}
                                   </td>
-
                                   <td className="max-w-[430px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/45">
                                     <div
                                       className="truncate"
@@ -943,7 +1102,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                       {device}
                                     </div>
                                   </td>
-
                                   <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-right text-slate-400 dark:border-white/[0.05] dark:text-white/40">
                                     {formatTimestamp(
                                       timestamp
@@ -971,10 +1129,9 @@ const IncidentByChannel = ({ data = {} }) => {
                       </tbody>
                     </table>
                   )}
-                </div>      
-                {/* =================================================
-                    PAGINATION
-                ================================================= */}
+                </div>
+
+                {/* PAGINATION */}
                 {!loading && !error && (
                   <div className="flex shrink-0 flex-col gap-1 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-[10px] text-slate-500 dark:text-white/40">
@@ -982,9 +1139,7 @@ const IncidentByChannel = ({ data = {} }) => {
                       {lastRecord} of{" "}
                       {filteredData.length}
                     </span>
-
                     <div className="flex items-center gap-2">
-                      {/* PREVIOUS */}
                       <button
                         type="button"
                         disabled={
@@ -1006,14 +1161,10 @@ const IncidentByChannel = ({ data = {} }) => {
                         />
                         Prev
                       </button>
-
-                      {/* CURRENT PAGE */}
                       <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10">
                         {safePage} /{" "}
                         {totalPages}
                       </span>
-
-                      {/* NEXT */}
                       <button
                         type="button"
                         disabled={

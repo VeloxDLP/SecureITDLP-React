@@ -23,7 +23,6 @@ import { dashboardService } from "../../services/dashboardService";
 // ======================================================
 const incidentColumns = [
   { accessor: "ipAddress", header: "HOST NAME" },
-  { accessor: "username", header: "USERNAME" },
   { accessor: "eventType", header: "APPLICATION NAME" },
   { accessor: "fileDetails", header: "APPLICATION DETAILS" },
   { accessor: "timestamp", header: "TIMESTAMP" },
@@ -187,7 +186,6 @@ export default function PreventedApplicationChart({
 
       const transformedRows = rawRows.map((item) => ({
         ipAddress: item.hostName || "NA",
-        username: "NA",
         eventType: item.applicationName || "Prevented",
         fileDetails: item.applicationPath || "NA",
         timestamp: item.ctime || "NA",
@@ -465,9 +463,6 @@ export default function PreventedApplicationChart({
                             >
                               <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
                                 {row.ipAddress || "NA"}
-                              </td>
-                              <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
-                                {row.username || "NA"}
                               </td>
                               <td
                                 className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(

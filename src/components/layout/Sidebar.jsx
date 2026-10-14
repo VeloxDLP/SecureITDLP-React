@@ -73,7 +73,7 @@ const NAV = [
     scope: '/printercontrol',
   },
 
-  {
+  { 
     label: 'Data Classification',
     icon: ScanSearch,
     path: '/DataClassification',
@@ -88,17 +88,17 @@ const NAV = [
   },
 
   {
-    label: 'Network Policy',
+    label: 'DLP Security Policy',
     icon: FolderSearch,
     scope: '/networkpolicy',
     children: [
       {
-        label: 'Create Network Policy',
+        label: 'Create Security Policy',
         icon: FolderSearch,
         path: '/NetworkPolicy',
       },
       {
-        label: 'Apply Network Policy',
+        label: 'Apply Security Policy',
         icon: FolderSearch,
         path: '/ApplyNetworkPolicy',
       },

@@ -15,10 +15,6 @@ const incidentColumns = [
     header: "IP ADDRESS",
   },
   {
-    accessor: "username",
-    header: "USERNAME",
-  },
-  {
     accessor: "eventType",
     header: "EVENT TYPE",
   },
@@ -282,16 +278,6 @@ export default function PrinterIncidentChart({
   // ==========================================================
   // GET FIELD
   // ==========================================================
-
-  const getUsername = (row) => {
-    return (
-      row?.username ??
-      row?.userName ??
-      row?.USER_NAME ??
-      row?.USERNAME ??
-      "NA"
-    );
-  };
 
   const getIpAddress = (row) => {
     return (
@@ -661,16 +647,6 @@ export default function PrinterIncidentChart({
                                 <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
 
                                   {getIpAddress(
-                                    row
-                                  )}
-
-                                </td>
-
-                                {/* USERNAME */}
-
-                                <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
-
-                                  {getUsername(
                                     row
                                   )}
 

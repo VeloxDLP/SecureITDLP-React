@@ -226,7 +226,7 @@ export default function ActivePolicy() {
       ===================================================== */}
 
       <div className="flex flex-wrap items-center gap-4">
-        <div className="relative flex-1 min-w-[300px]">
+        <div className="relative flex-1 min-w-[200px]">
           <Search
             size={18}
             className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 dark:text-indigo-400"
@@ -251,24 +251,7 @@ export default function ActivePolicy() {
           />
         </div>
 
-        <button
-          type="button"
-          className="
-            flex items-center gap-3 rounded-lg
-            border border-gray-200 dark:border-[#2B3345]
-            bg-white dark:bg-[#020617]
-            px-5 py-3
-            text-gray-700 dark:text-gray-300
-            hover:bg-gray-50 dark:hover:bg-[#0B1220]
-            transition
-          "
-        >
-          <CalendarDays
-            size={18}
-            className="text-indigo-500 dark:text-indigo-400"
-          />
-          <span>Select Date Range</span>
-        </button>
+
 
         <button
           type="button"
