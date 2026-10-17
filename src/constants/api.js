@@ -29,7 +29,7 @@ export const API_ENDPOINTS = {
     MAIL_INCIDENT:"/email-monitoring/emailwisecount",
     ORGANIZATION_INCIDENT:"/NetworkDLP/timeSlotHostCounts",
     LATEST_INCIDENT:"/NetworkDLP/latest-incidents",
-    PREVENTED_APPLICATION:"/application-info/last7daysapplicationinfo-counts",
+    PREVENTED_APPLICATION:"/ApplicationControl/last7daysapplicationinfo-counts",
    INCIDENT_BY_CHANNEL_MODAL:"/DashboardModal/IncidentbyChannelModal",
    INCIDENT_BY_FILE_TYPE:"/DashboardModal/ExtensionModalData",
    FILE_UPLOAD_MODAL:"/DashboardModal/FileUploadModalData",
@@ -56,16 +56,17 @@ PRINTER_CONTROL:{
 
 
 APPLICATION_CONTROL:{
-  APPLICATION_CONTROLDATA:"/application-info/getmodeall",
-  VIEW_APPLICATION_COUNT: "/application-info/GetHostWiseApplicationCount",
-  VIEW_APPLICATION_DETAILS:"/application-info/GetHostWiseApplicationDetail",
-  APPLICATION_BLACKLISTED:"/application-info/ApplicationBlacklisted",
-  APPLICATION_BY_HOST:"/application-info/GetApplicationByHost",
-  APPLICATION_WHITELISTED: "/application-info/ApplicationWhitelisted",
+  SET_MODE:"/ApplicationControl/SetApplicationMode",
+  APPLICATION_CONTROLDATA:"/ApplicationControl/getmodeall",
+  VIEW_APPLICATION_COUNT: "/ApplicationControl/GetHostWiseApplicationCount",
+  VIEW_APPLICATION_DETAILS:"/ApplicationControl/GetHostWiseApplicationDetail",
+  APPLICATION_BLACKLISTED:"/ApplicationControl/ApplicationBlacklisted",
+  APPLICATION_BY_HOST:"/ApplicationControl/GetApplicationByHost",
+  APPLICATION_WHITELISTED: "/ApplicationControl/ApplicationWhitelisted",
 },
 
 // APPLICATION_CONTROL: {
-//   APPLICATION_CONTROLDATA: "/application-info/getapplicationinfoall",
+//   APPLICATION_CONTROLDATA: "/ApplicationControl/getapplicationinfoall",
 // },
 
 USB_Policy: {

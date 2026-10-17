@@ -592,11 +592,17 @@ function AddForm({ branches, onAdd }) {
     if (!isValid) return;
     setIsSubmitting(true);
     try {
-      const response = await dashboardService.addApplicationPolicy({
-        branch: form.branch,
-        device: form.device,   // array
+
+      const requestData={
+         branch: form.branch,
+        devices: form.device,   // array
         mode: form.mode,
-      });
+      }
+
+      // alert("Sending policy request in style "+JSON.stringify(requestData));
+
+      const response = await dashboardService.setApplicationMode(requestData);
+
       if (response?.data === 'SUCCESS' || response?.success === true) {
         await showAlert({
           icon: 'success',
