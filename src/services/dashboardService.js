@@ -512,12 +512,56 @@ export const dashboardService = {
     return data;
   },
 
+getTotalScannedFiles: async () => {
+  const { data } = await axiosInstance.get(
+    API_ENDPOINTS.DATA_CLASSIFICATION.TOTAL_SCANNED_FILES
+  );
+  return data;
+},
+
+  getLabelCounts: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.DATA_CLASSIFICATION.LABEL_COUNTS
+    );
+    return data;
+  },
+
+    getClassificationFiles: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.DATA_CLASSIFICATION.MASTER
+    );
+    return data;
+  },
+
+
+  getFilesByLabel: async (label) => {
+    const { data } = await axiosInstance.get(
+      `${API_ENDPOINTS.DATA_CLASSIFICATION.FILES_BY_LABEL}/${encodeURIComponent(label)}`
+    );
+    return data;
+  },
+
   getActivePolicyModal: async (policyName) => {
     const { data } = await axiosInstance.get(
       `${API_ENDPOINTS.NETWORK_POLICY.GETACTIVE_DISTINCTPOLICY_MODAL}/${encodeURIComponent(policyName)}`,
     );
     return data;
   },
+  getExtensionCounts: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.DATA_CLASSIFICATION.EXTENSION_COUNTS
+    );
+    return data;
+  },
+
+    getFilesByExtension: async (extension) => {
+    const { data } = await axiosInstance.get(
+      `${API_ENDPOINTS.DATA_CLASSIFICATION.FILES_BY_EXTENSION}/${encodeURIComponent(extension)}`
+    );
+    return data;
+  },
+
+
 };
 
 

@@ -348,7 +348,8 @@ function ApplyNetworkPolicy() {
     };
     return (
       <span
-        className={`rounded-lg border px-3 py-1.5 text-xs whitespace-nowrap ${themes[theme]}`}
+        className={`rounded-lg border px-3 py-1.5 text-xs max-w-full break-all ${themes[theme]}`}
+        title={typeof children === "string" ? children : undefined}
       >
         {children}
       </span>
@@ -436,7 +437,7 @@ function ApplyNetworkPolicy() {
       <div className="flex gap-3">
         {/* Left - Policies */}
         <div
-          className={`w-[360px] rounded-xl border p-4 ${
+          className={`w-[360px] flex-shrink-0 rounded-xl border p-4 ${
             isDark
               ? "border-[#2B3345] bg-[#020617]"
               : "border-slate-200 bg-white"
@@ -528,7 +529,7 @@ function ApplyNetworkPolicy() {
         </div>
 
         {/* Right side */}
-        <div className="flex-1 space-y-3">
+        <div className="flex-1 min-w-0 space-y-3">
           {selectedPolicy ? (
             <div
               className={`rounded-xl border p-6 ${
@@ -603,7 +604,7 @@ function ApplyNetworkPolicy() {
                   <span>{detailsError}</span>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-x-10 gap-y-6">
+                <div className="grid grid-cols-2 gap-x-10 gap-y-6 min-w-0">
                   {details.fileType.length > 0 && (
                     <div>
                       <SectionHeader icon={Folder} iconColor="#4F7CFF">
@@ -650,7 +651,7 @@ function ApplyNetworkPolicy() {
                   )}
 
                   {details.regex.length > 0 && (
-                    <div>
+                    <div className="col-span-2">
                       <SectionHeader icon={Folder} iconColor="#4F7CFF">
                         REGEX
                       </SectionHeader>

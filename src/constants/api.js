@@ -92,6 +92,18 @@ REPORTS:{
   GET_REPORTS:"/reports/getReports",
 },
 
+DATA_CLASSIFICATION: {
+  TOTAL_SCANNED_FILES: "/DataClassification/TotalScannedFiles",
+  LABEL_COUNTS: "/DataClassification/LabelCounts",
+    MASTER: "/DataClassification/DataClassificationMaster",
+  FILES_BY_LABEL: "/DataClassification/files-by-label",
+   EXTENSION_COUNTS: "/DataClassification/ExtensionCounts",
+     FILES_BY_EXTENSION: "/DataClassification/files-by-extension",
+},
+
+
+
+
   DEVICES: {
     LIST: "/devices",
     BY_ID: (id) => `/devices/${id}`,

@@ -6,7 +6,6 @@ import {
   Check,
   ChevronDown,
   RefreshCw,
-  Eye,
   Search,
   X,
   ChevronLeft,
@@ -831,7 +830,7 @@ function ManageWhitelisted() {
 
           {/* DEVICE NAME (with search) */}
           <div ref={deviceRef} className="relative">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 text-[rgb(100,116,139)]">
+            <label className={labelClass}>
               DEVICE NAME{" "}
               <span className="text-rose-500 normal-case tracking-normal">*</span>
             </label>
@@ -848,23 +847,30 @@ function ManageWhitelisted() {
                 setApplicationQuery("");
               }}
               className={`
-                w-full h-[42px] rounded-xl border px-3 text-[13px]
+                ${inputClass}
                 flex items-center justify-between text-left
-                outline-none transition-all duration-200
                 ${
                   !branch || deviceLoading
-                    ? "bg-[#111827] border-[#334155] text-slate-600 opacity-50 cursor-not-allowed"
+                    ? isDark
+                      ? "bg-[#111827] border-[#334155] text-slate-600 opacity-50 cursor-not-allowed"
+                      : "bg-slate-100 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed"
                     : deviceOpen
-                    ? "bg-[#111827] border-[#7094ff]/60 text-slate-200 ring-2 ring-[#7094ff]/15"
+                    ? "border-[#7094ff]/60 ring-2 ring-[#7094ff]/15"
                     : submitted && selectedDevices.length === 0
-                    ? "bg-[#111827] border-rose-500/60 text-slate-200"
-                    : "bg-[#111827] border-white/[0.10] text-slate-200"
+                    ? "border-rose-500/60"
+                    : ""
                 }
               `}
             >
               <span
                 className={
-                  selectedDevices.length > 0 ? "text-slate-200" : "text-slate-600"
+                  selectedDevices.length > 0
+                    ? isDark
+                      ? "text-slate-200"
+                      : "text-slate-700"
+                    : isDark
+                    ? "text-slate-600"
+                    : "text-slate-400"
                 }
               >
                 {!branch
@@ -877,12 +883,16 @@ function ManageWhitelisted() {
               </span>
 
               {deviceLoading ? (
-                <RefreshCw size={14} className="text-slate-500 animate-spin" />
+                <RefreshCw
+                  size={14}
+                  className={`animate-spin ${isDark ? "text-slate-500" : "text-slate-400"}`}
+                />
               ) : (
                 <ChevronDown
                   size={14}
                   className={`
-                    text-slate-500 transition-transform
+                    transition-transform
+                    ${isDark ? "text-slate-500" : "text-slate-400"}
                     ${deviceOpen ? "rotate-180" : ""}
                   `}
                 />
@@ -891,29 +901,44 @@ function ManageWhitelisted() {
 
             {deviceOpen && branch && !deviceLoading && (
               <div
-                className="
+                className={`
                   absolute z-[200] left-0 right-0 top-full mt-1
-                  rounded-xl border border-white/[0.10] bg-[#111827]
-                  shadow-[0_16px_48px_rgba(0,0,0,0.35)] overflow-hidden
-                "
+                  rounded-xl border shadow-[0_16px_48px_rgba(0,0,0,0.25)] overflow-hidden
+                  ${
+                    isDark
+                      ? "bg-[#111827] border-white/[0.10]"
+                      : "bg-white border-slate-200"
+                  }
+                `}
               >
                 {/* DEVICE SEARCH */}
-                <div className="px-3 py-2 border-b border-white/[0.07]">
+                <div
+                  className={`
+                    px-3 py-2 border-b
+                    ${isDark ? "border-white/[0.07]" : "border-slate-100"}
+                  `}
+                >
                   <div className="relative flex items-center">
                     <Search
                       size={12}
-                      className="absolute left-2.5 text-slate-500"
+                      className={`absolute left-2.5 ${
+                        isDark ? "text-slate-500" : "text-slate-400"
+                      }`}
                     />
                     <input
                       autoFocus
                       value={deviceQuery}
                       onChange={(e) => setDeviceQuery(e.target.value)}
                       placeholder="Search devices…"
-                      className="
+                      className={`
                         w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg
-                        outline-none border border-white/[0.08]
-                        bg-[#111827] text-[#d0d0d0] placeholder-[#555]
-                      "
+                        outline-none border transition-all duration-150
+                        ${
+                          isDark
+                            ? "bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]"
+                            : "bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400"
+                        }
+                      `}
                     />
                     {deviceQuery && (
                       <button
@@ -929,7 +954,11 @@ function ManageWhitelisted() {
 
                 <div className="max-h-[187px] overflow-y-auto py-1">
                   {filteredDevicesByQuery.length === 0 ? (
-                    <div className="px-3 py-3 text-[12px] text-slate-500">
+                    <div
+                      className={`px-3 py-3 text-[12px] ${
+                        isDark ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    >
                       {devices.length === 0 ? "No devices found" : "No results"}
                     </div>
                   ) : (
@@ -941,11 +970,16 @@ function ManageWhitelisted() {
                         className={`
                           w-full px-3 py-2.5 text-left text-[12px]
                           flex items-center justify-between gap-2
-                          border-b border-[#27355f] transition-colors
+                          border-b transition-colors
+                          ${isDark ? "border-[#27355f]" : "border-slate-100"}
                           ${
                             allDevicesSelected
-                              ? "bg-[#1e293b] text-[#7094ff]"
-                              : "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                              ? isDark
+                                ? "bg-[#1e293b] text-[#7094ff]"
+                                : "bg-slate-100 text-[#7094ff]"
+                              : isDark
+                              ? "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                              : "text-slate-700 hover:bg-slate-100"
                           }
                         `}
                       >
@@ -957,7 +991,9 @@ function ManageWhitelisted() {
                               ${
                                 allDevicesSelected
                                   ? "bg-[#7094ff] border-[#7094ff]"
-                                  : "border-white/[0.25]"
+                                  : isDark
+                                  ? "border-white/[0.25]"
+                                  : "border-slate-300"
                               }
                             `}
                           >
@@ -965,11 +1001,10 @@ function ManageWhitelisted() {
                               <Check size={11} className="text-white" />
                             )}
                           </span>
-
                           <span>Select all</span>
                         </span>
 
-                        <span className="text-[10px] text-slate-500">
+                        <span className={`text-[10px] ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                           {
                             devices.filter(
                               (d) =>
@@ -1008,8 +1043,12 @@ function ManageWhitelisted() {
                               flex items-center justify-between gap-2 transition-colors
                               ${
                                 isSelected
-                                  ? "bg-[#25395f] text-[#7094ff]"
-                                  : "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                                  ? isDark
+                                    ? "bg-[#25395f] text-[#7094ff]"
+                                    : "bg-[#f0f4ff] text-[#7094ff]"
+                                  : isDark
+                                  ? "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                                  : "text-slate-700 hover:bg-slate-100"
                               }
                             `}
                           >
@@ -1064,7 +1103,9 @@ function ManageWhitelisted() {
                 flex items-center justify-between text-left
                 ${
                   selectedDevices.length === 0 || applicationLoading
-                    ? "opacity-50 cursor-not-allowed"
+                    ? isDark
+                      ? "bg-[#111827] border-[#334155] text-slate-600 opacity-50 cursor-not-allowed"
+                      : "bg-slate-100 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed"
                     : ""
                 }
                 ${
@@ -1082,8 +1123,12 @@ function ManageWhitelisted() {
               <span
                 className={
                   selectedApplications.length > 0
-                    ? "text-slate-200 truncate"
-                    : "text-slate-600"
+                    ? isDark
+                      ? "text-slate-200 truncate"
+                      : "text-slate-700 truncate"
+                    : isDark
+                    ? "text-slate-600"
+                    : "text-slate-400"
                 }
               >
                 {getApplicationDisplayText()}
@@ -1092,13 +1137,14 @@ function ManageWhitelisted() {
               {applicationLoading ? (
                 <RefreshCw
                   size={14}
-                  className="text-slate-500 animate-spin flex-shrink-0"
+                  className={`animate-spin flex-shrink-0 ${isDark ? "text-slate-500" : "text-slate-400"}`}
                 />
               ) : (
                 <ChevronDown
                   size={14}
                   className={`
-                    flex-shrink-0 text-slate-500 transition-transform
+                    flex-shrink-0 transition-transform
+                    ${isDark ? "text-slate-500" : "text-slate-400"}
                     ${applicationOpen ? "rotate-180" : ""}
                   `}
                 />
@@ -1109,29 +1155,44 @@ function ManageWhitelisted() {
               selectedDevices.length > 0 &&
               !applicationLoading && (
                 <div
-                  className="
+                  className={`
                     absolute top-full left-0 right-0 mt-1.5 z-[200]
-                    rounded-xl border border-white/[0.10] bg-[#111827]
-                    shadow-[0_16px_48px_rgba(0,0,0,0.35)] overflow-hidden
-                  "
+                    rounded-xl border shadow-[0_16px_48px_rgba(0,0,0,0.25)] overflow-hidden
+                    ${
+                      isDark
+                        ? "bg-[#111827] border-white/[0.10]"
+                        : "bg-white border-slate-200"
+                    }
+                  `}
                 >
                   {/* APPLICATION SEARCH */}
-                  <div className="px-3 py-2 border-b border-white/[0.07]">
+                  <div
+                    className={`
+                      px-3 py-2 border-b
+                      ${isDark ? "border-white/[0.07]" : "border-slate-100"}
+                    `}
+                  >
                     <div className="relative flex items-center">
                       <Search
                         size={12}
-                        className="absolute left-2.5 text-slate-500"
+                        className={`absolute left-2.5 ${
+                          isDark ? "text-slate-500" : "text-slate-400"
+                        }`}
                       />
                       <input
                         autoFocus
                         value={applicationQuery}
                         onChange={(e) => setApplicationQuery(e.target.value)}
                         placeholder="Search applications…"
-                        className="
+                        className={`
                           w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg
-                          outline-none border border-white/[0.08]
-                          bg-[#111827] text-[#d0d0d0] placeholder-[#555]
-                        "
+                          outline-none border transition-all duration-150
+                          ${
+                            isDark
+                              ? "bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]"
+                              : "bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400"
+                          }
+                        `}
                       />
                       {applicationQuery && (
                         <button
@@ -1147,7 +1208,11 @@ function ManageWhitelisted() {
 
                   <div className="max-h-[187px] overflow-y-auto py-1">
                     {filteredApplicationValues.length === 0 ? (
-                      <div className="px-4 py-3 text-[12px] text-slate-500 text-center">
+                      <div
+                        className={`px-4 py-3 text-[12px] text-center ${
+                          isDark ? "text-slate-500" : "text-slate-400"
+                        }`}
+                      >
                         {applicationValues.length === 0
                           ? "No applications found"
                           : "No results"}
@@ -1160,11 +1225,16 @@ function ManageWhitelisted() {
                           className={`
                             w-full px-3 py-2.5 text-left text-[12px]
                             flex items-center gap-2
-                            border-b border-[#27355f] transition-colors
+                            border-b transition-colors
+                            ${isDark ? "border-[#27355f]" : "border-slate-100"}
                             ${
                               allApplicationsSelected
-                                ? "bg-[#1e293b] text-[#7094ff]"
-                                : "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                                ? isDark
+                                  ? "bg-[#1e293b] text-[#7094ff]"
+                                  : "bg-slate-100 text-[#7094ff]"
+                                : isDark
+                                ? "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                                : "text-slate-700 hover:bg-slate-100"
                             }
                           `}
                         >
@@ -1175,7 +1245,9 @@ function ManageWhitelisted() {
                               ${
                                 allApplicationsSelected
                                   ? "bg-[#7094ff] border-[#7094ff]"
-                                  : "border-white/[0.25]"
+                                  : isDark
+                                  ? "border-white/[0.25]"
+                                  : "border-slate-300"
                               }
                             `}
                           >
@@ -1203,8 +1275,12 @@ function ManageWhitelisted() {
                                 flex items-center justify-between transition-colors
                                 ${
                                   isSelected
-                                    ? "bg-[#25395f] text-[#7094ff]"
-                                    : "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                                    ? isDark
+                                      ? "bg-[#25395f] text-[#7094ff]"
+                                      : "bg-[#f0f4ff] text-[#7094ff]"
+                                    : isDark
+                                    ? "text-slate-400 hover:bg-[#1e293b] hover:text-slate-200"
+                                    : "text-slate-700 hover:bg-slate-100"
                                 }
                               `}
                             >
@@ -1290,15 +1366,19 @@ function ManageWhitelisted() {
       {submitted && (
         <div
           ref={tableRef}
-          className="w-full rounded-xl border border-[#27355f] bg-[#020617] p-6 mt-4 scroll-mt-6"
+          className={`w-full rounded-xl border p-6 mt-4 scroll-mt-6 ${
+            isDark
+              ? "border-[#27355f] bg-[#020617]"
+              : "border-slate-200 bg-white shadow-sm"
+          }`}
         >
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-[14px] font-semibold text-white">
+              <h3 className={`text-[14px] font-semibold ${isDark ? "text-white" : "text-slate-800"}`}>
                 Whitelisted Applications
               </h3>
 
-              <p className="mt-1 text-[11px] text-slate-500">
+              <p className={`mt-1 text-[11px] ${isDark ? "text-slate-500" : "text-slate-500"}`}>
                 Device:{" "}
                 {selectedDevices.length === 1
                   ? selectedDevices[0]
@@ -1309,7 +1389,7 @@ function ManageWhitelisted() {
             <div className="relative w-[250px]">
               <Search
                 size={13}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+                className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? "text-slate-500" : "text-slate-400"}`}
               />
 
               <input
@@ -1320,7 +1400,11 @@ function ManageWhitelisted() {
                   setCurrentPage(1);
                 }}
                 placeholder="Search..."
-                className="w-full h-[34px] rounded-lg border border-[#334155] bg-[#111827] pl-9 pr-8 text-[11px] text-slate-300 placeholder:text-slate-600 outline-none focus:border-[#4f56f0] focus:ring-1 focus:ring-[#4f56f0]/30"
+                className={`w-full h-[34px] rounded-lg border pl-9 pr-8 text-[11px] outline-none transition-colors ${
+                  isDark
+                    ? "border-[#334155] bg-[#111827] text-slate-300 placeholder:text-slate-600 focus:border-[#4f56f0] focus:ring-1 focus:ring-[#4f56f0]/30"
+                    : "border-slate-200 bg-slate-50 text-slate-700 placeholder:text-slate-400 focus:border-[#4f56f0] focus:ring-1 focus:ring-[#4f56f0]/30"
+                }`}
               />
 
               {searchTerm && (
@@ -1330,7 +1414,7 @@ function ManageWhitelisted() {
                     setSearchTerm("");
                     setCurrentPage(1);
                   }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  className={`absolute right-2.5 top-1/2 -translate-y-1/2 ${isDark ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`}
                 >
                   <X size={13} />
                 </button>
@@ -1340,8 +1424,8 @@ function ManageWhitelisted() {
 
           <div className="overflow-x-auto max-h-[430px] overflow-y-auto custom-scrollbar">
             <table className="w-full text-left">
-              <thead className="sticky top-0 z-10 bg-[#020617]">
-                <tr className="border-b border-[#27355f]">
+              <thead className={`sticky top-0 z-10 ${isDark ? "bg-[#020617]" : "bg-white"}`}>
+                <tr className={`border-b ${isDark ? "border-[#27355f]" : "border-slate-200"}`}>
                   <th className="w-[55px] px-2 py-3 text-center">
                     <input
                       type="checkbox"
@@ -1351,29 +1435,29 @@ function ManageWhitelisted() {
                     />
                   </th>
 
-                  <th className="w-[55px] px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className={`w-[55px] px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                     Sr
                     <br />
                     No
                   </th>
 
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className={`px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                     Application Hash
                   </th>
 
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className={`px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                     Application Name
                   </th>
 
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className={`px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                     Application Path
                   </th>
 
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className={`px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                     Branch Name
                   </th>
 
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className={`px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                     IP Address
                   </th>
                 </tr>
@@ -1384,7 +1468,7 @@ function ManageWhitelisted() {
                   <tr>
                     <td
                       colSpan={7}
-                      className="px-4 py-10 text-center text-[11px] text-slate-500"
+                      className={`px-4 py-10 text-center text-[11px] ${isDark ? "text-slate-500" : "text-slate-400"}`}
                     >
                       No whitelisted applications found.
                     </td>
@@ -1398,7 +1482,11 @@ function ManageWhitelisted() {
                     return (
                       <tr
                         key={`${applicationKey}-${index}`}
-                        className="border-b border-[#27355f]/60 hover:bg-[#0f172a] transition-colors"
+                        className={`border-b transition-colors ${
+                          isDark
+                            ? "border-[#27355f]/60 hover:bg-[#0f172a]"
+                            : "border-slate-100 hover:bg-slate-50"
+                        }`}
                       >
                         <td className="w-[55px] px-2 py-3 text-center">
                           <input
@@ -1409,27 +1497,27 @@ function ManageWhitelisted() {
                           />
                         </td>
 
-                        <td className="w-[55px] px-2 py-3 text-center text-[11px] text-slate-500">
+                        <td className={`w-[55px] px-2 py-3 text-center text-[11px] ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                           {startIndex + index + 1}
                         </td>
 
-                        <td className="px-4 py-3 text-[11px] text-slate-300 break-all max-w-[300px]">
+                        <td className={`px-4 py-3 text-[11px] break-all max-w-[300px] ${isDark ? "text-slate-300" : "text-slate-600"}`}>
                           {item?.applicationHash || "-"}
                         </td>
 
-                        <td className="px-4 py-3 text-[11px] text-slate-300 break-all max-w-[350px]">
+                        <td className={`px-4 py-3 text-[11px] break-all max-w-[350px] ${isDark ? "text-slate-300" : "text-slate-600"}`}>
                           {item?.applicationName || "-"}
                         </td>
 
-                        <td className="px-4 py-3 text-[11px] text-slate-300 break-all max-w-[400px]">
+                        <td className={`px-4 py-3 text-[11px] break-all max-w-[400px] ${isDark ? "text-slate-300" : "text-slate-600"}`}>
                           {item?.applicationPath || "-"}
                         </td>
 
-                        <td className="px-4 py-3 text-[11px] text-slate-300 whitespace-nowrap">
+                        <td className={`px-4 py-3 text-[11px] whitespace-nowrap ${isDark ? "text-slate-300" : "text-slate-600"}`}>
                           {item?.branchName || "-"}
                         </td>
 
-                        <td className="px-4 py-3 text-[11px] text-slate-300 whitespace-nowrap">
+                        <td className={`px-4 py-3 text-[11px] whitespace-nowrap ${isDark ? "text-slate-300" : "text-slate-600"}`}>
                           {item?.ipAddress || "-"}
                         </td>
                       </tr>
@@ -1442,7 +1530,7 @@ function ManageWhitelisted() {
 
           {/* PAGINATION */}
           <div className="flex items-center justify-between mt-5 pt-4">
-            <div className="text-[11px] text-slate-500">
+            <div className={`text-[11px] ${isDark ? "text-slate-500" : "text-slate-400"}`}>
               Showing {displayStart} to {displayEnd} of{" "}
               {filteredApplications.length} entries
             </div>
@@ -1458,8 +1546,12 @@ function ManageWhitelisted() {
                   h-[32px] px-3 border text-[11px] flex items-center gap-1 transition-colors
                   ${
                     currentPage === 1
-                      ? "border-[#27355f] text-slate-700 cursor-not-allowed"
-                      : "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
+                      ? isDark
+                        ? "border-[#27355f] text-slate-700 cursor-not-allowed"
+                        : "border-slate-200 text-slate-300 cursor-not-allowed"
+                      : isDark
+                      ? "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
+                      : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
                   }
                 `}
               >
@@ -1478,7 +1570,9 @@ function ManageWhitelisted() {
                       ${
                         currentPage === page
                           ? "border-[#4f56f0] bg-[#4f56f0] text-white"
-                          : "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
+                          : isDark
+                          ? "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
+                          : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
                       }
                     `}
                   >
@@ -1497,8 +1591,12 @@ function ManageWhitelisted() {
                   h-[32px] px-3 border text-[11px] flex items-center gap-1 transition-colors
                   ${
                     currentPage === totalPages
-                      ? "border-[#27355f] text-slate-700 cursor-not-allowed"
-                      : "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
+                      ? isDark
+                        ? "border-[#27355f] text-slate-700 cursor-not-allowed"
+                        : "border-slate-200 text-slate-300 cursor-not-allowed"
+                      : isDark
+                      ? "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
+                      : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
                   }
                 `}
               >

@@ -7,23 +7,16 @@ import {
   Clock3,
   PlayCircle,
   ClipboardCheck,
-  ChevronDown,
   ChevronLeft,
   Settings2,
-  Server,
   Shield,
-  Users,
-  GitBranch,
   AlertCircle,
   Image,
   File,
-  FileJson,
   FileSpreadsheet,
   FileArchive,
-  CheckCircle,
   Plus,
   X,
-  Search,
   AlertTriangle,
   AlertCircle as AlertCircleIcon,
   Info,
@@ -34,32 +27,21 @@ import {
   Copy,
   Mail,
   Monitor,
-  Database,
 } from "lucide-react";
 
 const CreateNetworkPolicy = () => {
   const [activeStep, setActiveStep] = useState(0);
-  const [selectedFileType, setSelectedFileType] = useState("");
   const [selectedFileTypes, setSelectedFileTypes] = useState([]);
   const [selectedApplications, setSelectedApplications] = useState([]);
   const [selectedChannels, setSelectedChannels] = useState([]);
-  const [selectedSeverity, setSelectedSeverity] = useState("");
   const [policyName, setPolicyName] = useState("");
   const [description, setDescription] = useState("");
-  const [fileExtension, setFileExtension] = useState("");
-  const [appVersion, setAppVersion] = useState("");
-  const [source, setSource] = useState("");
-  const [destination, setDestination] = useState("");
-  const [protocol, setProtocol] = useState("TCP");
-  const [port, setPort] = useState("");
-  const [channelType, setChannelType] = useState("Public");
-  const [priority, setPriority] = useState("P1 - High");
-  const [keyword, setKeyword] = useState("");
   const [regularExpression, setRegularExpression] = useState("");
   const [regularExpressions, setRegularExpressions] = useState([]);
   const [keywords, setKeywords] = useState([]);
+  const [keyword, setKeyword] = useState("");
   const [mode, setMode] = useState("Content Based");
-  const [selectedSeverityLevel, setSelectedSeverityLevel] = useState(""); // Changed to single selection
+  const [selectedSeverityLevel, setSelectedSeverityLevel] = useState(""); 
 
   const steps = [
     { title: "General Info", icon: FileText },
@@ -84,70 +66,21 @@ const CreateNetworkPolicy = () => {
     { name: "7z", description: " A Highly Compressed", icon: FileArchive },
     { name: "RAR", description: " To Bundle Multiple Files ", icon: FileArchive },
     { name: "XLS", description: "Microsoft Excel documents", icon: FileSpreadsheet },
-
   ];
 
   const applicationGroups = [
-    {
-      name: "Chrome",
-      description: "Google Chrome web browser",
-      icon: <Globe size={20} />,
-    },
-    {
-      name: "FireFox",
-      description: "Mozilla Firefox web browser",
-      icon: <Globe size={20} />,
-    },
-    {
-      name: "Safari",
-      description: "Apple Safari web browser",
-      icon: <Globe size={20} />,
-    },
-    {
-      name: "Iexplore",
-      description: "Microsoft Internet Explorer web browser",
-      icon: <Globe size={20} />,
-    },
-    {
-      name: "Brave",
-      description: "Brave privacy-focused web browser",
-      icon: <Shield size={20} />,
-    },
-    {
-      name: "Vivaldi",
-      description: "Vivaldi customizable web browser",
-      icon: <Globe size={20} />,
-    },
-    {
-      name: "Edge",
-      description: "Microsoft Edge web browser",
-      icon: <Globe size={20} />,
-    },
-    {
-      name: "Opera",
-      description: "Opera web browser",
-      icon: <Globe size={20} />,
-    },
-    {
-      name: "WinSCP",
-      description: "Secure file transfer application",
-      icon: <Share2 size={20} />,
-    },
-    {
-      name: "Coreftp",
-      description: "FTP and SFTP file transfer client",
-      icon: <Upload size={20} />,
-    },
-    {
-      name: "Cyberduck",
-      description: "File transfer and cloud storage client",
-      icon: <FolderOpen size={20} />,
-    },
-    {
-      name: "FileZilla",
-      description: "FTP and SFTP file transfer client",
-      icon: <Share2 size={20} />,
-    },
+    { name: "Chrome", description: "Google Chrome web browser", icon: <Globe size={20} /> },
+    { name: "FireFox", description: "Mozilla Firefox web browser", icon: <Globe size={20} /> },
+    { name: "Safari", description: "Apple Safari web browser", icon: <Globe size={20} /> },
+    { name: "Iexplore", description: "Microsoft Internet Explorer web browser", icon: <Globe size={20} /> },
+    { name: "Brave", description: "Brave privacy-focused web browser", icon: <Shield size={20} /> },
+    { name: "Vivaldi", description: "Vivaldi customizable web browser", icon: <Globe size={20} /> },
+    { name: "Edge", description: "Microsoft Edge web browser", icon: <Globe size={20} /> },
+    { name: "Opera", description: "Opera web browser", icon: <Globe size={20} /> },
+    { name: "WinSCP", description: "Secure file transfer application", icon: <Share2 size={20} /> },
+    { name: "Coreftp", description: "FTP and SFTP file transfer client", icon: <Upload size={20} /> },
+    { name: "Cyberduck", description: "File transfer and cloud storage client", icon: <FolderOpen size={20} /> },
+    { name: "FileZilla", description: "FTP and SFTP file transfer client", icon: <Share2 size={20} /> },
   ];
 
   const channelControls = [
@@ -165,9 +98,6 @@ const CreateNetworkPolicy = () => {
     { name: "Medium", description: "Medium severity level", icon: AlertCircle, color: "yellow" },
     { name: "Low", description: "Low severity level", icon: Info, color: "blue" },
   ];
-
-  const channels = ["Production", "Staging", "Development", "QA", "Testing"];
-  const severities = ["Critical", "High", "Medium", "Low", "Info"];
 
   const toggleFileType = (fileName) => {
     setSelectedFileTypes(prev => {
@@ -223,18 +153,15 @@ const CreateNetworkPolicy = () => {
     }
   };
 
-  // Updated to handle single selection
   const toggleSeverityLevel = (severityName) => {
     setSelectedSeverityLevel(prev => {
       if (prev === severityName) {
-        return ""; // Deselect if same
+        return "";
       } else {
-        return severityName; // Select new one
+        return severityName;
       }
     });
   };
-
-  // Removed selectAllSeverityLevels since it doesn't make sense for single selection
 
   const addRegularExpression = () => {
     if (regularExpression.trim()) {
@@ -258,52 +185,34 @@ const CreateNetworkPolicy = () => {
     setKeywords(keywords.filter((_, i) => i !== index));
   };
 
-  // Helper function to check if a step has selections
   const hasSelections = (stepIndex) => {
     switch (stepIndex) {
-      case 0:
-        return policyName || description;
-      case 1:
-        return selectedFileTypes.length > 0;
-      case 2:
-        return selectedApplications.length > 0;
-      case 3:
-        return keywords.length > 0 || regularExpressions.length > 0;
-      case 4:
-        return selectedChannels.length > 0;
-      case 5:
-        return selectedSeverityLevel !== ""; // Updated for single selection
-      default:
-        return false;
+      case 0: return policyName || description;
+      case 1: return selectedFileTypes.length > 0;
+      case 2: return selectedApplications.length > 0;
+      case 3: return keywords.length > 0 || regularExpressions.length > 0;
+      case 4: return selectedChannels.length > 0;
+      case 5: return selectedSeverityLevel !== ""; 
+      default: return false;
     }
   };
 
-  // Small pill used across the Summary cards
   const Pill = ({ children, tone = "slate" }) => {
     const tones = {
-      slate:
-        "bg-slate-100 text-slate-600 border-slate-200 dark:bg-[#1a2744] dark:text-gray-300 dark:border-[#2d3748]",
-      blue:
-        "bg-blue-50 text-blue-600 border-blue-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
-      green:
-        "bg-green-50 text-green-600 border-green-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
-      orange:
-        "bg-orange-50 text-orange-600 border-orange-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
-      pink:
-        "bg-pink-50 text-pink-600 border-pink-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#1a2744]",
-      purple:
-        "bg-purple-50 text-purple-600 border-purple-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
+      slate: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-[#1a2744] dark:text-gray-300 dark:border-[#2d3748]",
+      blue: "bg-blue-50 text-blue-600 border-blue-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
+      green: "bg-green-50 text-green-600 border-green-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
+      orange: "bg-orange-50 text-orange-600 border-orange-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
+      pink: "bg-pink-50 text-pink-600 border-pink-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#1a2744]",
+      purple: "bg-purple-50 text-purple-600 border-purple-200 dark:bg-[#1a2744] dark:text-[#8fa8ff] dark:border-[#324a86]",
     };
     return (
-      <span
-        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${tones[tone]}`}
-      >
+      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${tones[tone]}`}>
         {children}
       </span>
     );
   };
 
-  // Row with a label on the left and pills (or empty state) on the right
   const SummaryRow = ({ label, values, tone, emptyText = "Not specified" }) => (
     <div className="flex items-start justify-between gap-6 py-1.5">
       <span className="text-sm text-slate-400 dark:text-gray-500 whitespace-nowrap pt-0.5">
@@ -312,9 +221,7 @@ const CreateNetworkPolicy = () => {
       <div className="flex flex-wrap gap-1.5 justify-end">
         {values && values.length > 0 ? (
           values.map((v, i) => (
-            <Pill key={i} tone={tone}>
-              {v}
-            </Pill>
+            <Pill key={i} tone={tone}>{v}</Pill>
           ))
         ) : (
           <span className="text-sm text-slate-500 dark:text-gray-500">{emptyText}</span>
@@ -323,7 +230,6 @@ const CreateNetworkPolicy = () => {
     </div>
   );
 
-  // Compact card with icon and title
   const SummaryCard = ({ icon: Icon, title, children }) => (
     <div className="rounded-lg p-3 border bg-white border-slate-200 dark:bg-[#0b1220] dark:border-[#1a2a4a]">
       <div className="flex items-center gap-2 mb-2">
@@ -347,10 +253,7 @@ const CreateNetworkPolicy = () => {
                   value={policyName}
                   onChange={(e) => setPolicyName(e.target.value)}
                   placeholder="Enter Policy Name"
-                  className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 transition-all ${policyName
-                    ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
-                    : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
-                    }`}
+                  className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 transition-all ${policyName ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'}`}
                 />
               </div>
             </div>
@@ -361,10 +264,7 @@ const CreateNetworkPolicy = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Description"
-                className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 transition-all ${description
-                  ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
-                  : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
-                  }`}
+                className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 transition-all ${description ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'}`}
               />
             </div>
           </div>
@@ -390,14 +290,10 @@ const CreateNetworkPolicy = () => {
                   <div
                     key={file.name}
                     onClick={() => toggleFileType(file.name)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
-                      ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]"
-                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"
-                      }`}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]" : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"}`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
-                        }`}>
+                      <div className={`p-2 rounded-lg ${isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"}`}>
                         <Icon size={20} className={isSelected ? "text-blue-600 dark:text-[#5A7BFF]" : "text-slate-400 dark:text-gray-400"} />
                       </div>
                       <div className="flex-1">
@@ -440,14 +336,10 @@ const CreateNetworkPolicy = () => {
                   <div
                     key={app.name}
                     onClick={() => toggleApplication(app.name)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
-                      ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]"
-                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"
-                      }`}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]" : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"}`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
-                        }`}>
+                      <div className={`p-2 rounded-lg ${isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"}`}>
                         <span className="text-xl">{app.icon}</span>
                       </div>
                       <div className="flex-1">
@@ -472,11 +364,10 @@ const CreateNetworkPolicy = () => {
         );
 
       case 3:
-      case 3:
         const isBlockMode = mode === "Block Based";
         return (
           <div className="space-y-6">
-            {/* Mode Toggle – larger buttons */}
+            {/* Mode Toggle */}
             <div className="flex flex-col gap-2">
               <span className="text-sm font-semibold text-slate-700 dark:text-gray-300">
                 Mode
@@ -485,27 +376,29 @@ const CreateNetworkPolicy = () => {
                 <button
                   type="button"
                   onClick={() => setMode("Content Based")}
-                  className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${mode === "Content Based"
-                    ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
-                    : "bg-[#0f172a] text-gray-300 border-[#334155] hover:bg-[#1e293b]"
-                    }`}
+                  className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${
+                    mode === "Content Based"
+                      ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
+                      : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 dark:bg-[#0f172a] dark:text-gray-300 dark:border-[#334155] dark:hover:bg-[#1e293b]"
+                  }`}
                 >
                   Content Based
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode("Block Based")}
-                  className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${mode === "Block Based"
-                    ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
-                    : "bg-[#0f172a] text-gray-300 border-[#334155] hover:bg-[#1e293b]"
-                    }`}
+                  className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${
+                    mode === "Block Based"
+                      ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
+                      : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 dark:bg-[#0f172a] dark:text-gray-300 dark:border-[#334155] dark:hover:bg-[#1e293b]"
+                  }`}
                 >
                   Block Based
                 </button>
               </div>
             </div>
 
-            {/* Keyword + Regex grid – conditionally disabled */}
+            {/* Keyword + Regex grid */}
             <div className={`grid grid-cols-2 gap-6 ${isBlockMode ? "opacity-60 pointer-events-none" : ""}`}>
               {/* Keyword Section */}
               <div>
@@ -517,10 +410,7 @@ const CreateNetworkPolicy = () => {
                     onChange={(e) => setKeyword(e.target.value)}
                     placeholder="eg: hello, get lost"
                     disabled={isBlockMode}
-                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${keyword
-                      ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
-                      : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
-                      } ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
+                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${keyword ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'} ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && !isBlockMode) {
                         addKeyword();
@@ -530,8 +420,7 @@ const CreateNetworkPolicy = () => {
                   <button
                     onClick={addKeyword}
                     disabled={isBlockMode}
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md transition ${isBlockMode ? "opacity-50 cursor-not-allowed" : "hover:bg-[#4a6bff]"
-                      }`}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md transition ${isBlockMode ? "opacity-50 cursor-not-allowed" : "hover:bg-[#4a6bff]"}`}
                   >
                     <Plus size={18} className="text-white" />
                   </button>
@@ -551,8 +440,7 @@ const CreateNetworkPolicy = () => {
                     {keywords.map((item, index) => (
                       <div
                         key={index}
-                        className={`flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition ${isBlockMode ? "opacity-50" : ""
-                          }`}
+                        className={`flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition ${isBlockMode ? "opacity-50" : ""}`}
                       >
                         <span>{item}</span>
                         {!isBlockMode && (
@@ -581,10 +469,7 @@ const CreateNetworkPolicy = () => {
                     onChange={(e) => setRegularExpression(e.target.value)}
                     placeholder="eg: ^[a-z]+$"
                     disabled={isBlockMode}
-                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${regularExpression
-                      ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]'
-                      : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'
-                      } ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
+                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${regularExpression ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'} ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
                     onKeyPress={(e) => {
                       if (e.key === "Enter" && !isBlockMode) {
                         addRegularExpression();
@@ -594,8 +479,7 @@ const CreateNetworkPolicy = () => {
                   <button
                     onClick={addRegularExpression}
                     disabled={isBlockMode}
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md transition ${isBlockMode ? "opacity-50 cursor-not-allowed" : "hover:bg-[#4a6bff]"
-                      }`}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.9 bg-[#5A7BFF] rounded-md transition ${isBlockMode ? "opacity-50 cursor-not-allowed" : "hover:bg-[#4a6bff]"}`}
                   >
                     <Plus size={18} className="text-white" />
                   </button>
@@ -615,8 +499,7 @@ const CreateNetworkPolicy = () => {
                     {regularExpressions.map((item, index) => (
                       <div
                         key={index}
-                        className={`flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition ${isBlockMode ? "opacity-50" : ""
-                          }`}
+                        className={`flex items-center gap-2 bg-blue-50 border border-slate-200 dark:bg-[#1a2744] dark:border-[#2d3748] rounded-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-[#5A7BFF] transition ${isBlockMode ? "opacity-50" : ""}`}
                       >
                         <span className="font-mono">{item}</span>
                         {!isBlockMode && (
@@ -635,6 +518,7 @@ const CreateNetworkPolicy = () => {
             </div>
           </div>
         );
+
       case 4:
         return (
           <div className="space-y-6">
@@ -655,14 +539,10 @@ const CreateNetworkPolicy = () => {
                   <div
                     key={channel.name}
                     onClick={() => toggleChannel(channel.name)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
-                      ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]"
-                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"
-                      }`}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected ? "border-blue-400 bg-blue-50 dark:border-[#5A7BFF] dark:bg-[#1a2744]" : "border-slate-200 bg-white hover:border-slate-300 dark:border-[#2d3748] dark:bg-[#111827] dark:hover:border-[#4a5568]"}`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
-                        }`}>
+                      <div className={`p-2 rounded-lg ${isSelected ? "bg-blue-100 dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"}`}>
                         <Icon size={20} className={isSelected ? "text-blue-600 dark:text-[#5A7BFF]" : "text-slate-400 dark:text-gray-400"} />
                       </div>
                       <div className="flex-1">
@@ -716,14 +596,10 @@ const CreateNetworkPolicy = () => {
                   <div
                     key={level.name}
                     onClick={() => toggleSeverityLevel(level.name)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected
-                      ? selectedColorClasses[level.color]
-                      : colorClasses[level.color]
-                      }`}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${isSelected ? selectedColorClasses[level.color] : colorClasses[level.color]}`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${isSelected ? "bg-white dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"
-                        }`}>
+                      <div className={`p-2 rounded-lg ${isSelected ? "bg-white dark:bg-[#2d3748]" : "bg-slate-100 dark:bg-[#1a202c]"}`}>
                         <Icon size={20} className={isSelected ? iconColorClasses[level.color] : "text-slate-400 dark:text-gray-400"} />
                       </div>
                       <div className="flex-1">
@@ -733,11 +609,7 @@ const CreateNetworkPolicy = () => {
                         <p className="text-sm text-slate-500 dark:text-gray-400">{level.description}</p>
                       </div>
                       {isSelected && (
-                        <div className={`w-5 h-5 rounded-full ${level.color === "red" ? "bg-red-500" :
-                          level.color === "orange" ? "bg-orange-500" :
-                            level.color === "yellow" ? "bg-yellow-500" :
-                              "bg-blue-500"
-                          } flex items-center justify-center flex-shrink-0`}>
+                        <div className={`w-5 h-5 rounded-full ${level.color === "red" ? "bg-red-500" : level.color === "orange" ? "bg-orange-500" : level.color === "yellow" ? "bg-yellow-500" : "bg-blue-500"} flex items-center justify-center flex-shrink-0`}>
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
@@ -754,45 +626,30 @@ const CreateNetworkPolicy = () => {
       case 6:
         return (
           <div className="space-y-3">
-            {/* Summary Header */}
-            {/* <div className="bg-blue-50 border border-blue-200 dark:bg-[#0f1f3d] dark:border-[#1a3a6a] rounded-lg px-4 py-2.5 flex items-center gap-2">
-              <ClipboardCheck size={16} className="text-blue-600 dark:text-[#5A7BFF]" />
-              <h4 className="text-sm font-medium text-blue-700 dark:text-[#5A7BFF]">
-                Review all the details before creating the policy
-              </h4>
-            </div> */}
-
-            {/* Compact Grid */}
             <div className="grid grid-cols-3 gap-3">
-              {/* General Information */}
               <SummaryCard icon={Info} title="General Information">
                 <SummaryRow label="Policy Name" values={policyName ? [policyName] : []} tone="blue" />
                 <SummaryRow label="Description" values={description ? [description] : []} tone="blue" />
               </SummaryCard>
 
-              {/* File Type */}
               <SummaryCard icon={File} title="File Type">
                 <SummaryRow label="" values={selectedFileTypes} tone="blue" />
               </SummaryCard>
 
-              {/* Applications */}
               <SummaryCard icon={FolderOpen} title="Applications">
                 <SummaryRow label="" values={selectedApplications} tone="green" />
               </SummaryCard>
 
-              {/* Policy Condition */}
               <SummaryCard icon={FileCode} title="Policy Condition">
-                <SummaryRow label="Mode" values={keywords} tone="orange" emptyText="None" />
+                <SummaryRow label="Mode" values={mode ? [mode] : []} tone="orange" emptyText="None" />
                 <SummaryRow label="Keywords" values={keywords} tone="orange" emptyText="None" />
                 <SummaryRow label="Regular Expressions" values={regularExpressions} tone="orange" emptyText="None" />
               </SummaryCard>
 
-              {/* Channels */}
               <SummaryCard icon={Clock3} title="Channels">
                 <SummaryRow label="" values={selectedChannels} tone="pink" />
               </SummaryCard>
 
-              {/* Severity Levels - Updated for single selection */}
               <SummaryCard icon={Shield} title="Severity Level">
                 <SummaryRow label="" values={selectedSeverityLevel ? [selectedSeverityLevel] : []} tone="purple" emptyText="Not selected" />
               </SummaryCard>
@@ -807,29 +664,19 @@ const CreateNetworkPolicy = () => {
 
   return (
     <div className="min-h-screen p-6 space-y-6">
-
-      {/* ===================== STEP HEADER WITH PROGRESS BAR ===================== */}
       <div className="w-full bg-white border border-slate-200 text-slate-800 dark:bg-[#020617] dark:border-[#2d2e30] dark:text-white rounded-xl p-6">
-
         <h2 className="text-xl font-semibold">
           Create Security Policy
         </h2>
-
         <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
           Configure policy, source, destination, control, details.
         </p>
 
-        {/* Progress Bar Steps */}
         <div className="relative flex justify-between items-center px-4 mt-6">
-          {/* Background Line */}
           <div className="absolute left-0 right-0 top-4 h-[2px] bg-slate-200 dark:bg-gray-700"></div>
-
-          {/* Active Progress Line */}
           <div
             className="absolute left-0 top-4 h-[2px] bg-[#5A7BFF] transition-all duration-500"
-            style={{
-              width: `${(activeStep / (steps.length - 1)) * 100}%`,
-            }}
+            style={{ width: `${(activeStep / (steps.length - 1)) * 100}%` }}
           ></div>
 
           {steps.map((step, index) => {
@@ -845,25 +692,12 @@ const CreateNetworkPolicy = () => {
                 className="relative z-10 flex flex-col items-center cursor-pointer group"
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${isActive
-                    ? "bg-[#5A7BFF] border-[#5A7BFF] text-white shadow-lg shadow-[#5A7BFF]/30"
-                    : isCompleted
-                      ? "bg-blue-100 border-[#5A7BFF] text-[#5A7BFF] dark:bg-[#2d3748] dark:text-white"
-                      : hasData && !isActive
-                        ? "bg-blue-50 border-[#5A7BFF] text-[#5A7BFF] dark:bg-[#1a2744] dark:text-white"
-                        : "bg-white border-slate-300 text-slate-400 dark:bg-[#0a1628] dark:border-gray-600 dark:text-gray-400"
-                    }`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${isActive ? "bg-[#5A7BFF] border-[#5A7BFF] text-white shadow-lg shadow-[#5A7BFF]/30" : isCompleted ? "bg-blue-100 border-[#5A7BFF] text-[#5A7BFF] dark:bg-[#2d3748] dark:text-white" : hasData && !isActive ? "bg-blue-50 border-[#5A7BFF] text-[#5A7BFF] dark:bg-[#1a2744] dark:text-white" : "bg-white border-slate-300 text-slate-400 dark:bg-[#0a1628] dark:border-gray-600 dark:text-gray-400"}`}
                 >
                   <Icon size={16} />
                 </div>
-
                 <span
-                  className={`mt-3 text-xs transition-colors duration-300 ${isActive
-                    ? "text-slate-800 font-medium dark:text-white"
-                    : hasData || isCompleted
-                      ? "text-[#5A7BFF]"
-                      : "text-slate-400 dark:text-gray-400"
-                    }`}
+                  className={`mt-3 text-xs transition-colors duration-300 ${isActive ? "text-slate-800 font-medium dark:text-white" : hasData || isCompleted ? "text-[#5A7BFF]" : "text-slate-400 dark:text-gray-400"}`}
                 >
                   {step.title}
                 </span>
@@ -873,23 +707,15 @@ const CreateNetworkPolicy = () => {
         </div>
       </div>
 
-      {/* ===================== STEP CONTENT CARD ===================== */}
-
       <div className="bg-white border border-slate-200 text-slate-800 dark:bg-[#020617] dark:border-[#1a2a4a] dark:text-white rounded-xl p-4">
-
-        {/* Heading */}
-
         <div className="flex items-start gap-2 mb-4">
-
           <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-[#243b6b] flex items-center justify-center">
             <Settings2 size={16} className="text-blue-600 dark:text-[#82a5ff]" />
           </div>
-
           <div>
             <h3 className="text-lg font-medium">
               {steps[activeStep]?.title || "General Information"}
             </h3>
-
             <p className="text-sm text-slate-500 dark:text-gray-400">
               {activeStep === 0 && "Add basic policy details"}
               {activeStep === 1 && "Select the file type and extension"}
@@ -900,31 +726,22 @@ const CreateNetworkPolicy = () => {
               {activeStep === 6 && "Review all the details before creating the policy"}
             </p>
           </div>
-
           <span className="ml-auto text-sm text-slate-500 dark:text-gray-400">
             Step {activeStep + 1} of {steps.length}
           </span>
-
         </div>
-
-        {/* Content */}
 
         {renderStepContent()}
 
-        {/* Navigation Buttons - Right Aligned */}
-
         <div className="flex justify-end items-center gap-3 mt-10 pt-6 ">
-
           <button
             onClick={() => setActiveStep(activeStep > 0 ? activeStep - 1 : 0)}
-            className={`px-6 py-3 border border-slate-200 dark:border-[#1a2a4a] rounded-md flex items-center gap-2 transition ${activeStep === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-50 dark:hover:bg-[#1f2937]"
-              }`}
+            className={`px-6 py-3 border border-slate-200 dark:border-[#1a2a4a] rounded-md flex items-center gap-2 transition ${activeStep === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-50 dark:hover:bg-[#1f2937]"}`}
             disabled={activeStep === 0}
           >
             <ChevronLeft size={16} />
             Previous
           </button>
-
           <button
             onClick={() => {
               if (activeStep === steps.length - 1) {
@@ -933,18 +750,12 @@ const CreateNetworkPolicy = () => {
                 setActiveStep(activeStep + 1);
               }
             }}
-            className={`px-8 py-3 rounded-md transition text-white ${activeStep === steps.length - 1
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-[#6b8cff] hover:bg-[#5a7bff]"
-              }`}
+            className={`px-8 py-3 rounded-md transition text-white ${activeStep === steps.length - 1 ? "bg-green-600 hover:bg-green-700" : "bg-[#6b8cff] hover:bg-[#5a7bff]"}`}
           >
             {activeStep === steps.length - 1 ? "Create Policy" : "Next"}
           </button>
-
         </div>
-
       </div>
-
     </div>
   );
 };
