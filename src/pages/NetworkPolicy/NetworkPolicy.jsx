@@ -197,6 +197,26 @@ const CreateNetworkPolicy = () => {
     });
   };
 
+
+  const buildPolicyPayload = () => {
+    const isContentBased = mode === "Content Based";
+
+    return {
+      policyName: policyName.trim(),
+      description: description.trim(),
+      fileTypes: selectedFileTypes,
+      applications: selectedApplications,
+      condition: {
+        mode,
+        // Block Based ignores keywords/regex even if some were typed before switching modes
+        keywords: isContentBased ? keywords : [],
+        regularExpressions: isContentBased ? regularExpressions : [],
+      },
+      channels: selectedChannels,
+      severity: selectedSeverityLevel,
+    };
+  };
+
   const selectAllApplications = () => {
     if (selectedApplications.length === applicationGroups.length) {
       setSelectedApplications([]);
@@ -928,7 +948,9 @@ const CreateNetworkPolicy = () => {
           <button
             onClick={() => {
               if (activeStep === steps.length - 1) {
-                alert("Policy created successfully!");
+                const payload = buildPolicyPayload();
+                alert("Policy created successfully "+JSON.stringify(payload));
+                console.log(JSON.stringify(payload));
               } else {
                 setActiveStep(activeStep + 1);
               }
