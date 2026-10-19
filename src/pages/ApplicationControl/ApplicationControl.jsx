@@ -6,6 +6,7 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { dashboardService } from '../../services/dashboardService';
 import { alert as showAlert } from '../../components/ui/AlertModal';
+import PolicyStatusTracker from '../PolicyStatusTracker/PolicyStatusTracker';
 
 // ─── Static data (fallback) ─────────────────────────────────────
 const MOCK_DEVICES_BY_BRANCH = {
@@ -537,6 +538,8 @@ function AddForm({ branches, onAdd }) {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetchedDevices, setFetchedDevices] = useState([]);
+  const [trackedEventIds, setTrackedEventIds] = useState([]);
+  const isTracking = trackedEventIds.length > 0;
 
   const getDeviceValue = (item) => {
     if (typeof item === 'string') return item;
@@ -587,33 +590,33 @@ function AddForm({ branches, onAdd }) {
     }
   };
 
+  const handleReset = () => {
+    setForm({ branch: '', device: [], mode: '' });
+    setSubmitted(false);
+    setFetchedDevices([]);
+  };
+
   const handleSubmit = async () => {
     setSubmitted(true);
-    if (!isValid) return;
+    if (!isValid || isTracking) return;
     setIsSubmitting(true);
     try {
-      const response = await dashboardService.addApplicationPolicy({
+      const response = await dashboardService.setApplicationMode({
         branch: form.branch,
-        device: form.device,   // array
+        devices: form.device, // array
         mode: form.mode,
       });
-      if (response?.data === 'SUCCESS' || response?.success === true) {
-        await showAlert({
-          icon: 'success',
-          title: 'Policy Saved',
-          text: 'Application policy added successfully.',
-          timer: 2500,
-          timerProgressBar: true,
-          showConfirmButton: true,
-        });
-        onAdd({
-          ipAddress: '192.168.1.' + (Math.floor(Math.random() * 200) + 1),
-          mode: form.mode,
-          date: new Date().toISOString().slice(0, 10),
-        });
-        setSubmitted(false);
-        setForm({ branch: '', device: [], mode: '' });
-        setFetchedDevices([]);
+
+      // Same contract as USB: backend returns event IDs (either the body itself or body.data)
+      const body = response?.data;
+      const eventIds = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.data)
+        ? body.data
+        : [];
+
+      if (eventIds.length > 0) {
+        setTrackedEventIds(eventIds);
       } else {
         await showAlert({
           icon: 'error',
@@ -627,7 +630,7 @@ function AddForm({ branches, onAdd }) {
       await showAlert({
         icon: 'error',
         title: 'Policy Failed',
-        text: error?.message || 'An error occurred.',
+        text: error?.response?.data?.message || error?.message || 'An error occurred.',
         confirmButtonText: 'Try Again',
       });
     } finally {
@@ -635,60 +638,87 @@ function AddForm({ branches, onAdd }) {
     }
   };
 
+  const handleTrackerClose = async () => {
+    setTrackedEventIds([]);
+    handleReset();
+    if (onAdd) await onAdd();
+  };
+
+  const busy = isSubmitting || isTracking;
+
   const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`;
 
   return (
-    <GlassCard className="p-6 mb-50">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
-        {/* Branch */}
-        <div>
-          <label className={labelCls}>Branch Name <span className="text-rose-500 normal-case tracking-normal">*</span></label>
-          <Dropdown value={form.branch} onChange={handleBranchChange} options={branchOptions} placeholder="Select Branch" searchable error={submitted && !form.branch} />
-          {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
+    <>
+      <GlassCard className="p-6 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
+          {/* Branch */}
+          <div>
+            <label className={labelCls}>Branch Name <span className="text-rose-500 normal-case tracking-normal">*</span></label>
+            <Dropdown value={form.branch} onChange={handleBranchChange} options={branchOptions} placeholder="Select Branch" searchable error={submitted && !form.branch} />
+            {submitted && !form.branch && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
+          </div>
+
+          {/* Device (MULTI SELECT + SEARCH) */}
+          <div>
+            <label className={labelCls}>Device Name <span className="text-rose-500 normal-case tracking-normal">*</span></label>
+            <MultiSelectDropdown
+              values={form.device}
+              onChange={vals => setForm(f => ({ ...f, device: vals }))}
+              options={deviceOptions}
+              placeholder={form.branch ? 'Select Devices' : 'Select branch first'}
+              disabled={!form.branch}
+              searchable
+              error={submitted && form.device.length === 0}
+            />
+            {submitted && form.device.length === 0 && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
+          </div>
+
+          {/* Mode */}
+          <div>
+            <label className={labelCls}>Set Mode <span className="text-rose-500 normal-case tracking-normal">*</span></label>
+            <Dropdown value={form.mode} onChange={val => setForm(f => ({ ...f, mode: val }))} options={modeOptions} placeholder="Select Mode" error={submitted && !form.mode} />
+            {submitted && !form.mode && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
+          </div>
         </div>
 
-        {/* Device (MULTI SELECT + SEARCH) */}
-        <div>
-          <label className={labelCls}>Device Name <span className="text-rose-500 normal-case tracking-normal">*</span></label>
-          <MultiSelectDropdown
-            values={form.device}
-            onChange={vals => setForm(f => ({ ...f, device: vals }))}
-            options={deviceOptions}
-            placeholder={form.branch ? 'Select Devices' : 'Select branch first'}
-            disabled={!form.branch}
-            searchable
-            error={submitted && form.device.length === 0}
+        <div className="flex items-center justify-end gap-3">
+          <GlassButton onClick={handleReset} variant="default" className="px-4 py-2" disabled={busy}>
+            <RotateCcw size={13} /> Reset
+          </GlassButton>
+          <GlassButton onClick={handleSubmit} variant="primary" className="px-5 py-2 font-semibold" disabled={busy}>
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                Saving...
+              </span>
+            ) : isTracking ? (
+              <><Plus size={13} /> Processing…</>
+            ) : (
+              <><Plus size={13} /> Submit</>
+            )}
+          </GlassButton>
+        </div>
+      </GlassCard>
+
+      {isTracking && (
+        <div
+          className="mb-5"
+          style={{
+            boxShadow: isDark ? '0 4px 24px rgba(0,0,0,0.5)' : '0 2px 16px rgba(0,0,0,0.08)',
+          }}
+        >
+          <PolicyStatusTracker
+            title="Application Set Mode"
+            eventIds={trackedEventIds}
+            onClose={handleTrackerClose}
           />
-          {submitted && form.device.length === 0 && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
-
-        {/* Mode */}
-        <div>
-          <label className={labelCls}>Set Mode <span className="text-rose-500 normal-case tracking-normal">*</span></label>
-          <Dropdown value={form.mode} onChange={val => setForm(f => ({ ...f, mode: val }))} options={modeOptions} placeholder="Select Mode" error={submitted && !form.mode} />
-          {submitted && !form.mode && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-end gap-3">
-        <GlassButton onClick={() => { setForm({ branch: '', device: [], mode: '' }); setSubmitted(false); setFetchedDevices([]); }} variant="default" className="px-4 py-2" disabled={isSubmitting}>
-          <RotateCcw size={13} /> Reset
-        </GlassButton>
-        <GlassButton onClick={handleSubmit} variant="primary" className="px-5 py-2 font-semibold" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <span className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-              Saving...
-            </span>
-          ) : (
-            <><Plus size={13} /> Submit</>
-          )}
-        </GlassButton>
-      </div>
-    </GlassCard>
+      )}
+    </>
   );
 }
 
@@ -866,7 +896,6 @@ export default function ApplicationControl() {
     setLoading(true);
     try {
       const response = await dashboardService.getApplicationPolicies();
-      console.log('📦 Raw API response:', response);
 
       let rawData = null;
       if (Array.isArray(response)) rawData = response;
@@ -889,34 +918,20 @@ export default function ApplicationControl() {
         setPolicies(INITIAL_POLICIES);
       }
     } catch (error) {
-      console.error('❌ Failed to load policies:', error);
+      console.error('Failed to load policies:', error);
       setPolicies(INITIAL_POLICIES);
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch on mount and whenever user lands on the View tab
   useEffect(() => {
-    fetchPolicies();
-  }, []);
-
-  useEffect(() => {
-    if (tab === 'view') {
-      fetchPolicies();
-    }
+    if (tab === 'view') fetchPolicies();
   }, [tab]);
 
-  const handleAdd = (newPolicy) => {
-    const newId = Math.max(...policies.map(p => p.id), 0) + 1;
-    setPolicies(prev => [
-      ...prev,
-      {
-        id: newId,
-        ipAddress: newPolicy.ipAddress || '192.168.1.99',
-        mode: newPolicy.mode || 'Learning',
-        date: newPolicy.date || new Date().toISOString().slice(0, 10),
-      }
-    ]);
+  // Called when the tracker is closed — switching to 'view' triggers a fresh fetch
+  const handleAdd = () => {
     setTab('view');
   };
 

@@ -440,10 +440,15 @@ export const dashboardService = {
 
     return data;
   },
-
+  
+  setApplicationMode: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.APPLICATION_CONTROL.SET_MODE,requestData);
+    return data;
+  },
   getApplicationPolicies: async () => {
     const { data } = await axiosInstance.get(
-      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_CONTROLDATA, // 👈 corrected
+      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_CONTROLDATA, 
     );
     return data;
   },

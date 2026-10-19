@@ -17,6 +17,7 @@ import {
 import { useTheme } from '../../context/ThemeContext'
 import { alert as showAlert } from '../../components/ui/AlertModal'
 import { dashboardService } from '../../services/dashboardService'
+import PolicyStatusTracker from '../PolicyStatusTracker/PolicyStatusTracker'
 function StatusPill({ status }) {
   if (!status) return null
 
@@ -27,8 +28,8 @@ function StatusPill({ status }) {
   const styles = isUp
     ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/[0.08]'
     : isDown
-    ? 'text-rose-400 border-rose-500/40 bg-rose-500/[0.08]'
-    : 'text-slate-400 border-slate-500/40 bg-slate-500/[0.08]'
+      ? 'text-rose-400 border-rose-500/40 bg-rose-500/[0.08]'
+      : 'text-slate-400 border-slate-500/40 bg-slate-500/[0.08]'
 
   return (
     <span
@@ -64,10 +65,10 @@ function Dropdown({
   const filtered =
     searchable && query
       ? normalised.filter((o) =>
-          String(o.label || '')
-            .toLowerCase()
-            .includes(query.toLowerCase())
-        )
+        String(o.label || '')
+          .toLowerCase()
+          .includes(query.toLowerCase())
+      )
       : normalised
 
   const selected = normalised.find((o) => o.value === value)
@@ -154,15 +155,15 @@ function Dropdown({
 
   const glassSurface = isDark
     ? {
-        background: '#111827',
-        backdropFilter: 'none',
-        WebkitBackdropFilter: 'none',
-      }
+      background: '#111827',
+      backdropFilter: 'none',
+      WebkitBackdropFilter: 'none',
+    }
     : {
-        background: 'rgba(255,255,255,0.80)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-      }
+      background: 'rgba(255,255,255,0.80)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+    }
 
   const triggerBorder = error
     ? 'border-rose-500/60'
@@ -194,9 +195,8 @@ function Dropdown({
         style={glassSurface}
       >
         <span
-          className={`truncate flex-1 ${
-            selected ? '' : isDark ? 'text-slate-500' : 'text-slate-400'
-          }`}
+          className={`truncate flex-1 ${selected ? '' : isDark ? 'text-slate-500' : 'text-slate-400'
+            }`}
         >
           {selected ? selected.label : placeholder}
         </span>
@@ -231,16 +231,14 @@ function Dropdown({
         >
           {searchable && (
             <div
-              className={`px-3 py-2 border-b ${
-                isDark ? 'border-white/[0.07]' : 'border-slate-100'
-              }`}
+              className={`px-3 py-2 border-b ${isDark ? 'border-white/[0.07]' : 'border-slate-100'
+                }`}
             >
               <div className="relative flex items-center">
                 <Search
                   size={12}
-                  className={`absolute left-2.5 ${
-                    isDark ? 'text-slate-500' : 'text-slate-400'
-                  }`}
+                  className={`absolute left-2.5 ${isDark ? 'text-slate-500' : 'text-slate-400'
+                    }`}
                 />
 
                 <input
@@ -252,10 +250,9 @@ function Dropdown({
                     w-full pl-7 pr-3 py-1.5
                     text-[12px] rounded-lg
                     outline-none border transition-all duration-150
-                    ${
-                      isDark
-                        ? 'bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
-                        : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'
+                    ${isDark
+                      ? 'bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400'
                     }
                   `}
                 />
@@ -276,9 +273,8 @@ function Dropdown({
           <div ref={listRef} className="max-h-52 overflow-y-auto py-1">
             {filtered.length === 0 ? (
               <p
-                className={`px-4 py-3 text-[12px] text-center ${
-                  isDark ? 'text-slate-600' : 'text-slate-400'
-                }`}
+                className={`px-4 py-3 text-[12px] text-center ${isDark ? 'text-slate-600' : 'text-slate-400'
+                  }`}
               >
                 No results
               </p>
@@ -299,16 +295,15 @@ function Dropdown({
                       text-[13px]
                       flex items-center justify-between gap-2
                       transition-colors duration-100
-                      ${
-                        isSelected
-                          ? 'text-[#7094ff] bg-[#7094ff]/10'
-                          : isHighlighted
-                            ? isDark
-                              ? 'text-[#e0e0e0] bg-white/[0.08]'
-                              : 'text-slate-900 bg-slate-100'
-                            : isDark
-                              ? 'text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]'
-                              : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'
+                      ${isSelected
+                        ? 'text-[#7094ff] bg-[#7094ff]/10'
+                        : isHighlighted
+                          ? isDark
+                            ? 'text-[#e0e0e0] bg-white/[0.08]'
+                            : 'text-slate-900 bg-slate-100'
+                          : isDark
+                            ? 'text-[#888] hover:bg-white/[0.06] hover:text-[#e0e0e0]'
+                            : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'
                       }
                     `}
                   >
@@ -335,6 +330,326 @@ function Dropdown({
     </div>
   )
 }
+
+function MultiSelectDropdown({
+  values = [],
+  onChange,
+  options = [],
+  placeholder = "Select...",
+  disabled = false,
+  isDark = false,
+  searchable = false,
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setOpen(false);
+        setQuery("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
+  const normalizedOptions = (options || [])
+    .map((item) => {
+      if (typeof item === "string") {
+        return { value: item, label: item, status: null };
+      }
+
+      const value =
+        item?.value ??
+        item?.deviceName ??
+        item?.device ??
+        item?.pcName ??
+        item?.computerName ??
+        item?.name ??
+        "";
+
+      const label =
+        item?.label ??
+        item?.deviceName ??
+        item?.device ??
+        item?.pcName ??
+        item?.computerName ??
+        item?.name ??
+        value;
+
+      const status = item?.agentStatus ?? item?.status ?? null;
+
+      return { value, label, status };
+    })
+    .filter((item) => item.value !== "");
+
+  const filteredOptions =
+    searchable && query
+      ? normalizedOptions.filter((o) =>
+        String(o.label).toLowerCase().includes(query.toLowerCase())
+      )
+      : normalizedOptions;
+
+  const allSelected =
+    normalizedOptions.length > 0 &&
+    normalizedOptions.every((item) => values.includes(item.value));
+
+  const toggleDevice = (deviceValue) => {
+    if (values.includes(deviceValue)) {
+      onChange(values.filter((value) => value !== deviceValue));
+    } else {
+      onChange([...values, deviceValue]);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      onChange([]);
+    } else {
+      onChange(normalizedOptions.map((item) => item.value));
+    }
+  };
+
+  const upCount = normalizedOptions.filter(
+    (o) => String(o.status).toLowerCase() === "up"
+  ).length;
+
+  const downCount = normalizedOptions.filter(
+    (o) => String(o.status).toLowerCase() === "down"
+  ).length;
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      {/* SELECTED VALUE BUTTON */}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) {
+            setOpen((prev) => !prev);
+          }
+        }}
+        className={`
+          w-full min-h-[42px] flex items-center justify-between
+          px-3 py-2.5 rounded-xl text-[13px] text-left
+          border transition-all
+          disabled:opacity-40 disabled:cursor-not-allowed
+          ${isDark
+            ? "bg-[#111827] border-[#334155] text-slate-200"
+            : "bg-white border-slate-300 text-slate-800"
+          }
+          ${open
+            ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60"
+            : ""
+          }
+        `}
+      >
+        <span
+          className={
+            values.length > 0
+              ? ""
+              : isDark
+                ? "text-slate-500"
+                : "text-slate-400"
+          }
+        >
+          {values.length > 0
+            ? `${values.length} device${values.length !== 1 ? "s" : ""} selected`
+            : placeholder}
+        </span>
+
+        <ChevronDown
+          size={14}
+          className={`
+            transition-transform
+            ${open ? "rotate-180" : ""}
+            ${isDark ? "text-slate-500" : "text-slate-400"}
+          `}
+        />
+      </button>
+
+      {/* DROPDOWN */}
+      {open && (
+        <div
+          className={`
+            absolute top-full left-0 right-0 mt-1.5 z-[200]
+            rounded-xl border overflow-hidden
+            shadow-[0_16px_48px_rgba(0,0,0,0.35)]
+            ${isDark
+              ? "bg-[#111827] border-[#334155]"
+              : "bg-white border-slate-200"
+            }
+          `}
+        >
+          {/* SEARCH BAR */}
+          {searchable && (
+            <div
+              className={`
+                px-3 py-2 border-b
+                ${isDark
+                  ? "border-white/[0.06]"
+                  : "border-slate-100"
+                }
+              `}
+            >
+              <div className="relative flex items-center">
+                <Search
+                  size={12}
+                  className={`absolute left-2.5 ${isDark ? "text-slate-500" : "text-slate-400"
+                    }`}
+                />
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search devices…"
+                  className={`
+                    w-full pl-7 pr-3 py-1.5 text-[12px] rounded-lg
+                    outline-none border transition-all duration-150
+                    ${isDark
+                      ? "bg-[#111827] border-white/[0.08] text-[#d0d0d0] placeholder-[#555]"
+                      : "bg-slate-50 border-slate-200 text-slate-700 placeholder-slate-400"
+                    }
+                  `}
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    className="absolute right-2 text-slate-400 hover:text-slate-200"
+                  >
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* SELECT ALL */}
+          <div
+            className={`
+              px-3 py-2.5 border-b
+              ${isDark
+                ? "border-white/[0.06]"
+                : "border-slate-100"
+              }
+            `}
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleSelectAll();
+              }}
+              className={`
+                w-full flex items-center justify-between gap-2
+                text-left text-[12px]
+                ${isDark
+                  ? "text-gray-300 hover:text-white"
+                  : "text-gray-600 hover:text-gray-900"
+                }
+              `}
+            >
+              <span className="flex items-center gap-2">
+                <span
+                  className={`
+                    h-4 w-4 rounded border
+                    flex items-center justify-center
+                    ${allSelected
+                      ? "bg-[#7094ff] border-[#7094ff]"
+                      : isDark
+                        ? "border-slate-500"
+                        : "border-slate-300"
+                    }
+                  `}
+                >
+                  {allSelected && (
+                    <Check size={11} className="text-white" />
+                  )}
+                </span>
+
+                {allSelected ? "Deselect all" : "Select all"}
+              </span>
+
+              <span
+                className={`text-[10px] ${isDark ? "text-slate-500" : "text-slate-400"
+                  }`}
+              >
+                {/* {upCount} Up / {downCount} Down */}
+              </span>
+            </button>
+          </div>
+
+          {/* DEVICE LIST */}
+          <div className="max-h-52 overflow-y-auto py-1">
+            {filteredOptions.length === 0 ? (
+              <p
+                className={`
+                  px-4 py-3 text-[12px] text-center
+                  ${isDark ? "text-slate-600" : "text-slate-400"}
+                `}
+              >
+                {normalizedOptions.length === 0
+                  ? "No devices available"
+                  : "No results"}
+              </p>
+            ) : (
+              filteredOptions.map((option, index) => {
+                const selected = values.includes(option.value);
+
+                return (
+                  <button
+                    key={`${option.value}-${index}`}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleDevice(option.value);
+                    }}
+                    className={`
+                      w-full text-left px-4 py-2.5
+                      text-[13px] flex items-center
+                      justify-between gap-2
+                      transition-colors
+                      ${selected
+                        ? "text-[#7094ff] bg-[#7094ff]/10"
+                        : isDark
+                          ? "text-[#a0aec0] hover:bg-white/[0.06] hover:text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }
+                    `}
+                  >
+                    <span className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">{option.label}</span>
+                    </span>
+
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      {option.status && <StatusPill status={option.status} />}
+                      {selected && (
+                        <Check size={13} className="text-[#7094ff]" />
+                      )}
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function GlassButton({
   children,
   onClick,
@@ -552,10 +867,14 @@ function AddForm({ branches, onAdd }) {
     drivePath: '',
   })
 
+  const [selectedDevices, setSelectedDevices] = useState([]);
+  const [selectedFunction, setSelectedFunction] = useState([]);
   const [submitted, setSubmitted] = useState(false)
   const [success, setSuccess] = useState(false)
   const [fetchedDevices, setFetchedDevices] = useState([])
   const [loadingDevices, setLoadingDevices] = useState(false)
+  const [trackedEventIds, setTrackedEventIds] = useState([]);
+  const isTracking = trackedEventIds.length > 0;
 
   const branchOptions = (branches || []).map((branch, index) => {
     const branchName =
@@ -602,18 +921,19 @@ function AddForm({ branches, onAdd }) {
     }))
   }
 
-  const isValid =
-    form.branch && form.device && form.function && form.drivePath
+  // const isValid = form.branch && form.device && form.function && form.drivePath;
+
+  const isValid = form.branch && selectedDevices.length > 0 && form.drivePath;
+
 
   /* Branch change → fetch devices */
   const handleBranchChange = async (branch) => {
     setForm((prev) => ({
       ...prev,
       branch,
-      device: '',
-      function: '',
-    }))
+    }));
 
+    setSelectedDevices([]);
     setFetchedDevices([])
 
     if (!branch) return
@@ -622,8 +942,7 @@ function AddForm({ branches, onAdd }) {
       setLoadingDevices(true)
 
       const response = await dashboardService.getDevicesByBranch(branch)
-
-      console.log('🔎 Devices API response:', response?.data)
+      console.log('Devices API response:', response?.data)
 
       const data = response?.data ?? []
 
@@ -636,36 +955,53 @@ function AddForm({ branches, onAdd }) {
     }
   }
 
-  const handleSubmit = async () => {
-    setSubmitted(true)
+  const handleTrackerClose = async () => {
+    setTrackedEventIds([]);
+    handleReset();
+    if (onAdd) await onAdd();
+  };
 
-    if (!isValid) return
+  const handleSubmit = async () => {
+    setSubmitted(true);
+    if (!isValid || isTracking) return;
 
     const requestData = {
       branch: form.branch,
-      device: form.device,
-      function: form.function,
+      devices: selectedDevices,
+      function: selectedFunction,
       drivePath: form.drivePath,
     }
 
     try {
-      // alert("Selected Values : "+ JSON.stringify(requestData));
-
       const response = await dashboardService.addDrivePolicy(requestData);
 
-      console.log('Add Drive Policy Response:', response)
+      const body = response?.data;
+      const eventIds = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.data)
+          ? body.data
+          : [];
 
-      setSuccess(true)
-
-      if (onAdd) onAdd({ ...requestData })
-
-      setTimeout(() => setSuccess(false), 2000)
+      if (eventIds.length > 0) {
+        setTrackedEventIds(eventIds);
+      } else {
+        await showAlert({
+          icon: "error",
+          title: "Policy Failed",
+          text: response?.message || "Error sending policy",
+          confirmButtonText: "Cancel",
+        });
+      }
     } catch (error) {
-      console.error('Error adding drive policy:', error)
-
-      showAlert?.('Unable to add drive policy.')
+      console.error("Error adding USB policy:", error);
+      await showAlert({
+        icon: "error",
+        title: "Policy Failed",
+        text: error?.response?.data?.message || "Error sending policy",
+        confirmButtonText: "Cancel",
+      });
     }
-  }
+  };
 
   const handleReset = () => {
     setForm({
@@ -676,6 +1012,7 @@ function AddForm({ branches, onAdd }) {
     })
 
     setFetchedDevices([])
+    setSelectedFunction([])
     setSubmitted(false)
     setSuccess(false)
   }
@@ -687,144 +1024,152 @@ function AddForm({ branches, onAdd }) {
   `
 
   return (
-    <GlassCard className="p-6 mb-5">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-        {/* Branch */}
-        <div>
-          <label className={labelCls}>
-            Branch Name{' '}
-            <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
+    <>
+      <GlassCard className="p-6 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+          {/* Branch */}
+          <div>
+            <label className={labelCls}>
+              Branch Name{' '}
+              <span className="text-rose-500 normal-case tracking-normal">*</span>
+            </label>
 
-          <Dropdown
-            value={form.branch}
-            onChange={handleBranchChange}
-            options={branchOptions}
-            placeholder="Select Branch"
-            searchable={true}
-            error={submitted && !form.branch}
-          />
+            <Dropdown
+              value={form.branch}
+              onChange={handleBranchChange}
+              options={branchOptions}
+              placeholder="Select Branch"
+              searchable={true}
+              error={submitted && !form.branch}
+            />
 
-          {submitted && !form.branch && (
-            <p className="text-[10px] text-rose-500 mt-1">Required</p>
-          )}
-        </div>
+            {submitted && !form.branch && (
+              <p className="text-[10px] text-rose-500 mt-1">Required</p>
+            )}
+          </div>
 
-        {/* Device */}
-        <div>
-          <label className={labelCls}>
-            Device Name{' '}
-            <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
+          {/* Device */}
+          <div>
+            <label className={labelCls}>
+              Device Name{' '}
+              <span className="text-rose-500 normal-case tracking-normal">*</span>
+            </label>
 
-          <Dropdown
-            value={form.device}
-            onChange={set('device')}
-            options={deviceOptions}
-            placeholder={
-              !form.branch
-                ? 'Select branch first'
-                : loadingDevices
-                  ? 'Loading devices...'
-                  : 'Select Device'
-            }
-            disabled={!form.branch || loadingDevices}
-            searchable
-            error={submitted && !form.device}
-          />
+            <MultiSelectDropdown
+              values={selectedDevices}
+              onChange={setSelectedDevices}
+              options={deviceOptions}
+              placeholder={
+                form.branch ? "Select Device" : "Select branch first"
+              }
+              disabled={!form.branch}
+              isDark={isDark}
+              searchable
+            />
 
-          {submitted && !form.device && (
-            <p className="text-[10px] text-rose-500 mt-1">Required</p>
-          )}
-        </div>
+            {submitted && selectedDevices.length === 0 && (
+              <p className="text-[10px] text-rose-500 mt-1">Required</p>
+            )}
 
-        {/* Function */}
-        <div>
-          <label className={labelCls}>
-            Functions{' '}
-            <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
+          </div>
 
-          <Dropdown
+          {/* Function */}
+          <div>
+            <label className={labelCls}>
+              Functions{' '}
+              <span className="text-rose-500 normal-case tracking-normal">*</span>
+            </label>
+
+            {/* <Dropdown
             value={form.function}
             onChange={set('function')}
             options={functionOptions}
             placeholder="Select Function"
             error={submitted && !form.function}
-          />
+          /> */}
 
-          {submitted && !form.function && (
-            <p className="text-[10px] text-rose-500 mt-1">Required</p>
-          )}
-        </div>
+            <MultiSelectDropdown
+              values={selectedFunction}
+              onChange={setSelectedFunction}
+              options={functionOptions}
+              placeholder={
+                selectedDevices ? "Select Function" : "Select Device first"
+              }
+              disabled={!selectedDevices}
+              isDark={isDark}
+              searchable
+            />
 
-        {/* Drive Path */}
-        <div>
-          <label className={labelCls}>
-            Drive Path{' '}
-            <span className="text-rose-500 normal-case tracking-normal">*</span>
-          </label>
+            {submitted && !form.function && (
+              <p className="text-[10px] text-rose-500 mt-1">Required</p>
+            )}
+          </div>
 
-          <div className="relative">
-            <input
-              type="text"
-              value={form.drivePath}
-              onChange={(e) => set('drivePath')(e.target.value)}
-              placeholder="Enter Drive Path"
-              className={`
+          {/* Drive Path */}
+          <div>
+            <label className={labelCls}>
+              Drive Path{' '}
+              <span className="text-rose-500 normal-case tracking-normal">*</span>
+            </label>
+
+            <div className="relative">
+              <input
+                type="text"
+                value={form.drivePath}
+                onChange={(e) => set('drivePath')(e.target.value)}
+                placeholder="Enter Drive Path"
+                className={`
                 w-full px-3 py-2.5 pl-10
                 rounded-xl text-[13px]
                 border transition-all duration-200
                 outline-none
-                ${
-                  submitted && !form.drivePath
+                ${submitted && !form.drivePath
                     ? 'border-rose-500/60'
                     : isDark
                       ? 'border-white/[0.10]'
                       : 'border-slate-300/70'
-                }
-                ${
-                  isDark
+                  }
+                ${isDark
                     ? 'text-slate-200 placeholder-slate-500'
                     : 'text-slate-800 placeholder-slate-400'
-                }
+                  }
                 ${submitted && !form.drivePath ? 'ring-2 ring-rose-500/20' : ''}
               `}
-              style={{
-                background: isDark ? '#111827' : 'rgba(255,255,255,0.80)',
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-              }}
-            />
+                style={{
+                  background: isDark ? '#111827' : 'rgba(255,255,255,0.80)',
+                  backdropFilter: 'blur(24px)',
+                  WebkitBackdropFilter: 'blur(24px)',
+                }}
+              />
 
-            <Folder
-              size={16}
-              className={`
+              <Folder
+                size={16}
+                className={`
                 absolute left-3 top-1/2
                 -translate-y-1/2
                 ${isDark ? 'text-slate-500' : 'text-slate-400'}
               `}
-            />
+              />
+            </div>
+
+            {submitted && !form.drivePath && (
+              <p className="text-[10px] text-rose-500 mt-1">Required</p>
+            )}
           </div>
-
-          {submitted && !form.drivePath && (
-            <p className="text-[10px] text-rose-500 mt-1">Required</p>
-          )}
         </div>
-      </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3">
-        <GlassButton
-          onClick={handleReset}
-          variant="default"
-          className="px-4 py-2"
-        >
-          <RotateCcw size={13} />
-          Reset
-        </GlassButton>
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3">
+          <GlassButton
+            onClick={handleReset}
+            variant="default"
+            className="px-4 py-2"
+          >
+            <RotateCcw size={13} />
+            Reset
+          </GlassButton>
 
-        <GlassButton
+          {/* <GlassButton
           onClick={handleSubmit}
           variant={success ? 'success' : 'primary'}
           className="px-5 py-2 font-semibold"
@@ -840,9 +1185,38 @@ function AddForm({ branches, onAdd }) {
               Submit
             </>
           )}
-        </GlassButton>
-      </div>
-    </GlassCard>
+        </GlassButton> */}
+          <GlassButton
+            onClick={handleSubmit}
+            disabled={isTracking}
+            variant="primary"
+            className="px-5 py-2 font-semibold"
+          >
+            <Plus size={13} />
+            {isTracking ? "Processing…" : "Submit"}
+          </GlassButton>
+
+
+        </div>
+      </GlassCard>
+      {isTracking && (
+        <div
+          className="mb-5"
+          style={{
+            boxShadow: isDark
+              ? "0 4px 24px rgba(0,0,0,0.5)"
+              : "0 2px 16px rgba(0,0,0,0.08)",
+          }}
+        >
+          <PolicyStatusTracker
+            title="Drive Policy"
+            eventIds={trackedEventIds}
+            onClose={handleTrackerClose}
+          />
+        </div>
+      )}
+    </>
+
   )
 }
 
@@ -999,9 +1373,8 @@ function PolicyTable({ policies, onDelete }) {
           >
             <Search
               size={12}
-              className={`absolute left-2.5 ${
-                isDark ? 'text-slate-500' : 'text-slate-400'
-              }`}
+              className={`absolute left-2.5 ${isDark ? 'text-slate-500' : 'text-slate-400'
+                }`}
             />
 
             <input
@@ -1010,10 +1383,9 @@ function PolicyTable({ policies, onDelete }) {
               placeholder="Search..."
               className={`
                 bg-transparent pl-7 pr-3 py-1.5 outline-none w-44 text-[12px]
-                ${
-                  isDark
-                    ? 'text-slate-300 placeholder-slate-600'
-                    : 'text-slate-700 placeholder-slate-400'
+                ${isDark
+                  ? 'text-slate-300 placeholder-slate-600'
+                  : 'text-slate-700 placeholder-slate-400'
                 }
               `}
             />
@@ -1110,17 +1482,15 @@ function PolicyTable({ policies, onDelete }) {
                     key={rowId}
                     className={`
                       group border-b transition-colors duration-150
-                      ${
-                        isDark
-                          ? 'border-white/[0.045] hover:bg-white/[0.025]'
-                          : 'border-slate-100 hover:bg-slate-50/70'
+                      ${isDark
+                        ? 'border-white/[0.045] hover:bg-white/[0.025]'
+                        : 'border-slate-100 hover:bg-slate-50/70'
                       }
                     `}
                   >
                     <td
-                      className={`px-4 py-3 text-[11px] ${
-                        isDark ? 'text-slate-600' : 'text-slate-400'
-                      }`}
+                      className={`px-4 py-3 text-[11px] ${isDark ? 'text-slate-600' : 'text-slate-400'
+                        }`}
                     >
                       {i + 1}
                     </td>
