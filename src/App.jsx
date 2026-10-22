@@ -82,7 +82,7 @@ function AppRoutes() {
         <Route path="DataClassification" element={<DataClassification></DataClassification>} />
         <Route path="ApplicationControl" element={<ApplicationControl></ApplicationControl>} />
         <Route path="ManageBlacklisted" element={<ManageBlacklisted></ManageBlacklisted>} />
-
+{/* <Route path="OSDashboard" element={<OSDA} */}
          <Route path="ManageWhitelisted" element={<ManageWhitelisted></ManageWhitelisted>}/>
         <Route path="ViewApplication" element={<ViewApplication></ViewApplication>} />
        <Route path="DeviceDetails" element={<DriveDetail></DriveDetail>}/>

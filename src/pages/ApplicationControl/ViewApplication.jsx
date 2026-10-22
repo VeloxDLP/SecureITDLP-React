@@ -1101,7 +1101,7 @@ export default function ViewApplication() {
                 }`}
               >
                 <tr>
-                  <th className="px-4 py-3">#</th>
+                  <th className="px-4 py-3">SR. NO.</th>
                   <th className="px-4 py-3">PC Name</th>
                   <th className="px-4 py-3">Branch</th>
                   <th className="px-4 py-3">Application Count</th>
@@ -1421,7 +1421,7 @@ export default function ViewApplication() {
                   }`}
                 >
                   <tr>
-                    <th className="px-4 py-3">#</th>
+                    <th className="px-4 py-3">SR. NO.</th>
                     <th className="px-4 py-3">Application Hash</th>
                     <th className="px-4 py-3">Application Name</th>
                     <th className="px-4 py-3">Application Path</th>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import {
   AreaChart,
   Area,
@@ -18,6 +18,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
@@ -201,6 +202,80 @@ function STitle({ children }) {
     <p className="text-[12px] font-semibold dark:text-white/80 text-slate-700 mb-3">
       {children}
     </p>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Custom Page Size Select
+───────────────────────────────────────────────────────────── */
+function PageSizeSelect({ value, onChange, options = [5, 10, 20, 50] }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="
+          inline-flex h-8 items-center gap-1.5
+          rounded-lg border border-slate-200 bg-white px-2.5
+          text-[12px] font-medium text-slate-700
+          transition hover:bg-slate-100
+          dark:border-white/10 dark:bg-white/[0.04]
+          dark:text-white/70 dark:hover:bg-white/[0.08]
+        "
+      >
+        {value} / page
+        <ChevronDown
+          size={12}
+          className={`transition-transform ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="
+            absolute bottom-full right-0 z-50 mb-1
+            min-w-[110px] overflow-hidden rounded-lg border
+            border-slate-200 bg-white shadow-lg
+            dark:border-white/10 dark:bg-[#0b1120]
+          "
+        >
+          {options.map((size) => (
+            <button
+              key={size}
+              type="button"
+              onClick={() => {
+                onChange(size)
+                setOpen(false)
+              }}
+              className={`
+                block w-full px-3 py-1.5 text-left text-[12px]
+                transition
+                ${
+                  size === value
+                    ? 'bg-[#7094ff]/10 text-[#7094ff] dark:bg-[#7094ff]/20 dark:text-[#a5b8ff]'
+                    : 'text-slate-700 hover:bg-slate-100 dark:text-white/70 dark:hover:bg-white/[0.06]'
+                }
+              `}
+            >
+              {size} / page
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -514,31 +589,14 @@ function IncidentModal({
               </span>
 
               <div className="flex items-center gap-2">
-                <select
+                
+                <PageSizeSelect
                   value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value))
+                  onChange={(size) => {
+                    setPageSize(size)
                     setCurrentPage(1)
                   }}
-                  className="
-                    h-8 rounded-lg
-                    border border-slate-200
-                    bg-white px-2 text-[12px]
-                    text-slate-700 outline-none
-                    dark:border-white/10
-                    dark:bg-white/[0.04]
-                    dark:text-white/70
-                  "
-                >
-                  {[5, 10, 20, 50].map((size) => (
-                    <option
-                      key={size}
-                      value={size}
-                    >
-                      {size} / page
-                    </option>
-                  ))}
-                </select>
+                />
 
                 <button
                   type="button"
@@ -1107,35 +1165,14 @@ function EndpointStatusModal({
               </span>
 
               <div className="flex items-center gap-2">
-                <select
+                
+                <PageSizeSelect
                   value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(
-                      Number(e.target.value)
-                    )
+                  onChange={(size) => {
+                    setPageSize(size)
                     setCurrentPage(1)
                   }}
-                  className="
-                    h-8 rounded-lg
-                    border border-slate-200
-                    bg-white px-2
-                    text-[12px]
-                    text-slate-700
-                    outline-none
-                    dark:border-white/10
-                    dark:bg-white/[0.04]
-                    dark:text-white/70
-                  "
-                >
-                  {[5, 10, 20, 50].map((size) => (
-                    <option
-                      key={size}
-                      value={size}
-                    >
-                      {size} / page
-                    </option>
-                  ))}
-                </select>
+                />
 
                 <button
                   type="button"
@@ -1591,7 +1628,6 @@ export default function Dashboard() {
 
   /* ─────────────────────────────────────────────────────────
      Clipboard
-     ✅ FIXED: x now keeps the FULL date (YYYY-MM-DD)
   ───────────────────────────────────────────────────────── */
 
   const transformedClipboardData =
@@ -1601,17 +1637,12 @@ export default function Dashboard() {
         return []
       }
 
-      // Debug — remove after verifying
-      console.log('🔎 RAW clipboardData:', clipboardData)
-
       const mapped = clipboardData.map(
         (item) => ({
-          x: item[0],   // ✅ FULL date, e.g. "2026-10-11"
+          x: item[0],   
           v: item[1],
         })
       )
-
-      console.log('🔎 transformedClipboardData:', mapped)
 
       return mapped
 
