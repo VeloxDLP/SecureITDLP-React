@@ -28,8 +28,12 @@ import {
   Mail,
   Monitor,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { dashboardService } from "../../services/dashboardService";
+import { alert as showAlert } from "../../components/ui/AlertModal";
 
 const CreateNetworkPolicy = () => {
+  const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
   const [selectedFileTypes, setSelectedFileTypes] = useState([]);
   const [selectedApplications, setSelectedApplications] = useState([]);
@@ -42,6 +46,8 @@ const CreateNetworkPolicy = () => {
   const [keyword, setKeyword] = useState("");
   const [mode, setMode] = useState("Content Based");
   const [selectedSeverityLevel, setSelectedSeverityLevel] = useState(""); 
+  const [submitting, setSubmitting] = useState(false);
+  const [attemptedSteps, setAttemptedSteps] = useState([]); // steps where Next/Create was pressed
 
   const steps = [
     { title: "General Info", icon: FileText },
@@ -128,6 +134,49 @@ const CreateNetworkPolicy = () => {
   };
 
 
+  const handleCreatePolicy = async () => {
+  // Re-check every step; jump to the first one that is still incomplete
+  if (!goToStep(steps.length - 1)) return;
+
+  setSubmitting(true);
+  try {
+    const payload = buildPolicyPayload();
+    const response = await dashboardService.saveNetworkPolicy(payload);
+
+    // Backend can reply 200 with { success: false } — treat that as a failure (stay on page)
+    if (response?.success === false) {
+      await showAlert({
+        icon: "error",
+        title: "Policy Failed",
+        text: response?.message || "Error saving policy",
+        confirmButtonText: "Cancel",
+      });
+      return;
+    }
+
+    await showAlert({
+      icon: "success",
+      title: "Policy Created",
+      text: response?.message || `"${payload.policyName}" saved successfully`,
+      timer: 2500,
+    });
+
+    // Success → go to Apply Network Policy (leaving the page also clears this form)
+    navigate("/ApplyNetworkPolicy");
+  } catch (error) {
+    console.error("Error saving network policy:", error);
+    await showAlert({
+      icon: "error",
+      title: "Policy Failed",
+      text: error?.response?.data?.message || "Error saving policy",
+      confirmButtonText: "Cancel",
+    });
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+
   const buildPolicyPayload = () => {
     const isContentBased = mode === "Content Based";
 
@@ -136,12 +185,15 @@ const CreateNetworkPolicy = () => {
       description: description.trim(),
       fileTypes: selectedFileTypes,
       applications: selectedApplications,
-      condition: {
-        mode,
-        // Block Based ignores keywords/regex even if some were typed before switching modes
-        keywords: isContentBased ? keywords : [],
-        regularExpressions: isContentBased ? regularExpressions : [],
-      },
+      // condition: {
+      //   mode,
+        
+      //   keywords: isContentBased ? keywords : [],
+      //   regularExpressions: isContentBased ? regularExpressions : [],
+      // },
+      mode: mode,
+      keywords: keywords,
+      regex: regularExpressions,
       channels: selectedChannels,
       severity: selectedSeverityLevel,
     };
@@ -212,10 +264,55 @@ const CreateNetworkPolicy = () => {
       case 2: return selectedApplications.length > 0;
       case 3: return keywords.length > 0 || regularExpressions.length > 0;
       case 4: return selectedChannels.length > 0;
-      case 5: return selectedSeverityLevel !== ""; 
+      case 5: return selectedSeverityLevel !== "";
       default: return false;
     }
   };
+
+  // ─── Validation ───────────────────────────────────────────────
+  const stepErrors = {
+    0: "Policy name is required",
+    1: "Select at least one file type",
+    2: "Select at least one application",
+    3: "Add at least one keyword or regular expression",
+    4: "Select at least one channel",
+    5: "Select a severity level",
+  };
+
+  const isStepValid = (stepIndex) => {
+    switch (stepIndex) {
+      case 0: return policyName.trim() !== "";
+      case 1: return selectedFileTypes.length > 0;
+      case 2: return selectedApplications.length > 0;
+      case 3: return mode === "Block Based" || keywords.length > 0 || regularExpressions.length > 0;
+      case 4: return selectedChannels.length > 0;
+      case 5: return selectedSeverityLevel !== "";
+      default: return true;
+    }
+  };
+
+  // Error shows only after the user tried to leave that step, and clears as soon as it's fixed
+  const showError = (stepIndex) => attemptedSteps.includes(stepIndex) && !isStepValid(stepIndex);
+
+  // Moving forward requires every step before the target to be valid; going back is always allowed
+  const goToStep = (target) => {
+    for (let i = 0; i < target; i++) {
+      if (!isStepValid(i)) {
+        setAttemptedSteps((prev) => (prev.includes(i) ? prev : [...prev, i]));
+        setActiveStep(i);
+        return false;
+      }
+    }
+    setActiveStep(target);
+    return true;
+  };
+
+  const errorBorder = "bg-white border-rose-500 dark:bg-[#111827] dark:border-rose-500";
+
+  const RequiredText = ({ step }) =>
+    showError(step) ? <p className="text-[11px] text-rose-500 mt-1">{stepErrors[step]}</p> : null;
+
+  const RequiredMark = () => <span className="text-rose-500 ml-0.5">*</span>;
 
   const Pill = ({ children, tone = "slate" }) => {
     const tones = {
@@ -264,18 +361,19 @@ const CreateNetworkPolicy = () => {
     switch (activeStep) {
       case 0:
         return (
-          <div className="grid grid-cols-3 gap-10 items-end">
+          <div className="grid grid-cols-3 gap-10 items-start">
             <div>
-              <label className="text-sm text-slate-600 dark:text-gray-300 mb-2 block">Policy Name</label>
+              <label className="text-sm text-slate-600 dark:text-gray-300 mb-2 block">Policy Name<RequiredMark /></label>
               <div className="relative">
                 <input
                   type="text"
                   value={policyName}
                   onChange={(e) => setPolicyName(e.target.value)}
                   placeholder="Enter Policy Name"
-                  className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 transition-all ${policyName ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'}`}
+                  className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 transition-all ${showError(0) ? errorBorder : policyName ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'}`}
                 />
               </div>
+              <RequiredText step={0} />
             </div>
             <div>
               <label className="text-sm text-slate-600 dark:text-gray-300 mb-2 block">Description</label>
@@ -293,7 +391,8 @@ const CreateNetworkPolicy = () => {
       case 1:
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-end mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <div><RequiredText step={1} /></div>
               <button
                 onClick={selectAllFileTypes}
                 className="px-4 py-2 bg-blue-50 border border-blue-400 text-blue-600 dark:bg-[#1a2744] dark:border-[#5A7BFF] dark:text-[#5A7BFF] rounded-md hover:bg-blue-100 dark:hover:bg-[#243b6b] transition text-sm font-medium flex items-center gap-2"
@@ -302,7 +401,7 @@ const CreateNetworkPolicy = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className={`grid grid-cols-3 gap-4 rounded-lg transition-all ${showError(1) ? "ring-1 ring-rose-500 p-2" : ""}`}>
               {fileTypes.map((file) => {
                 const Icon = file.icon;
                 const isSelected = selectedFileTypes.includes(file.name);
@@ -340,7 +439,8 @@ const CreateNetworkPolicy = () => {
       case 2:
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-end mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <div><RequiredText step={2} /></div>
               <button
                 onClick={selectAllApplications}
                 className="px-4 py-2 bg-blue-50 border border-blue-400 text-blue-600 dark:bg-[#1a2744] dark:border-[#5A7BFF] dark:text-[#5A7BFF] rounded-md hover:bg-blue-100 dark:hover:bg-[#243b6b] transition text-sm font-medium flex items-center gap-2"
@@ -349,7 +449,7 @@ const CreateNetworkPolicy = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className={`grid grid-cols-3 gap-4 rounded-lg transition-all ${showError(2) ? "ring-1 ring-rose-500 p-2" : ""}`}>
               {applicationGroups.map((app) => {
                 const isSelected = selectedApplications.includes(app.name);
                 return (
@@ -418,6 +518,7 @@ const CreateNetworkPolicy = () => {
               </div>
             </div>
 
+            <RequiredText step={3} />
             {/* Keyword + Regex grid */}
             <div className={`grid grid-cols-2 gap-6 ${isBlockMode ? "opacity-60 pointer-events-none" : ""}`}>
               {/* Keyword Section */}
@@ -430,7 +531,7 @@ const CreateNetworkPolicy = () => {
                     onChange={(e) => setKeyword(e.target.value)}
                     placeholder="eg: hello, get lost"
                     disabled={isBlockMode}
-                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${keyword ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'} ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
+                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${showError(3) && !keyword ? errorBorder : keyword ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'} ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && !isBlockMode) {
                         addKeyword();
@@ -489,7 +590,7 @@ const CreateNetworkPolicy = () => {
                     onChange={(e) => setRegularExpression(e.target.value)}
                     placeholder="eg: ^[a-z]+$"
                     disabled={isBlockMode}
-                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${regularExpression ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'} ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
+                    className={`w-full border rounded-md px-4 py-3 outline-none text-slate-800 dark:text-gray-300 placeholder-slate-400 dark:placeholder-gray-500 pr-12 transition-all ${showError(3) && !regularExpression ? errorBorder : regularExpression ? 'bg-blue-50 border-blue-400 dark:bg-[#1a2744] dark:border-[#5A7BFF]' : 'bg-white border-slate-200 focus:border-blue-400 dark:bg-[#111827] dark:border-[#2d3748] dark:focus:border-[#5A7BFF]'} ${isBlockMode ? "cursor-not-allowed opacity-60" : ""}`}
                     onKeyPress={(e) => {
                       if (e.key === "Enter" && !isBlockMode) {
                         addRegularExpression();
@@ -542,7 +643,8 @@ const CreateNetworkPolicy = () => {
       case 4:
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-end mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <div><RequiredText step={4} /></div>
               <button
                 onClick={selectAllChannels}
                 className="px-4 py-2 bg-blue-50 border border-blue-400 text-blue-600 dark:bg-[#1a2744] dark:border-[#5A7BFF] dark:text-[#5A7BFF] rounded-md hover:bg-blue-100 dark:hover:bg-[#243b6b] transition text-sm font-medium flex items-center gap-2"
@@ -551,7 +653,7 @@ const CreateNetworkPolicy = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid grid-cols-2 gap-4 rounded-lg transition-all ${showError(4) ? "ring-1 ring-rose-500 p-2" : ""}`}>
               {channelControls.map((channel) => {
                 const Icon = channel.icon;
                 const isSelected = selectedChannels.includes(channel.name);
@@ -589,7 +691,8 @@ const CreateNetworkPolicy = () => {
       case 5:
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <RequiredText step={5} />
+            <div className={`grid grid-cols-2 gap-4 rounded-lg transition-all ${showError(5) ? "ring-1 ring-rose-500 p-2" : ""}`}>
               {severityLevels.map((level) => {
                 const Icon = level.icon;
                 const isSelected = selectedSeverityLevel === level.name;
@@ -704,20 +807,21 @@ const CreateNetworkPolicy = () => {
             const isActive = activeStep === index;
             const isCompleted = index < activeStep;
             const hasData = hasSelections(index);
+            const hasError = showError(index);
 
             return (
               <div
                 key={index}
-                onClick={() => setActiveStep(index)}
+                onClick={() => goToStep(index)}
                 className="relative z-10 flex flex-col items-center cursor-pointer group"
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${isActive ? "bg-[#5A7BFF] border-[#5A7BFF] text-white shadow-lg shadow-[#5A7BFF]/30" : isCompleted ? "bg-blue-100 border-[#5A7BFF] text-[#5A7BFF] dark:bg-[#2d3748] dark:text-white" : hasData && !isActive ? "bg-blue-50 border-[#5A7BFF] text-[#5A7BFF] dark:bg-[#1a2744] dark:text-white" : "bg-white border-slate-300 text-slate-400 dark:bg-[#0a1628] dark:border-gray-600 dark:text-gray-400"}`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${hasError ? "bg-rose-50 border-rose-500 text-rose-500 dark:bg-rose-500/10" : isActive ?"bg-[#5A7BFF] border-[#5A7BFF] text-white shadow-lg shadow-[#5A7BFF]/30" : isCompleted ? "bg-blue-100 border-[#5A7BFF] text-[#5A7BFF] dark:bg-[#2d3748] dark:text-white" : hasData && !isActive ? "bg-blue-50 border-[#5A7BFF] text-[#5A7BFF] dark:bg-[#1a2744] dark:text-white" : "bg-white border-slate-300 text-slate-400 dark:bg-[#0a1628] dark:border-gray-600 dark:text-gray-400"}`}
                 >
                   <Icon size={16} />
                 </div>
                 <span
-                  className={`mt-3 text-xs transition-colors duration-300 ${isActive ? "text-slate-800 font-medium dark:text-white" : hasData || isCompleted ? "text-[#5A7BFF]" : "text-slate-400 dark:text-gray-400"}`}
+                  className={`mt-3 text-xs transition-colors duration-300 ${hasError ? "text-rose-500" : isActive ?"text-slate-800 font-medium dark:text-white" : hasData || isCompleted ? "text-[#5A7BFF]" : "text-slate-400 dark:text-gray-400"}`}
                 >
                   {step.title}
                 </span>
@@ -763,18 +867,17 @@ const CreateNetworkPolicy = () => {
             Previous
           </button>
           <button
+            disabled={submitting}
             onClick={() => {
               if (activeStep === steps.length - 1) {
-                const payload = buildPolicyPayload();
-                alert("Policy created successfully "+JSON.stringify(payload));
-                console.log(JSON.stringify(payload));
+                handleCreatePolicy();
               } else {
-                setActiveStep(activeStep + 1);
+                goToStep(activeStep + 1);
               }
             }}
-            className={`px-8 py-3 rounded-md transition text-white ${activeStep === steps.length - 1 ? "bg-green-600 hover:bg-green-700" : "bg-[#6b8cff] hover:bg-[#5a7bff]"}`}
+            className={`px-8 py-3 rounded-md transition text-white disabled:opacity-60 ${activeStep === steps.length - 1 ? "bg-green-600 hover:bg-green-700" : "bg-[#6b8cff] hover:bg-[#5a7bff]"}`}
           >
-            {activeStep === steps.length - 1 ? "Create Policy" : "Next"}
+            {activeStep === steps.length - 1 ? (submitting ? "Creating..." : "Create Policy") : "Next"}
           </button>
         </div>
       </div>

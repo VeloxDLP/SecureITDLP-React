@@ -477,6 +477,12 @@ export const dashboardService = {
     return data;
   },
 
+    saveNetworkPolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.NETWORK_POLICY.SAVE_NEWTORK_POLICY, requestData,);
+    return data;
+  },
+
   getApplicationsByHost: async (devices) => {
     const { data } = await axiosInstance.post(
       API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BY_HOST,

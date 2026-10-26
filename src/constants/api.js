@@ -85,6 +85,7 @@ NETWORK_POLICY: {
   GETNETWORKPOLICY: "/NetworkDLP/GetDistinctPolicy",
   GETPOLICYBYNAME: "/NetworkDLP/GetPolicy", 
   GETACTIVEDISTINCTPOLICY:"/NetworkDLP/GetActiveDistinctPolicy",
+  SAVE_NEWTORK_POLICY:"/NetworkDLP/SaveNewtorkPolicy",
   GETACTIVE_DISTINCTPOLICY_MODAL:"/NetworkDLP/GetActiveDistinctPolicyModal"
 },
 
