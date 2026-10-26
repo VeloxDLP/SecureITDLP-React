@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { FileText, Hand, ShieldAlert, Search, Loader2 } from "lucide-react";
+import { FileText, Hand, ShieldAlert, Search, Loader2, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 import {
   ResponsiveContainer,
@@ -18,7 +18,6 @@ import {
 
 import { useTheme } from "../../context/ThemeContext";
 import { dashboardService } from "../../services/dashboardService";
-import ClassificationFilesModal from "./ClassificationFilesModal";
 
 import {
   getFilesByCategory,
@@ -28,9 +27,9 @@ import {
 
 /* ---------------- STATIC DATA & NORMALIZERS ---------------- */
 const fileTypeColors = [
-  "#7BBDE8", // Light Cyan (Peripherals)
+  "#0d2e88", // Light Cyan (Peripherals)
   "#1613d3", // Deep Blue (Email)
-  "#0d2e88", // Dark Blue (Network)
+  "#0d2e70", // Dark Blue (Network)
   "#375ab9", // Medium Blue (Printer)
   "#6375df", // Light Blue (Clipboard)
   "#6EA2B3", // Muted Teal (Drive)
@@ -339,11 +338,9 @@ export default function DataClassification() {
       }
 
       const response = await dashboardService.getFilesByExtension(extension);
-      console.log(`[DC] files-by-extension "${extension}" raw:`, response);
-
+      
       const rows = normalizeFilesList(response);
-      console.log(`[DC] files-by-extension "${extension}" normalized:`, rows);
-
+      
       setModalState((prev) => ({
         ...prev,
         loading: false,
@@ -535,7 +532,6 @@ export default function DataClassification() {
             <div className={`flex items-center justify-between px-5 py-2 border-b ${isDark ? "border-[#1D2B3D]" : "border-gray-200"}`}>
               <div className="flex items-center gap-3">
                 <h2 className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-800"}`}>Classification Files</h2>
-                {/* ✅ REMOVED COUNT HERE */}
               </div>
               <div className="flex items-center gap-2">
                 <div className="relative">
@@ -599,9 +595,286 @@ export default function DataClassification() {
 
       </div>
 
+      {/* ===== NEW STYLED MODAL ===== */}
       <ClassificationFilesModal
-        show={modalState.show} onClose={closeModal} title={modalState.title} data={modalState.data} loading={modalState.loading} error={modalState.error}
+        show={modalState.show}
+        onClose={closeModal}
+        title={modalState.title}
+        data={modalState.data}
+        loading={modalState.loading}
+        error={modalState.error}
+        isDark={isDark}
       />
+    </div>
+  );
+}
+
+/* ---------------- MODAL COMPONENT (Styled to match Dashboard/IncidentByChannel) ---------------- */
+
+function ClassificationFilesModal({
+  show,
+  onClose,
+  title,
+  data,
+  loading = false,
+  error = "",
+  isDark,
+}) {
+  const [search, setSearch] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Handle modal transitions
+  useEffect(() => {
+    if (show) {
+      setIsMounted(true);
+      requestAnimationFrame(() => setIsOpen(true));
+    } else if (isMounted) {
+      setIsOpen(false);
+    }
+  }, [show]);
+
+  // Prevent body scrolling when modal is open
+  useEffect(() => {
+    if (isMounted) {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+    };
+  }, [isMounted]);
+
+  const handleModalTransitionEnd = (event) => {
+    if (event.target !== event.currentTarget) return;
+    if (!show && !isOpen) setIsMounted(false);
+  };
+
+  const safeData = Array.isArray(data) ? data : [];
+
+  const columns = [
+    { accessor: "srNo", header: "SR NO" },
+    { accessor: "fileName", header: "FILE NAME" },
+    { accessor: "filePath", header: "FILE PATH" },
+    { accessor: "extension", header: "EXTENSION" },
+    { accessor: "label", header: "LABEL" },
+    { accessor: "hostName", header: "HOST NAME" },
+  ];
+
+  // Filter data based on search
+  const filteredRows = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return safeData;
+
+    return safeData.filter((row) =>
+      columns.some((col) =>
+        String(row[col.accessor] ?? "").toLowerCase().includes(term)
+      )
+    );
+  }, [safeData, search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, pageSize]);
+
+  // Pagination logic
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedRows = filteredRows.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize
+  );
+
+  const startRecord = filteredRows.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const endRecord = Math.min(safePage * pageSize, filteredRows.length);
+
+  if (!isMounted) return null;
+
+  return (
+    <div
+      onTransitionEnd={handleModalTransitionEnd}
+      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
+        isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+      }`}
+    >
+      <div
+        className={`
+          flex h-[80vh] w-full max-w-6xl flex-col transition-all duration-300 ease-in-out ${
+            isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+          }
+          overflow-hidden rounded-xl border border-slate-200
+          bg-white shadow-2xl
+          dark:border-white/[0.08] dark:bg-[#020617]
+        `}
+      >
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
+          <div className="min-w-0">
+            <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
+              {title}
+            </h2>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="relative w-[220px] sm:w-[260px]">
+              <Search
+                size={14}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30"
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search files..."
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-[12px] text-slate-700 outline-none transition focus:border-[#7094ff] focus:ring-2 focus:ring-[#7094ff]/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/80"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/[0.06] dark:text-white/60 dark:hover:bg-white/[0.1]"
+            >
+              <X size={17} />
+            </button>
+          </div>
+        </div>
+
+        {/* Table Area */}
+        <div className="min-h-0 flex-1 overflow-hidden p-4">
+          <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
+            <div className="min-h-0 flex-1 overflow-auto">
+              <table className="w-full text-[13px]">
+                <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
+                  <tr className="text-left text-slate-500 dark:text-white/50">
+                    {columns.map((col) => (
+                      <th
+                        key={col.accessor}
+                        className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]"
+                      >
+                        {col.header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={columns.length} className="px-3 py-10 text-center text-slate-400 dark:text-white/40">
+                        Loading files...
+                      </td>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan={columns.length} className="px-3 py-10 text-center text-red-500">
+                        {error}
+                      </td>
+                    </tr>
+                  ) : paginatedRows.length > 0 ? (
+                    paginatedRows.map((row, index) => (
+                      <tr
+                        key={row.srNo ?? index}
+                        className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
+                      >
+                        <td className="border-b border-slate-100 px-4 py-3 font-medium text-blue-600 dark:border-white/[0.05] dark:text-blue-400">
+                          {row.srNo ?? index + 1}
+                        </td>
+                        <td className="max-w-[200px] truncate border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/80" title={row.fileName}>
+                          {row.fileName || "NA"}
+                        </td>
+                        <td className="max-w-[300px] truncate border-b border-slate-100 px-4 py-3 text-slate-500 dark:border-white/[0.05] dark:text-white/50" title={row.filePath}>
+                          {row.filePath || "NA"}
+                        </td>
+                        <td className="border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/80">
+                          <span className="uppercase">{row.extension || "NA"}</span>
+                        </td>
+                        <td className="border-b border-slate-100 px-4 py-3 dark:border-white/[0.05]">
+                          {row.label ? (
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold ${getLabelColor(row.label)}`}>
+                              {row.label}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 dark:text-white/40">NA</span>
+                          )}
+                        </td>
+                        <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-500 dark:border-white/[0.05] dark:text-white/50">
+                          {row.hostName || "NA"}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={columns.length} className="px-3 py-10 text-center text-slate-400 dark:text-white/30">
+                        {search ? "No matching files found" : "No records found"}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {!loading && !error && (
+              <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-[12px] text-slate-500 dark:text-white/40">
+                  Showing {startRecord}-{endRecord} of {filteredRows.length}
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-[12px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70"
+                  >
+                    {[5, 10, 20, 50].map((size) => (
+                      <option key={size} value={size}>
+                        {size} / page
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    disabled={safePage === 1}
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
+                  >
+                    <ChevronLeft size={14} />
+                    Prev
+                  </button>
+
+                  <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10">
+                    {safePage} / {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={safePage === totalPages}
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
+                  >
+                    Next
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

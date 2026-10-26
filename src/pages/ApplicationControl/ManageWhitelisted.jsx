@@ -625,14 +625,6 @@ function ManageWhitelisted() {
     }
   }, [currentPage, totalPages]);
 
-  const displayStart =
-    filteredApplications.length === 0 ? 0 : startIndex + 1;
-
-  const displayEnd = Math.min(
-    startIndex + paginatedApplications.length,
-    filteredApplications.length
-  );
-
   // ============================================================
   // JSX
   // ============================================================
@@ -1528,58 +1520,43 @@ function ManageWhitelisted() {
             </table>
           </div>
 
-          {/* PAGINATION */}
+          {/* PAGINATION — matches ViewApplication style */}
           <div className="flex items-center justify-between mt-5 pt-4">
-            <div className={`text-[11px] ${isDark ? "text-slate-500" : "text-slate-400"}`}>
-              Showing {displayStart} to {displayEnd} of{" "}
-              {filteredApplications.length} entries
+            <div
+              className={`text-xs ${
+                isDark ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
+              Showing {paginatedApplications.length} of{" "}
+              {filteredApplications.length} records
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() =>
                   setCurrentPage((prev) => Math.max(prev - 1, 1))
                 }
-                className={`
-                  h-[32px] px-3 border text-[11px] flex items-center gap-1 transition-colors
-                  ${
-                    currentPage === 1
-                      ? isDark
-                        ? "border-[#27355f] text-slate-700 cursor-not-allowed"
-                        : "border-slate-200 text-slate-300 cursor-not-allowed"
-                      : isDark
-                      ? "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
-                      : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
-                  }
-                `}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${
+                  currentPage === 1
+                    ? "opacity-40 cursor-not-allowed"
+                    : isDark
+                    ? "bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60"
+                    : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                }`}
               >
-                <ChevronLeft size={13} />
+                <ChevronLeft size={14} />
                 Previous
               </button>
 
-              {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => setCurrentPage(page)}
-                    className={`
-                      h-[32px] min-w-[32px] px-2 border text-[11px] transition-colors
-                      ${
-                        currentPage === page
-                          ? "border-[#4f56f0] bg-[#4f56f0] text-white"
-                          : isDark
-                          ? "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
-                          : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
-                      }
-                    `}
-                  >
-                    {page}
-                  </button>
-                )
-              )}
+              <span
+                className={`text-xs px-2 ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                Page {currentPage} of {totalPages}
+              </span>
 
               <button
                 type="button"
@@ -1587,21 +1564,16 @@ function ManageWhitelisted() {
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
-                className={`
-                  h-[32px] px-3 border text-[11px] flex items-center gap-1 transition-colors
-                  ${
-                    currentPage === totalPages
-                      ? isDark
-                        ? "border-[#27355f] text-slate-700 cursor-not-allowed"
-                        : "border-slate-200 text-slate-300 cursor-not-allowed"
-                      : isDark
-                      ? "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
-                      : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
-                  }
-                `}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${
+                  currentPage === totalPages
+                    ? "opacity-40 cursor-not-allowed"
+                    : isDark
+                    ? "bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60"
+                    : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                }`}
               >
                 Next
-                <ChevronRight size={13} />
+                <ChevronRight size={14} />
               </button>
             </div>
           </div>

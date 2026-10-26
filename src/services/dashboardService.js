@@ -440,15 +440,10 @@ export const dashboardService = {
 
     return data;
   },
-  
-  setApplicationMode: async (requestData) => {
-    const { data } = await axiosInstance.post(
-      API_ENDPOINTS.APPLICATION_CONTROL.SET_MODE,requestData);
-    return data;
-  },
+
   getApplicationPolicies: async () => {
     const { data } = await axiosInstance.get(
-      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_CONTROLDATA, 
+      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_CONTROLDATA, // 👈 corrected
     );
     return data;
   },
@@ -469,13 +464,16 @@ export const dashboardService = {
     return data;
   },
 
-  getApplicationBlacklisted: async (requestData) => {
-    const { data } = await axiosInstance.get(
-      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BLACKLISTED,
-      requestData,
-    );
-    return data;
-  },
+ getApplicationBlacklisted: async (requestData) => {
+  const { data } = await axiosInstance.post(
+    API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BLACKLISTED,
+    requestData,
+    {
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+  return data;
+},
 
     saveNetworkPolicy: async (requestData) => {
     const { data } = await axiosInstance.post(

@@ -233,7 +233,6 @@ export default function OrganisationIncident({
         >
           <p className="text-sm font-medium">{`${payload[0].payload.x}`}</p>
           <p className="text-sm text-slate-600 dark:text-white/70">{`${payload[0].value} incidents`}</p>
-          {/* <p className="text-xs text-blue-500 mt-1">Click to view details →</p> */}
         </div>
       );
     }
@@ -318,9 +317,6 @@ export default function OrganisationIncident({
             />
           </AreaChart>
         </ResponsiveContainer>
-
-        {/* Click hint overlay */}
-     
       </div>
 
       {/* Modal */}
@@ -440,19 +436,7 @@ export default function OrganisationIncident({
                   </span>
 
                   <div className="flex items-center gap-2">
-                    {/* <select
-                      value={pageSize}
-                      onChange={(e) => {
-                        setPageSize(Number(e.target.value));
-                        setCurrentPage(1);
-                      }}
-                      className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-[12px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70"
-                    >
-                      {[5, 10, 20, 50].map((size) => (
-                        <option key={size} value={size}>{size} / page</option>
-                      ))}
-                    </select> */}
-
+                    {/* PREVIOUS */}
                     <button
                       type="button"
                       disabled={safePage === 1}
@@ -463,15 +447,17 @@ export default function OrganisationIncident({
                       Prev
                     </button>
 
+                    {/* PAGE INDICATOR */}
                     <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10">
                       {safePage} / {totalPages}
                     </span>
 
+                    {/* NEXT — fixed: was bg-black, now bg-white */}
                     <button
                       type="button"
                       disabled={safePage === totalPages}
                       onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-black px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
+                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
                     >
                       Next
                       <ChevronRight size={14} />

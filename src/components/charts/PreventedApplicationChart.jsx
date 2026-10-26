@@ -110,9 +110,9 @@ export default function PreventedApplicationChart({
   // ====================================================
   // MODAL TRANSITION STATES
   // ====================================================
-  const [isOpen, setIsOpen] = useState(false);          // controls visibility (enter/exit)
-  const [isMounted, setIsMounted] = useState(false);    // whether modal is in DOM
-  const [isClosing, setIsClosing] = useState(false);    // flag for exit animation
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
@@ -174,7 +174,6 @@ export default function PreventedApplicationChart({
     setError("");
     setLoading(true);
 
-    // Mount the modal
     setIsMounted(true);
 
     try {
@@ -207,7 +206,6 @@ export default function PreventedApplicationChart({
       setModalData([]);
     } finally {
       setLoading(false);
-      // Trigger enter animation after mount (next frame)
       requestAnimationFrame(() => setIsOpen(true));
     }
   };
@@ -231,10 +229,9 @@ export default function PreventedApplicationChart({
   const closeModal = () => {
     if (!isOpen) return;
     setIsClosing(true);
-    setIsOpen(false); // triggers exit animation
+    setIsOpen(false);
   };
 
-  // After exit animation completes, unmount the modal
   const handleTransitionEnd = () => {
     if (isClosing) {
       setIsMounted(false);
@@ -301,9 +298,6 @@ export default function PreventedApplicationChart({
           </p>
           <p className="text-sm text-blue-600 dark:text-blue-400">
             {count} prevented
-          </p>
-          <p className="mt-1 text-xs text-blue-500 dark:text-blue-300">
-            Click to view details →
           </p>
         </div>
       );

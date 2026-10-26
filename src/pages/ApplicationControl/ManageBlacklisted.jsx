@@ -47,6 +47,8 @@ function ManageBlacklisted() {
   const [devices, setDevices] = useState([]);
 
   const [blacklistedApplications, setBlacklistedApplications] = useState([]);
+  const [hasQueried, setHasQueried] = useState(false);
+  const [emptyMessage, setEmptyMessage] = useState("");
 
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,7 +56,6 @@ function ManageBlacklisted() {
   const [branchOpen, setBranchOpen] = useState(false);
   const [deviceOpen, setDeviceOpen] = useState(false);
 
-  // search queries for the dropdowns
   const [branchQuery, setBranchQuery] = useState("");
   const [deviceQuery, setDeviceQuery] = useState("");
 
@@ -122,6 +123,8 @@ function ManageBlacklisted() {
     setDevice([]);
     setDevices([]);
     setBlacklistedApplications([]);
+    setHasQueried(false);
+    setEmptyMessage("");
 
     setSearchTerm("");
     setCurrentPage(1);
@@ -159,6 +162,8 @@ function ManageBlacklisted() {
     });
 
     setBlacklistedApplications([]);
+    setHasQueried(false);
+    setEmptyMessage("");
     setSearchTerm("");
     setCurrentPage(1);
     setSelectedApplications([]);
@@ -185,6 +190,8 @@ function ManageBlacklisted() {
     }
 
     setBlacklistedApplications([]);
+    setHasQueried(false);
+    setEmptyMessage("");
     setSearchTerm("");
     setCurrentPage(1);
     setSelectedApplications([]);
@@ -235,6 +242,8 @@ function ManageBlacklisted() {
     setDevice([]);
     setDevices([]);
     setBlacklistedApplications([]);
+    setHasQueried(false);
+    setEmptyMessage("");
 
     setSearchTerm("");
     setCurrentPage(1);
@@ -259,8 +268,12 @@ function ManageBlacklisted() {
       setSearchTerm("");
       setCurrentPage(1);
       setSelectedApplications([]);
+      setEmptyMessage("");
 
-      const requestData = { device: device };
+      const requestData = {
+        branch: branch,
+        device: device,
+      };
       console.log("Application Blacklisted Request:", requestData);
 
       const response = await dashboardService.getApplicationBlacklisted(
@@ -269,6 +282,7 @@ function ManageBlacklisted() {
       console.log("Application Blacklisted Response:", response);
 
       setBlacklistedApplications(response?.data || []);
+      setHasQueried(true);
 
       setTimeout(() => {
         if (tableRef.current) {
@@ -280,7 +294,21 @@ function ManageBlacklisted() {
       }, 150);
     } catch (error) {
       console.error("Application Blacklisted API Error:", error);
-      setBlacklistedApplications([]);
+
+      if (error?.response?.status === 404) {
+        setBlacklistedApplications([]);
+        setHasQueried(true);
+        setEmptyMessage(
+          error?.response?.data?.message ||
+            "No blacklisted applications found for the given branch and devices"
+        );
+      } else {
+        setBlacklistedApplications([]);
+        setHasQueried(true);
+        setEmptyMessage(
+          "Failed to fetch blacklisted applications. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -523,11 +551,7 @@ function ManageBlacklisted() {
                 <div
                   className={`
                     px-3 py-2 border-b
-                    ${
-                      isDark
-                        ? "border-white/[0.07]"
-                        : "border-slate-100"
-                    }
+                    ${isDark ? "border-white/[0.07]" : "border-slate-100"}
                   `}
                 >
                   <div className="relative flex items-center">
@@ -743,11 +767,7 @@ function ManageBlacklisted() {
                           w-full px-3 py-2.5 text-left text-[12px]
                           flex items-center justify-between gap-2
                           border-b transition-colors
-                          ${
-                            isDark
-                              ? "border-[#27355f]"
-                              : "border-slate-100"
-                          }
+                          ${isDark ? "border-[#27355f]" : "border-slate-100"}
                           ${
                             allDevicesSelected
                               ? isDark
@@ -903,7 +923,7 @@ function ManageBlacklisted() {
       </div>
 
       {/* TABLE */}
-      {blacklistedApplications.length > 0 && (
+      {hasQueried && (
         <div
           ref={tableRef}
           className={`w-full rounded-xl border p-6 mt-4 scroll-mt-6 ${
@@ -918,10 +938,8 @@ function ManageBlacklisted() {
                 Blacklisted Applications
               </h3>
               <p className={`mt-1 text-[11px] ${isDark ? "text-slate-500" : "text-slate-500"}`}>
-                Device:{" "}
-                {device.length === 1
-                  ? device[0]
-                  : `${device.length} Devices`}
+                Branch: {branch || "-"} · Device:{" "}
+                {device.length === 1 ? device[0] : `${device.length} Devices`}
               </p>
             </div>
 
@@ -963,14 +981,20 @@ function ManageBlacklisted() {
             <table className="w-full text-left">
               <thead className={`sticky top-0 z-10 ${isDark ? "bg-[#020617]" : "bg-white"}`}>
                 <tr className={`border-b ${isDark ? "border-[#27355f]" : "border-slate-200"}`}>
-                  <th className="w-[55px] px-2 py-3 text-center">
-                    <input
-                      type="checkbox"
-                      checked={allFilteredSelected}
-                      onChange={handleSelectAll}
-                      className="h-3 w-3 cursor-pointer accent-[#4f56f0]"
-                    />
+                  
+                  {/* UPDATED: Added "Select All" text next to the checkbox */}
+                  <th className={`w-[100px] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={allFilteredSelected}
+                        onChange={handleSelectAll}
+                        className="h-3 w-3 cursor-pointer accent-[#4f56f0]"
+                      />
+                      Select All
+                    </label>
                   </th>
+
                   <th className={`w-[55px] px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                     Sr
                     <br />
@@ -996,9 +1020,12 @@ function ManageBlacklisted() {
                   <tr>
                     <td
                       colSpan={6}
-                      className={`px-4 py-10 text-center text-[11px] ${isDark ? "text-slate-500" : "text-slate-400"}`}
+                      className={`px-4 py-10 text-center text-[11px] ${
+                        isDark ? "text-slate-500" : "text-slate-400"
+                      }`}
                     >
-                      No matching applications found.
+                      {emptyMessage ||
+                        "No matching applications found."}
                     </td>
                   </tr>
                 ) : (
@@ -1016,7 +1043,7 @@ function ManageBlacklisted() {
                             : "border-slate-100 hover:bg-slate-50"
                         }`}
                       >
-                        <td className="w-[55px] px-2 py-3 text-center">
+                        <td className="w-[100px] px-4 py-3 text-left">
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -1047,58 +1074,43 @@ function ManageBlacklisted() {
             </table>
           </div>
 
-          {/* PAGINATION */}
+          {/* PAGINATION — matches ViewApplication style */}
           <div className="flex items-center justify-between mt-5 pt-4">
-            <div className={`text-[11px] ${isDark ? "text-slate-500" : "text-slate-400"}`}>
-              Showing {displayStart} to {displayEnd} of{" "}
-              {filteredApplications.length} entries
+            <div
+              className={`text-xs ${
+                isDark ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
+              Showing {paginatedApplications.length} of{" "}
+              {filteredApplications.length} records
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() =>
                   setCurrentPage((prev) => Math.max(prev - 1, 1))
                 }
-                className={`
-                  h-[32px] px-3 border text-[11px] flex items-center gap-1 transition-colors
-                  ${
-                    currentPage === 1
-                      ? isDark
-                        ? "border-[#27355f] text-slate-700 cursor-not-allowed"
-                        : "border-slate-200 text-slate-300 cursor-not-allowed"
-                      : isDark
-                      ? "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
-                      : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
-                  }
-                `}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${
+                  currentPage === 1
+                    ? "opacity-40 cursor-not-allowed"
+                    : isDark
+                    ? "bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60"
+                    : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                }`}
               >
-                <ChevronLeft size={13} />
+                <ChevronLeft size={14} />
                 Previous
               </button>
 
-              {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => setCurrentPage(page)}
-                    className={`
-                      h-[32px] min-w-[32px] px-2 border text-[11px] transition-colors
-                      ${
-                        currentPage === page
-                          ? "border-[#4f56f0] bg-[#4f56f0] text-white"
-                          : isDark
-                          ? "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
-                          : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
-                      }
-                    `}
-                  >
-                    {page}
-                  </button>
-                )
-              )}
+              <span
+                className={`text-xs px-2 ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                Page {currentPage} of {totalPages}
+              </span>
 
               <button
                 type="button"
@@ -1106,21 +1118,16 @@ function ManageBlacklisted() {
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
-                className={`
-                  h-[32px] px-3 border text-[11px] flex items-center gap-1 transition-colors
-                  ${
-                    currentPage === totalPages
-                      ? isDark
-                        ? "border-[#27355f] text-slate-700 cursor-not-allowed"
-                        : "border-slate-200 text-slate-300 cursor-not-allowed"
-                      : isDark
-                      ? "border-[#334155] text-slate-400 hover:bg-[#111827] hover:text-slate-200"
-                      : "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
-                  }
-                `}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs ${
+                  currentPage === totalPages
+                    ? "opacity-40 cursor-not-allowed"
+                    : isDark
+                    ? "bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60"
+                    : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                }`}
               >
                 Next
-                <ChevronRight size={13} />
+                <ChevronRight size={14} />
               </button>
             </div>
           </div>
@@ -1133,14 +1140,6 @@ function ManageBlacklisted() {
               className="h-[36px] px-4 rounded-none bg-[#4f56f0] text-[11px] font-semibold text-white border border-[#4f56f0] hover:bg-[#5d64f5] transition-colors"
             >
               Add To Whitelist
-            </button>
-
-            <button
-              type="button"
-              onClick={handleReset}
-              className="h-[36px] px-4 rounded-none bg-[#4f56f0] text-[11px] font-semibold text-white border border-[#4f56f0] hover:bg-[#5d64f5] transition-colors"
-            >
-              Reset
             </button>
           </div>
         </div>

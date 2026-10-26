@@ -660,7 +660,7 @@ const IncidentByChannel = ({ data = {} }) => {
                       </button>
                     </div>
                   ) : (
-                    <table className="w-full text-[13px]">
+                    <table className="w-full min-w-[900px] text-[13px]">
                       <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
                         <tr className="text-left text-slate-500 dark:text-white/50">
                           {getTableHeaders().map(

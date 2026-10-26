@@ -119,7 +119,7 @@ const NAV = [
   },
 
   //   {
-  //   label: 'DriveDetail',
+  //   label: 'OS Dashboard',
   //   icon: Monitor,
   //   path: '/DeviceDetails',
   //   roles: ['admin', 'superadmin'],
