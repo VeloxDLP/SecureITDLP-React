@@ -57,7 +57,6 @@ function ManageWhitelisted() {
   const [deviceOpen, setDeviceOpen] = useState(false);
   const [applicationOpen, setApplicationOpen] = useState(false);
 
-  // search queries for the dropdowns
   const [branchQuery, setBranchQuery] = useState("");
   const [deviceQuery, setDeviceQuery] = useState("");
   const [applicationQuery, setApplicationQuery] = useState("");
@@ -66,7 +65,9 @@ function ManageWhitelisted() {
   const [applicationLoading, setApplicationLoading] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  
   const [submitted, setSubmitted] = useState(false);
+  const [isSuccessfullySubmitted, setIsSuccessfullySubmitted] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -90,8 +91,6 @@ function ManageWhitelisted() {
   const loadBranches = async () => {
     try {
       const response = await dashboardService.getBranch();
-      console.log("Branch API Response:", response);
-
       if (Array.isArray(response?.data)) {
         setBranches(response.data);
       } else {
@@ -103,17 +102,11 @@ function ManageWhitelisted() {
     }
   };
 
-  // ============================================================
-  // GET BRANCH VALUE
-  // ============================================================
   const getBranchValue = (item) => {
     if (typeof item === "string") return item;
     return item?.branchName ?? item?.branch ?? item?.name ?? item?.value ?? "";
   };
 
-  // ============================================================
-  // GET DEVICE VALUE
-  // ============================================================
   const getDeviceValue = (item) => {
     if (typeof item === "string") return item;
     return (
@@ -127,17 +120,11 @@ function ManageWhitelisted() {
     );
   };
 
-  // ============================================================
-  // GET AGENT STATUS
-  // ============================================================
   const getAgentStatus = (item) => {
     if (typeof item === "string") return null;
     return item?.agentStatus ?? item?.status ?? null;
   };
 
-  // ============================================================
-  // GET APPLICATION VALUE
-  // ============================================================
   const getApplicationValue = (item) => {
     if (typeof item === "string") return item;
     return (
@@ -149,22 +136,17 @@ function ManageWhitelisted() {
     );
   };
 
-  // ============================================================
-  // BRANCH CHANGE
-  // ============================================================
   const handleBranchChange = async (branchValue) => {
     setBranch(branchValue);
-
     setSelectedDevices([]);
     setDevices([]);
-
     setSelectedApplications([]);
     setApplications([]);
-
     setWhitelistedApplications([]);
     setSelectedTableRows([]);
     setSearchTerm("");
     setCurrentPage(1);
+    setIsSuccessfullySubmitted(false);
 
     setBranchOpen(false);
     setBranchQuery("");
@@ -177,10 +159,7 @@ function ManageWhitelisted() {
 
     try {
       setDeviceLoading(true);
-
       const response = await dashboardService.getDevicesByBranch(branchValue);
-      console.log("Device API Response:", response);
-
       if (Array.isArray(response?.data)) {
         setDevices(response.data);
       } else {
@@ -194,9 +173,6 @@ function ManageWhitelisted() {
     }
   };
 
-  // ============================================================
-  // LOAD APPLICATIONS FOR DEVICES
-  // ============================================================
   const loadApplicationsByDevices = async (deviceList) => {
     if (!deviceList || deviceList.length === 0) {
       setApplications([]);
@@ -206,15 +182,9 @@ function ManageWhitelisted() {
 
     try {
       setApplicationLoading(true);
-
-      console.log("Get applications for devices:", deviceList);
-
       const response = await dashboardService.getApplicationsByHost(deviceList);
 
-      console.log("Application By Host API Response:", response);
-
       let applicationList = [];
-
       if (Array.isArray(response?.data?.applicationName)) {
         applicationList = response.data.applicationName;
       } else if (Array.isArray(response?.data)) {
@@ -227,8 +197,6 @@ function ManageWhitelisted() {
         ...new Set(applicationList.map(getApplicationValue).filter(Boolean)),
       ];
 
-      console.log("Applications for selected devices:", applicationList);
-
       setApplications(applicationList);
       setSelectedApplications([]);
     } catch (error) {
@@ -240,36 +208,27 @@ function ManageWhitelisted() {
     }
   };
 
-  // ============================================================
-  // DEVICE MULTI SELECT
-  // ============================================================
   const handleDeviceChange = (deviceValue) => {
     setSelectedDevices((prev) => {
       let updatedDevices;
-
       if (prev.includes(deviceValue)) {
         updatedDevices = prev.filter((device) => device !== deviceValue);
       } else {
         updatedDevices = [...prev, deviceValue];
       }
-
       loadApplicationsByDevices(updatedDevices);
-
       return updatedDevices;
     });
 
     setApplicationOpen(false);
     setApplicationQuery("");
-
     setWhitelistedApplications([]);
     setSelectedTableRows([]);
     setSearchTerm("");
     setCurrentPage(1);
+    setIsSuccessfullySubmitted(false);
   };
 
-  // ============================================================
-  // DEVICE VALUES
-  // ============================================================
   const filteredDevices = devices.map((item) => getDeviceValue(item)).filter(Boolean);
 
   const filteredDevicesByQuery = deviceQuery
@@ -278,9 +237,6 @@ function ManageWhitelisted() {
       )
     : filteredDevices;
 
-  // ============================================================
-  // SELECT ALL DEVICES
-  // ============================================================
   const allDevicesSelected =
     filteredDevices.length > 0 &&
     filteredDevices.every((device) => selectedDevices.includes(device));
@@ -289,7 +245,6 @@ function ManageWhitelisted() {
     if (filteredDevices.length === 0) return;
 
     let updatedDevices = [];
-
     if (allDevicesSelected) {
       updatedDevices = selectedDevices.filter(
         (device) => !filteredDevices.includes(device)
@@ -299,17 +254,13 @@ function ManageWhitelisted() {
     }
 
     setSelectedDevices(updatedDevices);
-
     loadApplicationsByDevices(updatedDevices);
-
     setSelectedApplications([]);
     setApplicationOpen(false);
     setApplicationQuery("");
+    setIsSuccessfullySubmitted(false);
   };
 
-  // ============================================================
-  // APPLICATION MULTI SELECT
-  // ============================================================
   const handleApplicationChange = (application) => {
     setSelectedApplications((prev) => {
       if (prev.includes(application)) {
@@ -317,11 +268,9 @@ function ManageWhitelisted() {
       }
       return [...prev, application];
     });
+    setIsSuccessfullySubmitted(false);
   };
 
-  // ============================================================
-  // SELECT ALL APPLICATIONS
-  // ============================================================
   const applicationValues = applications
     .map((item) => getApplicationValue(item))
     .filter(Boolean);
@@ -346,11 +295,9 @@ function ManageWhitelisted() {
     } else {
       setSelectedApplications([...applicationValues]);
     }
+    setIsSuccessfullySubmitted(false);
   };
 
-  // ============================================================
-  // APPLICATION DISPLAY TEXT
-  // ============================================================
   const getApplicationDisplayText = () => {
     if (selectedDevices.length === 0) return "Select device first";
     if (applicationLoading) return "Loading applications...";
@@ -359,9 +306,6 @@ function ManageWhitelisted() {
     return `${selectedApplications.length} applications selected`;
   };
 
-  // ============================================================
-  // BRANCH FILTER (for search)
-  // ============================================================
   const filteredBranches = branchQuery
     ? branches.filter((item) =>
         String(getBranchValue(item))
@@ -370,39 +314,27 @@ function ManageWhitelisted() {
       )
     : branches;
 
-  // ============================================================
-  // RESET
-  // ============================================================
   const handleReset = () => {
     setSelectedApplications([]);
     setBranch("");
-
     setSelectedDevices([]);
     setDevices([]);
     setApplications([]);
-
     setWhitelistedApplications([]);
     setSelectedTableRows([]);
-
     setSearchTerm("");
     setCurrentPage(1);
-
     setBranchOpen(false);
     setDeviceOpen(false);
     setApplicationOpen(false);
-
     setBranchQuery("");
     setDeviceQuery("");
     setApplicationQuery("");
-
     setSubmitted(false);
-
+    setIsSuccessfullySubmitted(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ============================================================
-  // SUBMIT
-  // ============================================================
   const handleSubmit = async () => {
     setSubmitted(true);
 
@@ -411,12 +343,11 @@ function ManageWhitelisted() {
       !branch ||
       selectedDevices.length === 0
     ) {
-      return;
+      return; 
     }
 
     try {
       setLoading(true);
-
       setSearchTerm("");
       setCurrentPage(1);
       setSelectedTableRows([]);
@@ -433,8 +364,9 @@ function ManageWhitelisted() {
       console.log("Application Whitelisted Response:", response);
 
       const result = Array.isArray(response?.data) ? response.data : [];
-
       setWhitelistedApplications(result);
+      
+      setIsSuccessfullySubmitted(true);
 
       setTimeout(() => {
         if (tableRef.current) {
@@ -447,45 +379,34 @@ function ManageWhitelisted() {
     } catch (error) {
       console.error("Application whitelist API error:", error);
       setWhitelistedApplications([]);
+      setIsSuccessfullySubmitted(false);
     } finally {
       setLoading(false);
     }
   };
 
-  // ============================================================
-  // OUTSIDE CLICK
-  // ============================================================
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (branchRef.current && !branchRef.current.contains(event.target)) {
         setBranchOpen(false);
         setBranchQuery("");
       }
-
       if (deviceRef.current && !deviceRef.current.contains(event.target)) {
         setDeviceOpen(false);
         setDeviceQuery("");
       }
-
-      if (
-        applicationRef.current &&
-        !applicationRef.current.contains(event.target)
-      ) {
+      if (applicationRef.current && !applicationRef.current.contains(event.target)) {
         setApplicationOpen(false);
         setApplicationQuery("");
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
-  // ============================================================
-  // CARD STYLE
-  // ============================================================
   const cardStyle = {
     background: isDark ? "#020617" : "rgba(255,255,255,0.95)",
     backdropFilter: isDark ? "none" : "blur(24px)",
@@ -496,9 +417,6 @@ function ManageWhitelisted() {
       : "0 2px 16px rgba(0,0,0,0.08)",
   };
 
-  // ============================================================
-  // INPUT STYLE
-  // ============================================================
   const inputClass = `
     w-full
     h-[42px]
@@ -529,12 +447,8 @@ function ManageWhitelisted() {
     ${isDark ? "text-slate-500" : "text-slate-400"}
   `;
 
-  // ============================================================
-  // TABLE SEARCH
-  // ============================================================
   const filteredApplications = whitelistedApplications.filter((item) => {
     const search = searchTerm.toLowerCase();
-
     return (
       String(item?.applicationHash || "").toLowerCase().includes(search) ||
       String(item?.applicationName || "").toLowerCase().includes(search) ||
@@ -544,9 +458,6 @@ function ManageWhitelisted() {
     );
   });
 
-  // ============================================================
-  // TABLE UNIQUE KEY
-  // ============================================================
   const getApplicationKey = (item) => {
     return (
       String(item?.applicationHash || "") ||
@@ -556,12 +467,8 @@ function ManageWhitelisted() {
     );
   };
 
-  // ============================================================
-  // SELECT TABLE ROW
-  // ============================================================
   const handleSelectTableRow = (item) => {
     const key = getApplicationKey(item);
-
     setSelectedTableRows((prev) => {
       if (prev.includes(key)) {
         return prev.filter((itemKey) => itemKey !== key);
@@ -570,9 +477,6 @@ function ManageWhitelisted() {
     });
   };
 
-  // ============================================================
-  // SELECT ALL TABLE ROWS
-  // ============================================================
   const allFilteredSelected =
     filteredApplications.length > 0 &&
     filteredApplications.every((item) =>
@@ -581,9 +485,7 @@ function ManageWhitelisted() {
 
   const handleSelectAllTableRows = () => {
     const allKeys = filteredApplications.map((item) => getApplicationKey(item));
-
     if (allKeys.length === 0) return;
-
     if (allFilteredSelected) {
       setSelectedTableRows((prev) =>
         prev.filter((key) => !allKeys.includes(key))
@@ -593,27 +495,18 @@ function ManageWhitelisted() {
     }
   };
 
-  // ============================================================
-  // ADD TO BLACKLISTED
-  // ============================================================
   const handleAddToBlacklisted = () => {
     const selectedRows = whitelistedApplications.filter((item) =>
       selectedTableRows.includes(getApplicationKey(item))
     );
-
     console.log("Selected applications for blacklist:", selectedRows);
   };
 
-  // ============================================================
-  // PAGINATION
-  // ============================================================
   const totalPages = Math.max(
     1,
     Math.ceil(filteredApplications.length / rowsPerPage)
   );
-
   const startIndex = (currentPage - 1) * rowsPerPage;
-
   const paginatedApplications = filteredApplications.slice(
     startIndex,
     startIndex + rowsPerPage
@@ -625,9 +518,6 @@ function ManageWhitelisted() {
     }
   }, [currentPage, totalPages]);
 
-  // ============================================================
-  // JSX
-  // ============================================================
   return (
     <div className="w-full">
       <br />
@@ -669,7 +559,7 @@ function ManageWhitelisted() {
       {/* FORM CARD */}
       <div className="rounded-2xl border p-6" style={cardStyle}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          {/* BRANCH NAME (with search) */}
+          {/* BRANCH NAME */}
           <div ref={branchRef} className="relative">
             <label className={labelClass}>
               Branch Name <span className="text-rose-500">*</span>
@@ -728,7 +618,6 @@ function ManageWhitelisted() {
                   }
                 `}
               >
-                {/* BRANCH SEARCH */}
                 <div
                   className={`
                     px-3 py-2 border-b
@@ -783,7 +672,6 @@ function ManageWhitelisted() {
                   ) : (
                     filteredBranches.map((item, index) => {
                       const value = getBranchValue(item);
-
                       return (
                         <button
                           key={`${value}-${index}`}
@@ -803,7 +691,6 @@ function ManageWhitelisted() {
                           `}
                         >
                           <span>{value}</span>
-
                           {branch === value && (
                             <Check size={13} className="text-[#7094ff]" />
                           )}
@@ -820,7 +707,7 @@ function ManageWhitelisted() {
             )}
           </div>
 
-          {/* DEVICE NAME (with search) */}
+          {/* DEVICE NAME */}
           <div ref={deviceRef} className="relative">
             <label className={labelClass}>
               DEVICE NAME{" "}
@@ -903,7 +790,6 @@ function ManageWhitelisted() {
                   }
                 `}
               >
-                {/* DEVICE SEARCH */}
                 <div
                   className={`
                     px-3 py-2 border-b
@@ -955,7 +841,6 @@ function ManageWhitelisted() {
                     </div>
                   ) : (
                     <>
-                      {/* SELECT ALL */}
                       <button
                         type="button"
                         onClick={handleSelectAllDevices}
@@ -1015,7 +900,6 @@ function ManageWhitelisted() {
                         </span>
                       </button>
 
-                      {/* DEVICE LIST */}
                       {filteredDevicesByQuery.map((value, index) => {
                         const originalItem = devices.find(
                           (d) => getDeviceValue(d) === value
@@ -1071,7 +955,7 @@ function ManageWhitelisted() {
             )}
           </div>
 
-          {/* APPLICATION NAME - MULTI SELECT (with search) */}
+          {/* APPLICATION NAME */}
           <div ref={applicationRef} className="relative">
             <label className={labelClass}>
               Application Name <span className="text-rose-500">*</span>
@@ -1157,7 +1041,6 @@ function ManageWhitelisted() {
                     }
                   `}
                 >
-                  {/* APPLICATION SEARCH */}
                   <div
                     className={`
                       px-3 py-2 border-b
@@ -1355,7 +1238,7 @@ function ManageWhitelisted() {
       </div>
 
       {/* WHITELISTED APPLICATION TABLE */}
-      {submitted && (
+      {isSuccessfullySubmitted && (
         <div
           ref={tableRef}
           className={`w-full rounded-xl border p-6 mt-4 scroll-mt-6 ${
@@ -1418,13 +1301,17 @@ function ManageWhitelisted() {
             <table className="w-full text-left">
               <thead className={`sticky top-0 z-10 ${isDark ? "bg-[#020617]" : "bg-white"}`}>
                 <tr className={`border-b ${isDark ? "border-[#27355f]" : "border-slate-200"}`}>
-                  <th className="w-[55px] px-2 py-3 text-center">
-                    <input
-                      type="checkbox"
-                      checked={allFilteredSelected}
-                      onChange={handleSelectAllTableRows}
-                      className="h-3 w-3 cursor-pointer accent-[#4f56f0]"
-                    />
+                  {/* ✅ UPDATED SELECT ALL HEADER */}
+                  <th className={`w-[110px] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={allFilteredSelected}
+                        onChange={handleSelectAllTableRows}
+                        className="h-3 w-3 cursor-pointer accent-[#4f56f0]"
+                      />
+                      Select All
+                    </label>
                   </th>
 
                   <th className={`w-[55px] px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
@@ -1480,7 +1367,7 @@ function ManageWhitelisted() {
                             : "border-slate-100 hover:bg-slate-50"
                         }`}
                       >
-                        <td className="w-[55px] px-2 py-3 text-center">
+                        <td className="w-[110px] px-4 py-3 text-left">
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -1520,7 +1407,7 @@ function ManageWhitelisted() {
             </table>
           </div>
 
-          {/* PAGINATION — matches ViewApplication style */}
+          {/* PAGINATION */}
           <div className="flex items-center justify-between mt-5 pt-4">
             <div
               className={`text-xs ${
@@ -1586,14 +1473,6 @@ function ManageWhitelisted() {
               className="h-[36px] px-4 rounded-none bg-[#4f56f0] text-[11px] font-semibold text-white border border-[#4f56f0] hover:bg-[#5d64f5] transition-colors"
             >
               Add To Blacklisted
-            </button>
-
-            <button
-              type="button"
-              onClick={handleReset}
-              className="h-[36px] px-4 rounded-none bg-[#4f56f0] text-[11px] font-semibold text-white border border-[#4f56f0] hover:bg-[#5d64f5] transition-colors"
-            >
-              Reset
             </button>
           </div>
         </div>

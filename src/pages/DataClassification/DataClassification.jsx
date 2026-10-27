@@ -626,6 +626,15 @@ function ClassificationFilesModal({
   const [isMounted, setIsMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
+  // ✅ Reset pagination + search every time the modal opens
+  useEffect(() => {
+    if (show) {
+      setCurrentPage(1);
+      setSearch("");
+      // setPageSize(10); // uncomment if you also want to reset rows-per-page
+    }
+  }, [show]);
+
   // Handle modal transitions
   useEffect(() => {
     if (show) {

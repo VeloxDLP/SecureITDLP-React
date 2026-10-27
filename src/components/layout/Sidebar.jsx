@@ -126,6 +126,14 @@ const NAV = [
   //   scope: '/devices',
   // },
 
+   {
+    label: 'OS Dashboard',
+    icon: Monitor,
+    path: '/OSDashboard',
+    roles: ['admin', 'superadmin'],
+    scope: '/devices',
+  },
+
 ];
 
 

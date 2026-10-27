@@ -258,7 +258,7 @@ function ManageBlacklisted() {
   };
 
   // ============================================================
-  // SUBMIT
+  // SUBMIT (With Deduplication Fix)
   // ============================================================
   const handleSubmit = async () => {
     if (!branch || device.length === 0) return;
@@ -281,7 +281,13 @@ function ManageBlacklisted() {
       );
       console.log("Application Blacklisted Response:", response);
 
-      setBlacklistedApplications(response?.data || []);
+      // 👇 FIX: Deduplicate the array using Application Hash
+      const rawData = response?.data || [];
+      const uniqueData = Array.from(
+        new Map(rawData.map((item) => [item.applicationHash, item])).values()
+      );
+
+      setBlacklistedApplications(uniqueData);
       setHasQueried(true);
 
       setTimeout(() => {
@@ -339,6 +345,8 @@ function ManageBlacklisted() {
   // SEARCH
   // ============================================================
   const filteredApplications = blacklistedApplications.filter((item) => {
+    if (!searchTerm) return true; // Fast return if no search term
+
     const search = searchTerm.toLowerCase();
 
     return (
@@ -982,7 +990,6 @@ function ManageBlacklisted() {
               <thead className={`sticky top-0 z-10 ${isDark ? "bg-[#020617]" : "bg-white"}`}>
                 <tr className={`border-b ${isDark ? "border-[#27355f]" : "border-slate-200"}`}>
                   
-                  {/* UPDATED: Added "Select All" text next to the checkbox */}
                   <th className={`w-[100px] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input

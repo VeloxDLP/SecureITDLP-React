@@ -544,6 +544,16 @@ getTotalScannedFiles: async () => {
     return data;
   },
 
+getIpAddressesByBranchAndOs: async (requestData) => {
+  const { data } = await axiosInstance.post(
+    API_ENDPOINTS.VIEWDEVICE.IP_ADDRESSES_BY_BRANCH_AND_OS,
+    requestData,
+    { headers: { "Content-Type": "application/json" } },
+  );
+  return data;   
+},
+  
+
   getActivePolicyModal: async (policyName) => {
     const { data } = await axiosInstance.get(
       `${API_ENDPOINTS.NETWORK_POLICY.GETACTIVE_DISTINCTPOLICY_MODAL}/${encodeURIComponent(policyName)}`,
@@ -564,6 +574,11 @@ getTotalScannedFiles: async () => {
     return data;
   },
 
+
+  
+
+
+  
 
 };
 

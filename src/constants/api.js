@@ -39,16 +39,18 @@ export const API_ENDPOINTS = {
    
   },
 
-VIEWDEVICE:{
-    VIEW_DEVICE:"/DeviceManager/allDevices",
-    GET_BRANCH:"/UsbProtection/getBranches",
-    GET_DEVICES_ON_BRANCH:"/DeviceManager/DevicesByBranch",
-    GET_MODEACESS:"/UsbProtection/modeAccessCount",
-    GET_DEVICEDETAIL:"/UsbProtection/deviceDetails",
-    GET_DEVICENAME:"/UsbProtection/devices",
-    GET_LIVE_POLICY_STATUS:"/DeviceManager/livePolicyStatus"
-},
+VIEWDEVICE: {
+    VIEW_DEVICE:              "/DeviceManager/allDevices",
+    GET_BRANCH:               "/UsbProtection/getBranches",
+    GET_DEVICES_ON_BRANCH:    "/DeviceManager/DevicesByBranch",
+    GET_MODEACESS:            "/UsbProtection/modeAccessCount",
+    GET_DEVICEDETAIL:         "/UsbProtection/deviceDetails",
+    GET_DEVICENAME:           "/UsbProtection/devices",
+    GET_LIVE_POLICY_STATUS:   "/DeviceManager/livePolicyStatus",
 
+    // 🆕 IP filter by branch + OS
+    IP_ADDRESSES_BY_BRANCH_AND_OS: "/DeviceManager/ipAddressesByBranchAndOs",
+},
 PRINTER_CONTROL:{
   ALL_PRINTER_POLICIES:"/PrinterDLP/getAllPrinterPolicy",
   ADD_PRINTER_POLICY:"/PrinterDLP/addPrinterPolicy"
