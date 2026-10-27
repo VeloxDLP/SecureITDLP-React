@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ShieldCheck,
   Folder,
@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { dashboardService } from "../../services/dashboardService";
+import { alert as showAlert } from "../../components/ui/AlertModal";
+import PolicyStatusTracker from "../PolicyStatusTracker/PolicyStatusTracker";
 
 function ApplyNetworkPolicy() {
   const { isDark } = useTheme();
@@ -22,6 +24,20 @@ function ApplyNetworkPolicy() {
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState("");
   const [selectedEndpoints, setSelectedEndpoints] = useState([]);
+
+  // Policy status tracker (same flow as Printer/USB policy)
+  const [trackedEventIds, setTrackedEventIds] = useState([]);
+  const [applying, setApplying] = useState(false);
+  const isTracking = trackedEventIds.length > 0;
+  const trackerRef = useRef(null);
+  const pageTopRef = useRef(null);
+
+  // Tracker just appeared → bring it into view automatically
+  useEffect(() => {
+    if (isTracking) {
+      trackerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isTracking]);
 
   const [policies, setPolicies] = useState([]);
   const [policiesLoading, setPoliciesLoading] = useState(true);
@@ -323,14 +339,80 @@ function ApplyNetworkPolicy() {
     );
   };
 
-  const handleApplyPolicy = () => {
-    const payload = {
-      policyId: selectedPolicy,
-      policyName: currentPolicy?.name,
-      branch: selectedBranch,
-      endpoints: selectedEndpoints,
+  // ---- Build Apply Policy payload (same values shown on screen) ----
+  const buildApplyPayload = () => {
+    const branchObj = branches.find((b) => b.id === selectedBranch);
+
+    // selectedEndpoints holds internal ids ("NAME-index") → send the real device names
+    const deviceNames = endpoints
+      .filter((e) => selectedEndpoints.includes(e.id))
+      .map((e) => e.name);
+
+    return {
+      policyName: policyDetails?.policyName || currentPolicy?.name || "",
+      Description: policyDetails?.description || currentPolicy?.description || "",
+      mode: details.mode[0] || "",
+      fileTypes: details.fileType,
+      applications: details.application,
+      keywords: details.keywords,
+      regex: details.regex,
+      channels: details.channels,
+      branch: branchObj?.label || selectedBranch,
+      devices: deviceNames,
     };
-    console.log("🚀 Apply Policy payload:", payload);
+  };
+
+  const handleApplyPolicy = async () => {
+    if (applying || isTracking) return;
+
+    const payload = buildApplyPayload();
+    console.log("Apply Policy payload : " + JSON.stringify(payload));
+
+    setApplying(true);
+    try {
+      const response = await dashboardService.ApplyNetworkPolicy(payload);
+
+      // Backend returns the event ids to poll (same shape handling as PrinterControl)
+      const body = response?.data;
+      const eventIds = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.data)
+        ? body.data
+        : Array.isArray(response)
+        ? response
+        : [];
+
+      if (eventIds.length > 0) {
+        setTrackedEventIds(eventIds);
+      } else {
+        await showAlert({
+          icon: "error",
+          title: "Policy Failed",
+          text: response?.message || "Error applying policy",
+          confirmButtonText: "Cancel",
+        });
+      }
+    } catch (error) {
+      console.error("Error applying network policy:", error);
+      await showAlert({
+        icon: "error",
+        title: "Policy Failed",
+        text: error?.response?.data?.message || "Error applying policy",
+        confirmButtonText: "Cancel",
+      });
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  // Tracker closed (X) → reset the form so the next apply starts fresh
+  const handleTrackerClose = () => {
+    setTrackedEventIds([]);
+    setSelectedPolicy(null);
+    setSelectedBranch("");
+    setSelectedEndpoints([]);
+    setEndpointSearch("");
+    pageTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   // ---- Small UI helpers ----
@@ -396,7 +478,7 @@ function ApplyNetworkPolicy() {
       : "border-emerald-300 bg-emerald-50 text-emerald-700";
 
   return (
-    <div className="w-full">
+    <div ref={pageTopRef} className="w-full">
       <br />
 
       {/* HEADING — styled like Manage Blacklisted */}
@@ -974,11 +1056,11 @@ function ApplyNetworkPolicy() {
 
                     <button
                       onClick={handleApplyPolicy}
-                      disabled={selectedEndpoints.length === 0}
+                      disabled={selectedEndpoints.length === 0 || applying || isTracking}
                       className="rounded-md bg-[#4F7CFF] px-3 py-1 text-[11px] font-medium text-white hover:bg-[#3A66E0] transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex-shrink-0"
                     >
-                      Apply
-                      {selectedEndpoints.length > 0
+                      {applying || isTracking ? "Processing…" : "Apply"}
+                      {!applying && !isTracking && selectedEndpoints.length > 0
                         ? ` (${selectedEndpoints.length})`
                         : ""}
                     </button>
@@ -1057,6 +1139,17 @@ function ApplyNetworkPolicy() {
           </div>
         </div>
       </div>
+
+      {/* Real-time policy status (same as Printer/USB policy) */}
+      {isTracking && (
+        <div ref={trackerRef} className="mt-5 mb-5 scroll-mt-5">
+          <PolicyStatusTracker
+            title="Network Policy"
+            eventIds={trackedEventIds}
+            onClose={handleTrackerClose}
+          />
+        </div>
+      )}
     </div>
   );
 }

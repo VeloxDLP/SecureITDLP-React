@@ -481,6 +481,18 @@ export const dashboardService = {
     return data;
   },
 
+     ApplyNetworkPolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.NETWORK_POLICY.APPLY_NETWORK_POLICY, requestData,);
+    return data;
+  },
+     DeleteNetworkPolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.NETWORK_POLICY.DELETE_NETWORK_POLICY, requestData,);
+    return data;
+  },
+
+
   getApplicationsByHost: async (devices) => {
     const { data } = await axiosInstance.post(
       API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BY_HOST,

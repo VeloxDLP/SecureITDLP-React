@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Search,
   CalendarDays,
@@ -19,6 +19,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { dashboardService } from "../../services/dashboardService";
+import { alert as showAlert } from "../../components/ui/AlertModal";
+import PolicyStatusTracker from "../PolicyStatusTracker/PolicyStatusTracker";
 
 export default function ActivePolicy() {
   const navigate = useNavigate();
@@ -40,9 +42,20 @@ export default function ActivePolicy() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  /* =========================================================
-     FETCH ACTIVE NETWORK POLICIES
-  ========================================================= */
+  // Policy status tracker (same flow as Apply Network Policy)
+  const [trackedEventIds, setTrackedEventIds] = useState([]);
+  const [deletingPolicy, setDeletingPolicy] = useState(null);
+  const isTracking = trackedEventIds.length > 0;
+  const trackerRef = useRef(null);
+  const pageTopRef = useRef(null);
+
+  // Tracker just appeared → bring it into view automatically
+  useEffect(() => {
+    if (isTracking) {
+      trackerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isTracking]);
+
 
   useEffect(() => {
     fetchActiveNetworkPolicies();
@@ -94,9 +107,6 @@ export default function ActivePolicy() {
     }
   };
 
-  /* =========================================================
-     SEARCH
-  ========================================================= */
 
   const filteredPolicies = policies.filter((policy) => {
     const search = searchTerm.toLowerCase();
@@ -106,10 +116,6 @@ export default function ActivePolicy() {
       policy.description.toLowerCase().includes(search)
     );
   });
-
-  /* =========================================================
-     VIEW DETAILS
-  ========================================================= */
 
   const handleViewDetails = async (policy) => {
     try {
@@ -151,27 +157,83 @@ export default function ActivePolicy() {
     }
   };
 
-  /* =========================================================
-     CLOSE MODAL
-  ========================================================= */
-
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedPolicy(null);
     setPolicyDetails(null);
   };
 
-  /* =========================================================
-     CREATE POLICY
-  ========================================================= */
+  const handleDeletePolicy = async (policy) => {
+    if (deletingPolicy || isTracking) return;
+
+    setDeletingPolicy(policy.name);
+    try {
+      // List API has no IPs → fetch the policy's active rows to get them
+      const response = await dashboardService.getActivePolicyModal(policy.name);
+      const apiData = Array.isArray(response?.data) ? response.data : [];
+
+      const ipAddresses = [
+        ...new Set(
+          apiData
+            .flatMap((row) =>
+              String(row.ipAddress || row.ipaddress || "").split(",")
+            )
+            .map((ip) => ip.trim())
+            .filter(Boolean)
+        ),
+      ];
+
+      const payload = {
+        policyName: policy.name,
+        hostnames:ipAddresses,
+      };
+
+      console.log("Delete Policy payload : " + JSON.stringify(payload));
+      const response2 = await dashboardService.DeleteNetworkPolicy(payload);
+
+      // Backend returns the event ids to poll (same shape handling as Apply)
+      const body = response2?.data;
+      const eventIds = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.data)
+        ? body.data
+        : Array.isArray(response2)
+        ? response2
+        : [];
+
+      if (eventIds.length > 0) {
+        setTrackedEventIds(eventIds);
+      } else {
+        await showAlert({
+          icon: "error",
+          title: "Delete Failed",
+          text: response2?.message || "Error deleting policy",
+          confirmButtonText: "Cancel",
+        });
+      }
+    } catch (err) {
+      console.error("Error deleting network policy:", err);
+      await showAlert({
+        icon: "error",
+        title: "Delete Failed",
+        text: err?.response?.data?.message || "Error deleting policy",
+        confirmButtonText: "Cancel",
+      });
+    } finally {
+      setDeletingPolicy(null);
+    }
+  };
+
+  // Tracker closed (X) → refresh the list so the deleted policy disappears
+  const handleTrackerClose = () => {
+    setTrackedEventIds([]);
+    fetchActiveNetworkPolicies();
+    pageTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const handleCreatePolicy = () => {
     navigate("/NetworkPolicy");
   };
-
-  /* =========================================================
-     BODY SCROLL
-  ========================================================= */
 
   useEffect(() => {
     document.body.style.overflow = showModal ? "hidden" : "unset";
@@ -182,11 +244,7 @@ export default function ActivePolicy() {
   }, [showModal]);
 
   return (
-    <div className="w-full p-6 space-y-6 bg-transparent min-h-screen">
-
-      {/* =====================================================
-          HEADER
-      ===================================================== */}
+    <div ref={pageTopRef} className="w-full p-6 space-y-6 bg-transparent min-h-screen">
 
       <div className="flex items-start justify-between mb-7">
         <div className="flex items-center gap-3">
@@ -220,10 +278,6 @@ export default function ActivePolicy() {
           </div>
         </div>
       </div>
-
-      {/* =====================================================
-          TOOLBAR
-      ===================================================== */}
 
       <div className="flex flex-wrap items-center gap-4">
         <div className="relative flex-1 min-w-[200px]">
@@ -283,19 +337,12 @@ export default function ActivePolicy() {
         </div>
       )}
 
-      {/* =====================================================
-          ERROR
-      ===================================================== */}
-
       {!loading && error && !showModal && (
         <div className="rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
 
-      {/* =====================================================
-          NO DATA
-      ===================================================== */}
 
       {!loading && !error && filteredPolicies.length === 0 && (
         <div className="rounded-xl border border-gray-200 dark:border-[#2B3345] bg-white dark:bg-[#020617] p-10 text-center">
@@ -305,10 +352,6 @@ export default function ActivePolicy() {
           </p>
         </div>
       )}
-
-      {/* =====================================================
-          POLICY CARDS
-      ===================================================== */}
 
       {!loading && filteredPolicies.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -368,8 +411,18 @@ export default function ActivePolicy() {
                   View Details →
                 </button>
 
-                <button type="button" className="hover:scale-110 transition">
-                  <Trash2 size={18} className="text-red-500 hover:text-red-400" />
+                <button
+                  type="button"
+                  onClick={() => handleDeletePolicy(policy)}
+                  disabled={!!deletingPolicy || isTracking}
+                  title={deletingPolicy === policy.name ? "Deleting…" : "Delete policy"}
+                  className="hover:scale-110 transition disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+                >
+                  {deletingPolicy === policy.name ? (
+                    <span className="block w-[18px] h-[18px] rounded-full border-2 border-red-300 border-t-red-500 animate-spin" />
+                  ) : (
+                    <Trash2 size={18} className="text-red-500 hover:text-red-400" />
+                  )}
                 </button>
               </div>
             </div>
@@ -377,9 +430,6 @@ export default function ActivePolicy() {
         </div>
       )}
 
-      {/* =====================================================
-          POLICY DETAILS MODAL
-      ===================================================== */}
 
       {showModal && selectedPolicy && (
         <div
@@ -395,10 +445,7 @@ export default function ActivePolicy() {
             "
             onClick={(e) => e.stopPropagation()}
           >
-            {/* =================================================
-                MODAL HEADER
-            ================================================= */}
-
+       
             <div className="flex items-center justify-between px-7 py-5 border-b border-[#1E293B]">
               <div className="flex items-center gap-4">
                 <div className="w-11 h-11 rounded-lg flex items-center justify-center border border-[#3154A6] bg-[#0B1630]">
@@ -429,10 +476,6 @@ export default function ActivePolicy() {
                 <X size={23} />
               </button>
             </div>
-
-            {/* =================================================
-                MODAL BODY
-            ================================================= */}
 
             <div className="max-h-[70vh] overflow-y-auto px-7 py-6">
               {modalLoading ? (
@@ -497,9 +540,20 @@ export default function ActivePolicy() {
             ================================================= */}
 
             <div className="flex justify-end  border-[#1E293B] px-7 py-5">
- 
+
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Real-time delete status (same as Apply Network Policy) */}
+      {isTracking && (
+        <div ref={trackerRef} className="scroll-mt-5">
+          <PolicyStatusTracker
+            title="Delete Network Policy"
+            eventIds={trackedEventIds}
+            onClose={handleTrackerClose}
+          />
         </div>
       )}
     </div>
