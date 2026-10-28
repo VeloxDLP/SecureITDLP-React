@@ -59,6 +59,7 @@ PRINTER_CONTROL:{
 
 APPLICATION_CONTROL:{
   SET_MODE:"/ApplicationControl/SetApplicationMode",
+  WHITELIST_APPLICATION:"/ApplicationControl/addToWhitelist",
   APPLICATION_CONTROLDATA:"/ApplicationControl/getmodeall",
   VIEW_APPLICATION_COUNT: "/ApplicationControl/GetHostWiseApplicationCount",
   VIEW_APPLICATION_DETAILS:"/ApplicationControl/GetHostWiseApplicationDetail",
