@@ -1155,7 +1155,7 @@ function PolicyTable({ policies, onDelete }) {
           <table className="w-full min-w-[1100px] table-fixed">
             <thead>
               <tr>
-                <th className={`${thCls} w-[7%]`}>#</th>
+                <th className={`${thCls} w-[7%]`}>SR NO</th>
                 <th className={`${thCls} w-[18%]`}>BRANCH</th>
                 <th className={`${thCls} w-[22%]`}>IP ADDRESS</th>
                 <th className={`${thCls} w-[20%]`}>DEVICE</th>

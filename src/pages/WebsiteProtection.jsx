@@ -296,7 +296,7 @@ function Dropdown({
 }
 
 /* ─────────────────────────────────────────────────────────────
-   MULTI SELECT DROPDOWN — count-only trigger
+   MULTI SELECT DROPDOWN — with Select All & Status Counter
 ───────────────────────────────────────────────────────────── */
 function MultiSelectDropdown({
   values = [],
@@ -306,6 +306,7 @@ function MultiSelectDropdown({
   disabled = false,
   searchable = false,
   error = false,
+  itemName = 'item',
 }) {
   const { isDark } = useTheme()
   const [open, setOpen] = useState(false)
@@ -324,6 +325,10 @@ function MultiSelectDropdown({
 
   const allSelected =
     filtered.length > 0 && filtered.every(o => values.includes(o.value))
+
+  // 🆕 Calculate Up / Down counts
+  const upCount = filtered.filter(o => String(o.status).toLowerCase() === 'up').length
+  const downCount = filtered.filter(o => String(o.status).toLowerCase() === 'down').length
 
   useEffect(() => {
     if (open) setHighlighted(0)
@@ -408,10 +413,9 @@ function MultiSelectDropdown({
     }
   }
 
-  /* Text shown on trigger — count only */
   const displayText =
     values.length > 0
-      ? `${values.length} device${values.length !== 1 ? 's' : ''} selected`
+      ? `${values.length} ${itemName}${values.length !== 1 ? 's' : ''} selected`
       : placeholder
 
   return (
@@ -464,8 +468,7 @@ function MultiSelectDropdown({
               : 'bg-white/95 border-slate-200 backdrop-blur-2xl'}
           `}
         >
-   
-
+          {/* SEARCH BAR */}
           {searchable && (
             <div className={`p-2 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
               <div className="relative">
@@ -475,7 +478,7 @@ function MultiSelectDropdown({
                   autoFocus
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  placeholder="Search..."
+                  placeholder="Search devices..."
                   className={`w-full pl-7 pr-3 py-2 rounded-lg outline-none text-[12px] border
                     ${isDark
                       ? 'bg-[#111827] border-white/[0.07] text-[#d0d0d0] placeholder-[#555]'
@@ -484,6 +487,33 @@ function MultiSelectDropdown({
               </div>
             </div>
           )}
+
+          {/* 🆕 SELECT ALL & COUNTER */}
+          <div className={`px-3 py-2 border-b flex justify-between items-center ${isDark ? 'border-white/[0.06] bg-[#0a101d]' : 'border-slate-100 bg-slate-50/50'}`}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleSelectAll();
+              }}
+              className={`text-[12px] font-medium flex items-center gap-2 transition-colors
+                ${isDark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors
+                ${allSelected ? 'bg-[#7094ff] border-[#7094ff]' : isDark ? 'border-slate-500' : 'border-slate-300'}`}>
+                {allSelected && <Check size={11} className="text-white" />}
+              </div>
+              {allSelected ? 'Deselect all' : 'Select all'}
+            </button>
+
+            {/* 🆕 UP / DOWN COUNTER */}
+            {filtered.some(o => o.status) && (
+              <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                {upCount} Up / {downCount} Down
+              </span>
+            )}
+          </div>
 
           <div ref={listRef} className="max-h-56 overflow-y-auto py-1">
             {filtered.length === 0 ? (
@@ -688,7 +718,6 @@ function AddForm({ branches, onAdd }) {
     return { value, label: value }
   })
 
-  /* Map devices → { value, label, status } */
   const deviceOptions = (fetchedDevices || []).map((device, idx) => {
     if (typeof device === 'string' || typeof device === 'number') {
       return { value: String(device), label: String(device), status: null }
@@ -748,7 +777,6 @@ function AddForm({ branches, onAdd }) {
     setSuccess(false)
 
     try {
-      /* Build one target per selected device */
       const targets = form.devices.map(dev => ({
         hostName: dev,
         branch: branchName,
@@ -823,6 +851,7 @@ function AddForm({ branches, onAdd }) {
             values={form.devices}
             onChange={set('devices')}
             options={deviceOptions}
+            itemName="device"
             placeholder={
               devicesLoading
                 ? 'Loading devices...'
@@ -844,6 +873,7 @@ function AddForm({ branches, onAdd }) {
             values={form.websites}
             onChange={set('websites')}
             options={websiteNames}
+            itemName="website"
             placeholder="Select Website Names"
             searchable
             error={submitted && form.websites.length === 0}

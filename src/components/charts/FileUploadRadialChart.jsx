@@ -8,6 +8,7 @@ import {
 } from "recharts";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { dashboardService } from "../../services/dashboardService";
+import { useTheme } from "../../context/ThemeContext";
 
 // Column configuration – all columns to display in the modal table
 const incidentColumns = [
@@ -53,10 +54,11 @@ const CustomPieTooltip = ({ active, payload, isDark }) => {
   return null;
 };
 
-export default function FileUploadRadialChart({
-  data = [],
-  isDark = false,
-}) {
+export default function FileUploadRadialChart({ data = [] }) {
+  const { isDark } = useTheme();
+  // Unfilled part of each ring: dark track in dark theme, light gray in light theme
+  const trackColor = isDark ? "#23232c" : "#e2e8f0";
+
   // ====================================================
   // MODAL TRANSITION STATES
   // ====================================================
@@ -274,7 +276,7 @@ export default function FileUploadRadialChart({
                 cornerRadius={20}
               >
                 <Cell key="outer-active" fill={data[0]?.color || "#7094ff"} />
-                <Cell key="outer-inactive" fill="#23232c" />
+                <Cell key="outer-inactive" fill={trackColor} />
               </Pie>
 
               {/* Middle Ring */}
@@ -290,7 +292,7 @@ export default function FileUploadRadialChart({
                 cornerRadius={20}
               >
                 <Cell key="middle-active" fill={data[1]?.color || "#4f8cff"} />
-                <Cell key="middle-inactive" fill="#23232c" />
+                <Cell key="middle-inactive" fill={trackColor} />
               </Pie>
 
               {/* Inner Ring */}
@@ -306,7 +308,7 @@ export default function FileUploadRadialChart({
                 cornerRadius={20}
               >
                 <Cell key="inner-active" fill={data[2]?.color || "#2d5cff"} />
-                <Cell key="inner-inactive" fill="#23232c" />
+                <Cell key="inner-inactive" fill={trackColor} />
               </Pie>
 
               {/* Custom Tooltip – shows "Name Incidents" like the image */}

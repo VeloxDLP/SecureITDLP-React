@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { dashboardService } from "../../services/dashboardService";
+import { alert as showAlert } from "../../components/ui/AlertModal";
+import PolicyStatusTracker from "../PolicyStatusTracker/PolicyStatusTracker";
 
 // ─── Status Pill ───────────────────────────────────────────────
 function StatusPill({ status }) {
@@ -67,6 +69,19 @@ function ManageBlacklisted() {
   const branchRef = useRef(null);
   const deviceRef = useRef(null);
   const tableRef = useRef(null);
+
+  // Policy status tracker (same flow as Apply Network Policy)
+  const [trackedEventIds, setTrackedEventIds] = useState([]);
+  const [whitelisting, setWhitelisting] = useState(false);
+  const isTracking = trackedEventIds.length > 0;
+  const trackerRef = useRef(null);
+
+  // Tracker just appeared → bring it into view automatically
+  useEffect(() => {
+    if (isTracking) {
+      trackerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isTracking]);
 
   const rowsPerPage = 10;
 
@@ -258,7 +273,7 @@ function ManageBlacklisted() {
   };
 
   // ============================================================
-  // SUBMIT
+  // SUBMIT (With Deduplication Fix)
   // ============================================================
   const handleSubmit = async () => {
     if (!branch || device.length === 0) return;
@@ -281,7 +296,12 @@ function ManageBlacklisted() {
       );
       console.log("Application Blacklisted Response:", response);
 
-      setBlacklistedApplications(response?.data || []);
+      const rawData = response?.data || [];
+      const uniqueData = Array.from(
+        new Map(rawData.map((item) => [item.applicationHash, item])).values()
+      );
+
+      setBlacklistedApplications(uniqueData);
       setHasQueried(true);
 
       setTimeout(() => {
@@ -314,9 +334,6 @@ function ManageBlacklisted() {
     }
   };
 
-  // ============================================================
-  // OUTSIDE CLICK
-  // ============================================================
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (branchRef.current && !branchRef.current.contains(event.target)) {
@@ -335,10 +352,9 @@ function ManageBlacklisted() {
     };
   }, []);
 
-  // ============================================================
-  // SEARCH
-  // ============================================================
   const filteredApplications = blacklistedApplications.filter((item) => {
+    if (!searchTerm) return true; // Fast return if no search term
+
     const search = searchTerm.toLowerCase();
 
     return (
@@ -388,11 +404,70 @@ function ManageBlacklisted() {
       selectedApplications.includes(getApplicationKey(item))
     );
 
-  const handleAddToWhitelist = () => {
+  const handleAddToWhitelist = async () => {
+    if (whitelisting || isTracking) return;
+
     const selectedRows = blacklistedApplications.filter((item) =>
       selectedApplications.includes(getApplicationKey(item))
     );
-    console.log("Selected applications for whitelist:", selectedRows);
+    if (selectedRows.length === 0) return;
+
+    const payload = {
+      branch: branch,
+      applications: selectedRows.map((item) => ({
+        applicationName: item.applicationName || "",
+        applicationType: item.applicationType || "",
+        applicationHash: item.applicationHash || "",
+        ipAddress: item.ipAddress || item.ipaddress || "",
+      })),
+    };
+
+    console.log("Add To Whitelist payload :", payload);
+
+    setWhitelisting(true);
+    try {
+      const response = await dashboardService.addWhitelistFromBlacklist(payload);
+
+      // Backend returns the event ids to poll (same shape handling as other policies)
+      const body = response?.data;
+      const eventIds = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.data)
+        ? body.data
+        : Array.isArray(response)
+        ? response
+        : [];
+
+      if (eventIds.length > 0) {
+        setTrackedEventIds(eventIds);
+      } else {
+        await showAlert({
+          icon: "error",
+          title: "Whitelist Failed",
+          text: response?.message || "Error adding applications to whitelist",
+          confirmButtonText: "Cancel",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding applications to whitelist:", error);
+      await showAlert({
+        icon: "error",
+        title: "Whitelist Failed",
+        text:
+          error?.response?.data?.message ||
+          "Error adding applications to whitelist",
+        confirmButtonText: "Cancel",
+      });
+    } finally {
+      setWhitelisting(false);
+    }
+  };
+
+  // Tracker closed (X) → clear selection and reload the blacklist table
+  const handleTrackerClose = () => {
+    setTrackedEventIds([]);
+    setSelectedApplications([]);
+    handleSubmit();
   };
 
   // ============================================================
@@ -982,7 +1057,6 @@ function ManageBlacklisted() {
               <thead className={`sticky top-0 z-10 ${isDark ? "bg-[#020617]" : "bg-white"}`}>
                 <tr className={`border-b ${isDark ? "border-[#27355f]" : "border-slate-200"}`}>
                   
-                  {/* UPDATED: Added "Select All" text next to the checkbox */}
                   <th className={`w-[100px] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -1137,11 +1211,25 @@ function ManageBlacklisted() {
             <button
               type="button"
               onClick={handleAddToWhitelist}
-              className="h-[36px] px-4 rounded-none bg-[#4f56f0] text-[11px] font-semibold text-white border border-[#4f56f0] hover:bg-[#5d64f5] transition-colors"
+              disabled={
+                selectedApplications.length === 0 || whitelisting || isTracking
+              }
+              className="h-[36px] px-4 rounded-none bg-[#4f56f0] text-[11px] font-semibold text-white border border-[#4f56f0] hover:bg-[#5d64f5] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Add To Whitelist
+              {whitelisting || isTracking ? "Processing…" : "Add To Whitelist"}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Real-time whitelist status (same as other policies) */}
+      {isTracking && (
+        <div ref={trackerRef} className="mt-5 mb-5 scroll-mt-5">
+          <PolicyStatusTracker
+            title="Whitelist Application"
+            eventIds={trackedEventIds}
+            onClose={handleTrackerClose}
+          />
         </div>
       )}
     </div>

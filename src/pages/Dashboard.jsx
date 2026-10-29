@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   AreaChart,
   Area,
@@ -18,7 +18,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
@@ -205,80 +204,6 @@ function STitle({ children }) {
   )
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Custom Page Size Select
-───────────────────────────────────────────────────────────── */
-function PageSizeSelect({ value, onChange, options = [5, 10, 20, 50] }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((p) => !p)}
-        className="
-          inline-flex h-8 items-center gap-1.5
-          rounded-lg border border-slate-200 bg-white px-2.5
-          text-[12px] font-medium text-slate-700
-          transition hover:bg-slate-100
-          dark:border-white/10 dark:bg-white/[0.04]
-          dark:text-white/70 dark:hover:bg-white/[0.08]
-        "
-      >
-        {value} / page
-        <ChevronDown
-          size={12}
-          className={`transition-transform ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-
-      {open && (
-        <div
-          className="
-            absolute bottom-full right-0 z-50 mb-1
-            min-w-[110px] overflow-hidden rounded-lg border
-            border-slate-200 bg-white shadow-lg
-            dark:border-white/10 dark:bg-[#0b1120]
-          "
-        >
-          {options.map((size) => (
-            <button
-              key={size}
-              type="button"
-              onClick={() => {
-                onChange(size)
-                setOpen(false)
-              }}
-              className={`
-                block w-full px-3 py-1.5 text-left text-[12px]
-                transition
-                ${
-                  size === value
-                    ? 'bg-[#7094ff]/10 text-[#7094ff] dark:bg-[#7094ff]/20 dark:text-[#a5b8ff]'
-                    : 'text-slate-700 hover:bg-slate-100 dark:text-white/70 dark:hover:bg-white/[0.06]'
-                }
-              `}
-            >
-              {size} / page
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 
 /* ─────────────────────────────────────────────────────────────
    Generic Incident Modal
@@ -296,10 +221,12 @@ function IncidentModal({
   error = '',
 }) {
   const [search, setSearch] = useState('')
-  const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
   const [isMounted, setIsMounted] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+
+  // Replaced hardcoded pageSize with a constant since the selector is removed
+  const pageSize = 10
 
   useEffect(() => {
     if (show) {
@@ -336,11 +263,11 @@ function IncidentModal({
   const safeData = Array.isArray(data) ? data : []
 
   const incidentColumns = [
-    { accessor: 'hostname',  header: 'HOSTNAME' },
+    { accessor: 'hostname', header: 'HOSTNAME' },
     { accessor: 'ipAddress', header: 'IP ADDRESS' },
     { accessor: 'eventType', header: 'EVENTS' },
-    { accessor: 'fileName',  header: 'FILE DETAILS' },
-    { accessor: 'action',    header: 'ACTIONS' },
+    { accessor: 'fileName', header: 'FILE DETAILS' },
+    { accessor: 'action', header: 'ACTIONS' },
     { accessor: 'timestamp', header: 'TIMESTAMP' },
   ]
 
@@ -362,7 +289,7 @@ function IncidentModal({
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [search, pageSize])
+  }, [search])
 
   const totalPages = Math.max(
     1,
@@ -396,14 +323,12 @@ function IncidentModal({
   return (
     <div
       onTransitionEnd={handleModalTransitionEnd}
-      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
-        isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-      }`}
+      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
     >
       <div
         className={`
-          flex h-[80vh] w-full max-w-6xl flex-col transition-all duration-300 ease-in-out ${
-            isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+          flex h-[80vh] w-full max-w-6xl flex-col transition-all duration-300 ease-in-out ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
           }
 
           overflow-hidden rounded-xl border border-slate-200
@@ -572,8 +497,8 @@ function IncidentModal({
             </div>
 
             {!loading && !error && (
-            <div
-              className="
+              <div
+                className="
                 flex shrink-0 flex-col gap-3
                 border-t border-slate-200
                 bg-slate-50 px-4 py-3
@@ -582,31 +507,25 @@ function IncidentModal({
                 sm:flex-row sm:items-center
                 sm:justify-between
               "
-            >
-              <span className="text-[12px] text-slate-500 dark:text-white/40">
-                Showing {startRecord}-{endRecord} of{' '}
-                {filteredRows.length}
-              </span>
+              >
+                <span className="text-[12px] text-slate-500 dark:text-white/40">
+                  Showing {startRecord}-{endRecord} of{' '}
+                  {filteredRows.length}
+                </span>
 
-              <div className="flex items-center gap-2">
-                
-                <PageSizeSelect
-                  value={pageSize}
-                  onChange={(size) => {
-                    setPageSize(size)
-                    setCurrentPage(1)
-                  }}
-                />
+                <div className="flex items-center gap-2">
 
-                <button
-                  type="button"
-                  disabled={safePage === 1}
-                  onClick={() =>
-                    setCurrentPage((prev) =>
-                      Math.max(1, prev - 1)
-                    )
-                  }
-                  className="
+                  {/* PageSizeSelect REMOVED HERE */}
+
+                  <button
+                    type="button"
+                    disabled={safePage === 1}
+                    onClick={() =>
+                      setCurrentPage((prev) =>
+                        Math.max(1, prev - 1)
+                      )
+                    }
+                    className="
                     inline-flex h-8 items-center gap-1
                     rounded-lg border border-slate-200
                     bg-white px-2.5 text-[12px]
@@ -619,13 +538,13 @@ function IncidentModal({
                     dark:text-white/70
                     dark:hover:bg-white/[0.08]
                   "
-                >
-                  <ChevronLeft size={14} />
-                  Prev
-                </button>
+                  >
+                    <ChevronLeft size={14} />
+                    Prev
+                  </button>
 
-                <span
-                  className="
+                  <span
+                    className="
                     rounded-lg bg-white px-3 py-1.5
                     text-[12px] font-semibold
                     text-slate-700
@@ -634,22 +553,22 @@ function IncidentModal({
                     dark:text-white/80
                     dark:ring-white/10
                   "
-                >
-                  {safePage} / {totalPages}
-                </span>
+                  >
+                    {safePage} / {totalPages}
+                  </span>
 
-                <button
-                  type="button"
-                  disabled={safePage === totalPages}
-                  onClick={() =>
-                    setCurrentPage((prev) =>
-                      Math.min(
-                        totalPages,
-                        prev + 1
+                  <button
+                    type="button"
+                    disabled={safePage === totalPages}
+                    onClick={() =>
+                      setCurrentPage((prev) =>
+                        Math.min(
+                          totalPages,
+                          prev + 1
+                        )
                       )
-                    )
-                  }
-                  className="
+                    }
+                    className="
                     inline-flex h-8 items-center gap-1
                     rounded-lg border border-slate-200
                     bg-white px-2.5 text-[12px]
@@ -662,12 +581,12 @@ function IncidentModal({
                     dark:text-white/70
                     dark:hover:bg-white/[0.08]
                   "
-                >
-                  Next
-                  <ChevronRight size={14} />
-                </button>
+                  >
+                    Next
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
               </div>
-            </div>
             )}
           </div>
         </div>
@@ -689,10 +608,12 @@ function EndpointStatusModal({
   isDark,
 }) {
   const [search, setSearch] = useState('')
-  const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
   const [isMounted, setIsMounted] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+
+  // Replaced hardcoded pageSize with a constant since the selector is removed
+  const pageSize = 10
 
   useEffect(() => {
     if (show) {
@@ -885,7 +806,7 @@ function EndpointStatusModal({
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [search, pageSize, category])
+  }, [search, category])
 
   const totalPages = Math.max(
     1,
@@ -919,15 +840,13 @@ function EndpointStatusModal({
   return (
     <div
       onTransitionEnd={handleModalTransitionEnd}
-      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
-        isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-      }`}
+      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
     >
       <div
         className={`
           flex h-[80vh] w-full max-w-6xl
-          flex-col overflow-hidden rounded-xl transition-all duration-300 ease-in-out ${
-            isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+          flex-col overflow-hidden rounded-xl transition-all duration-300 ease-in-out ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
           }
 
           border border-slate-200 bg-white
@@ -1165,14 +1084,8 @@ function EndpointStatusModal({
               </span>
 
               <div className="flex items-center gap-2">
-                
-                <PageSizeSelect
-                  value={pageSize}
-                  onChange={(size) => {
-                    setPageSize(size)
-                    setCurrentPage(1)
-                  }}
-                />
+
+                {/* PageSizeSelect REMOVED HERE */}
 
                 <button
                   type="button"
@@ -1639,7 +1552,7 @@ export default function Dashboard() {
 
       const mapped = clipboardData.map(
         (item) => ({
-          x: item[0],   
+          x: item[0],
           v: item[1],
         })
       )

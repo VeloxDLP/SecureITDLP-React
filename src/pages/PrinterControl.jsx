@@ -964,7 +964,7 @@ function PolicyTable({ policies, onDelete }) {
               }}
             >
               <tr>
-                <th className={thCls}>#</th>
+                <th className={`${thCls} w-14`}>Sr. No</th>
                 <th className={thCls}>Branch</th>
                 <th className={thCls}>Device</th>
                 <th className={thCls}>Mode</th>
@@ -1081,7 +1081,30 @@ export default function PrinterControl() {
     loadPageData()
   }, [])
 
-  const handleDelete = id => setPolicies(prev => prev.filter(p => p.id !== id))
+  const handleDelete = async id => {
+    const confirmed = await showAlert({
+      icon: 'warning',
+      title: 'Delete Policy?',
+      text: 'This printer policy will be permanently removed.',
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+    })
+    if (!confirmed) return
+
+    try {
+      await dashboardService.deletePrinterPolicy(id)
+      setPolicies(prev => prev.filter(p => p.id !== id))
+    } catch (err) {
+      console.error('Error deleting printer policy:', err)
+      await showAlert({
+        icon: 'error',
+        title: 'Delete Failed',
+        text: err?.response?.data?.message || 'Could not delete the policy.',
+        confirmButtonText: 'OK',
+      })
+    }
+  }
 
   return (
     <div className="w-full">
