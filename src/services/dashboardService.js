@@ -443,7 +443,7 @@ export const dashboardService = {
 
   getApplicationPolicies: async () => {
     const { data } = await axiosInstance.get(
-      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_CONTROLDATA, // 👈 corrected
+      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_CONTROLDATA, 
     );
     return data;
   },
@@ -451,6 +451,22 @@ export const dashboardService = {
   getApplicationCount: async (requestData) => {
     const { data } = await axiosInstance.post(
       API_ENDPOINTS.APPLICATION_CONTROL.VIEW_APPLICATION_COUNT,
+      requestData,
+    );
+    return data;
+  },
+
+  setApplicationMode: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.APPLICATION_CONTROL.SET_MODE,
+      requestData,
+    );
+    return data;
+  },
+
+  addWhitelistFromBlacklist: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.APPLICATION_CONTROL.WHITELIST_APPLICATION,
       requestData,
     );
     return data;

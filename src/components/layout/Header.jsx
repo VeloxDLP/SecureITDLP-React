@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
 import Button from '../ui/Button'
 import logo from '../../assets/DLP-Logo.png'
+import logoDark from '../../assets/DlpDark.png'
 
 export default function Header() {
   const { toggleTheme, isDark } = useTheme()
@@ -40,7 +41,7 @@ export default function Header() {
           "
       >
         <img
-          src={logo}
+          src={isDark ? logo : logoDark}
           alt="SecureIT DLP"
           className="h-20 w-auto object-contain"
         />

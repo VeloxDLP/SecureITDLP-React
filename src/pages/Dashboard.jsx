@@ -263,11 +263,11 @@ function IncidentModal({
   const safeData = Array.isArray(data) ? data : []
 
   const incidentColumns = [
-    { accessor: 'hostname',  header: 'HOSTNAME' },
+    { accessor: 'hostname', header: 'HOSTNAME' },
     { accessor: 'ipAddress', header: 'IP ADDRESS' },
     { accessor: 'eventType', header: 'EVENTS' },
-    { accessor: 'fileName',  header: 'FILE DETAILS' },
-    { accessor: 'action',    header: 'ACTIONS' },
+    { accessor: 'fileName', header: 'FILE DETAILS' },
+    { accessor: 'action', header: 'ACTIONS' },
     { accessor: 'timestamp', header: 'TIMESTAMP' },
   ]
 
@@ -323,14 +323,12 @@ function IncidentModal({
   return (
     <div
       onTransitionEnd={handleModalTransitionEnd}
-      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
-        isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-      }`}
+      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
     >
       <div
         className={`
-          flex h-[80vh] w-full max-w-6xl flex-col transition-all duration-300 ease-in-out ${
-            isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+          flex h-[80vh] w-full max-w-6xl flex-col transition-all duration-300 ease-in-out ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
           }
 
           overflow-hidden rounded-xl border border-slate-200
@@ -499,8 +497,8 @@ function IncidentModal({
             </div>
 
             {!loading && !error && (
-            <div
-              className="
+              <div
+                className="
                 flex shrink-0 flex-col gap-3
                 border-t border-slate-200
                 bg-slate-50 px-4 py-3
@@ -509,25 +507,25 @@ function IncidentModal({
                 sm:flex-row sm:items-center
                 sm:justify-between
               "
-            >
-              <span className="text-[12px] text-slate-500 dark:text-white/40">
-                Showing {startRecord}-{endRecord} of{' '}
-                {filteredRows.length}
-              </span>
+              >
+                <span className="text-[12px] text-slate-500 dark:text-white/40">
+                  Showing {startRecord}-{endRecord} of{' '}
+                  {filteredRows.length}
+                </span>
 
-              <div className="flex items-center gap-2">
-                
-                {/* PageSizeSelect REMOVED HERE */}
+                <div className="flex items-center gap-2">
 
-                <button
-                  type="button"
-                  disabled={safePage === 1}
-                  onClick={() =>
-                    setCurrentPage((prev) =>
-                      Math.max(1, prev - 1)
-                    )
-                  }
-                  className="
+                  {/* PageSizeSelect REMOVED HERE */}
+
+                  <button
+                    type="button"
+                    disabled={safePage === 1}
+                    onClick={() =>
+                      setCurrentPage((prev) =>
+                        Math.max(1, prev - 1)
+                      )
+                    }
+                    className="
                     inline-flex h-8 items-center gap-1
                     rounded-lg border border-slate-200
                     bg-white px-2.5 text-[12px]
@@ -540,13 +538,13 @@ function IncidentModal({
                     dark:text-white/70
                     dark:hover:bg-white/[0.08]
                   "
-                >
-                  <ChevronLeft size={14} />
-                  Prev
-                </button>
+                  >
+                    <ChevronLeft size={14} />
+                    Prev
+                  </button>
 
-                <span
-                  className="
+                  <span
+                    className="
                     rounded-lg bg-white px-3 py-1.5
                     text-[12px] font-semibold
                     text-slate-700
@@ -555,22 +553,22 @@ function IncidentModal({
                     dark:text-white/80
                     dark:ring-white/10
                   "
-                >
-                  {safePage} / {totalPages}
-                </span>
+                  >
+                    {safePage} / {totalPages}
+                  </span>
 
-                <button
-                  type="button"
-                  disabled={safePage === totalPages}
-                  onClick={() =>
-                    setCurrentPage((prev) =>
-                      Math.min(
-                        totalPages,
-                        prev + 1
+                  <button
+                    type="button"
+                    disabled={safePage === totalPages}
+                    onClick={() =>
+                      setCurrentPage((prev) =>
+                        Math.min(
+                          totalPages,
+                          prev + 1
+                        )
                       )
-                    )
-                  }
-                  className="
+                    }
+                    className="
                     inline-flex h-8 items-center gap-1
                     rounded-lg border border-slate-200
                     bg-white px-2.5 text-[12px]
@@ -583,12 +581,12 @@ function IncidentModal({
                     dark:text-white/70
                     dark:hover:bg-white/[0.08]
                   "
-                >
-                  Next
-                  <ChevronRight size={14} />
-                </button>
+                  >
+                    Next
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
               </div>
-            </div>
             )}
           </div>
         </div>
@@ -842,15 +840,13 @@ function EndpointStatusModal({
   return (
     <div
       onTransitionEnd={handleModalTransitionEnd}
-      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
-        isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-      }`}
+      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
     >
       <div
         className={`
           flex h-[80vh] w-full max-w-6xl
-          flex-col overflow-hidden rounded-xl transition-all duration-300 ease-in-out ${
-            isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+          flex-col overflow-hidden rounded-xl transition-all duration-300 ease-in-out ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
           }
 
           border border-slate-200 bg-white
@@ -1088,7 +1084,7 @@ function EndpointStatusModal({
               </span>
 
               <div className="flex items-center gap-2">
-                
+
                 {/* PageSizeSelect REMOVED HERE */}
 
                 <button
@@ -1556,7 +1552,7 @@ export default function Dashboard() {
 
       const mapped = clipboardData.map(
         (item) => ({
-          x: item[0],   
+          x: item[0],
           v: item[1],
         })
       )
