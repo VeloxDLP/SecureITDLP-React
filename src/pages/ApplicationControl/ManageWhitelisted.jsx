@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { dashboardService } from "../../services/dashboardService";
+import { alert as showAlert } from "../../components/ui/AlertModal";
+import PolicyStatusTracker from "../PolicyStatusTracker/PolicyStatusTracker";
 
 // ─── Status Pill ───────────────────────────────────────────────
 function StatusPill({ status }) {
@@ -78,6 +80,19 @@ function ManageWhitelisted() {
   const deviceRef = useRef(null);
   const applicationRef = useRef(null);
   const tableRef = useRef(null);
+
+  // Policy status tracker (same flow as Manage Blacklisted)
+  const [trackedEventIds, setTrackedEventIds] = useState([]);
+  const [blacklisting, setBlacklisting] = useState(false);
+  const isTracking = trackedEventIds.length > 0;
+  const trackerRef = useRef(null);
+
+  // Tracker just appeared → bring it into view automatically
+  useEffect(() => {
+    if (isTracking) {
+      trackerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isTracking]);
 
   const rowsPerPage = 5;
 
@@ -496,11 +511,69 @@ function ManageWhitelisted() {
     }
   };
 
-  const handleAddToBlacklisted = () => {
+  const handleAddToBlacklisted = async () => {
+    if (blacklisting || isTracking) return;
+
     const selectedRows = whitelistedApplications.filter((item) =>
       selectedTableRows.includes(getApplicationKey(item))
     );
-    console.log("Selected applications for blacklist:", selectedRows);
+    if (selectedRows.length === 0) return;
+
+    const payload = {
+      branch: branch || selectedRows[0]?.branchName || "",
+      blkApplications: selectedRows.map((item) => ({
+        applicationName: item.applicationName || "",
+        applicationPath: item.applicationPath || "",
+        applicationHash: item.applicationHash || "",
+        ipAddress: item.ipAddress || item.ipaddress || "",
+      })),
+    };
+
+    console.log("Add To Blacklist payload :", JSON.stringify(payload));
+
+    setBlacklisting(true);
+    try {
+      const response = await dashboardService.addBlacklistFromWhitelist(payload);
+
+      // Backend returns the event ids to poll (same shape handling as other policies)
+      const body = response?.data;
+      const eventIds = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.data)
+        ? body.data
+        : Array.isArray(response)
+        ? response
+        : [];
+
+      if (eventIds.length > 0) {
+        setTrackedEventIds(eventIds);
+      } else {
+        await showAlert({
+          icon: "error",
+          title: "Blacklist Failed",
+          text: response?.message || "Error adding applications to blacklist",
+          confirmButtonText: "Cancel",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding applications to blacklist:", error);
+      await showAlert({
+        icon: "error",
+        title: "Blacklist Failed",
+        text:
+          error?.response?.data?.message ||
+          "Error adding applications to blacklist",
+        confirmButtonText: "Cancel",
+      });
+    } finally {
+      setBlacklisting(false);
+    }
+  };
+
+  // Tracker closed (X) → reset the whole page for the next run
+  const handleTrackerClose = () => {
+    setTrackedEventIds([]);
+    handleReset();
   };
 
   const totalPages = Math.max(
@@ -1471,11 +1544,25 @@ function ManageWhitelisted() {
             <button
               type="button"
               onClick={handleAddToBlacklisted}
-              className="h-[36px] px-4 rounded-none bg-[#4f56f0] text-[11px] font-semibold text-white border border-[#4f56f0] hover:bg-[#5d64f5] transition-colors"
+              disabled={
+                selectedTableRows.length === 0 || blacklisting || isTracking
+              }
+              className="h-[36px] px-4 rounded-none bg-[#4f56f0] text-[11px] font-semibold text-white border border-[#4f56f0] hover:bg-[#5d64f5] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Add To Blacklisted
+              {blacklisting || isTracking ? "Processing…" : "Add To Blacklisted"}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Real-time blacklist status (same as other policies) */}
+      {isTracking && (
+        <div ref={trackerRef} className="mt-5 mb-5 scroll-mt-5">
+          <PolicyStatusTracker
+            title="Blacklist Application"
+            eventIds={trackedEventIds}
+            onClose={handleTrackerClose}
+          />
         </div>
       )}
     </div>
