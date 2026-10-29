@@ -102,7 +102,6 @@ export default function OSDashboard() {
       boxSizing: "border-box",
     },
     
-    // 🆕 NEW: Separate Header Card
     headerCard: {
       background: isDark ? "#020617" : "#ffffff",
       border: isDark ? "1px solid #1a2a4a" : "1px solid #e2e8f0",
@@ -126,6 +125,7 @@ export default function OSDashboard() {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
       gap: "16px",
+      alignItems: "start", // 👈 THE FIX: Prevents all cards from stretching to the tallest card's height
     },
     columnCard: {
       background: isDark ? "#020617" : "#ffffff",
@@ -135,6 +135,7 @@ export default function OSDashboard() {
       display: "flex",
       flexDirection: "column",
       gap: "16px",
+      // Removed align-self: stretch if it existed
     },
     columnHeader: {
       display: "flex",
@@ -248,7 +249,7 @@ export default function OSDashboard() {
   return (
     <div style={styles.page}>
       
-      {/* 🆕 HEADER SEPARATE DIV (MATCHING SCREENSHOT STYLE) */}
+      {/* HEADER */}
       <div style={styles.headerCard}>
         <h2 style={styles.panelTitle}>OS Dashboard</h2>
         <div style={styles.panelSubtitle}>
