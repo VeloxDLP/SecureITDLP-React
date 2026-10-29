@@ -250,7 +250,7 @@ export default function OSDashboard() {
       
       {/* 🆕 HEADER SEPARATE DIV (MATCHING SCREENSHOT STYLE) */}
       <div style={styles.headerCard}>
-        <h2 style={styles.panelTitle}>Zonewise Dashboard</h2>
+        <h2 style={styles.panelTitle}>OS Dashboard</h2>
         <div style={styles.panelSubtitle}>
           Configure policy, source, destination control details.
         </div>

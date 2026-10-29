@@ -504,12 +504,13 @@ export const dashboardService = {
     return data;
   },
 
-  getApplicationWhitelisted: async () => {
-    const { data } = await axiosInstance.get(
-      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_WHITELISTED,
-    );
+
+   getApplicationWhitelisted: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_WHITELISTED, requestData,);
     return data;
   },
+
 
   getAllNetworkPolicy: async () => {
     const { data } = await axiosInstance.get(

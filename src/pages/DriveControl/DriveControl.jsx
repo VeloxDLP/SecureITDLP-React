@@ -18,6 +18,7 @@ import { useTheme } from '../../context/ThemeContext'
 import { alert as showAlert } from '../../components/ui/AlertModal'
 import { dashboardService } from '../../services/dashboardService'
 import PolicyStatusTracker from '../PolicyStatusTracker/PolicyStatusTracker'
+
 function StatusPill({ status }) {
   if (!status) return null
 
@@ -39,6 +40,7 @@ function StatusPill({ status }) {
     </span>
   )
 }
+
 function Dropdown({
   value,
   onChange,
@@ -419,14 +421,6 @@ function MultiSelectDropdown({
     }
   };
 
-  const upCount = normalizedOptions.filter(
-    (o) => String(o.status).toLowerCase() === "up"
-  ).length;
-
-  const downCount = normalizedOptions.filter(
-    (o) => String(o.status).toLowerCase() === "down"
-  ).length;
-
   return (
     <div ref={containerRef} className="relative w-full">
       {/* SELECTED VALUE BUTTON */}
@@ -579,13 +573,6 @@ function MultiSelectDropdown({
                 </span>
 
                 {allSelected ? "Deselect all" : "Select all"}
-              </span>
-
-              <span
-                className={`text-[10px] ${isDark ? "text-slate-500" : "text-slate-400"
-                  }`}
-              >
-                {/* {upCount} Up / {downCount} Down */}
               </span>
             </button>
           </div>
@@ -790,13 +777,9 @@ function GlassCard({ children, className = '' }) {
       className={`rounded-2xl border ${className}`}
       style={{
         background: isDark ? '#020617' : 'rgba(255,255,255,0.95)',
-
         backdropFilter: isDark ? 'none' : 'blur(24px)',
-
         WebkitBackdropFilter: isDark ? 'none' : 'blur(24px)',
-
         borderColor: isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0',
-
         boxShadow: isDark
           ? '0 4px 24px rgba(0,0,0,0.5)'
           : '0 2px 16px rgba(0,0,0,0.08)',
@@ -817,7 +800,6 @@ function extractDeviceLabel(device, index) {
     return s || `Device ${index + 1}`
   }
 
-  /* Try common fields in priority order */
   const candidates = [
     device.deviceName,
     device.device,
@@ -839,7 +821,6 @@ function extractDeviceLabel(device, index) {
     }
   }
 
-  /* Last resort: pick any short non-empty string from the object */
   if (typeof device === 'object') {
     const fallback = Object.values(device).find(
       (v) =>
@@ -889,7 +870,6 @@ function AddForm({ branches, onAdd }) {
     }
   })
 
-  /* 🟢 Guaranteed non-empty labels + status pills */
   const deviceOptions = (fetchedDevices || []).map((device, index) => {
     const label = extractDeviceLabel(device, index)
 
@@ -921,12 +901,8 @@ function AddForm({ branches, onAdd }) {
     }))
   }
 
-  // const isValid = form.branch && form.device && form.function && form.drivePath;
-
   const isValid = form.branch && selectedDevices.length > 0 && form.drivePath;
 
-
-  /* Branch change → fetch devices */
   const handleBranchChange = async (branch) => {
     setForm((prev) => ({
       ...prev,
@@ -1070,7 +1046,6 @@ function AddForm({ branches, onAdd }) {
             {submitted && selectedDevices.length === 0 && (
               <p className="text-[10px] text-rose-500 mt-1">Required</p>
             )}
-
           </div>
 
           {/* Function */}
@@ -1079,14 +1054,6 @@ function AddForm({ branches, onAdd }) {
               Functions{' '}
               <span className="text-rose-500 normal-case tracking-normal">*</span>
             </label>
-
-            {/* <Dropdown
-            value={form.function}
-            onChange={set('function')}
-            options={functionOptions}
-            placeholder="Select Function"
-            error={submitted && !form.function}
-          /> */}
 
             <MultiSelectDropdown
               values={selectedFunction}
@@ -1169,23 +1136,6 @@ function AddForm({ branches, onAdd }) {
             Reset
           </GlassButton>
 
-          {/* <GlassButton
-          onClick={handleSubmit}
-          variant={success ? 'success' : 'primary'}
-          className="px-5 py-2 font-semibold"
-        >
-          {success ? (
-            <>
-              <Check size={13} />
-              Saved!
-            </>
-          ) : (
-            <>
-              <Plus size={13} />
-              Submit
-            </>
-          )}
-        </GlassButton> */}
           <GlassButton
             onClick={handleSubmit}
             disabled={isTracking}
@@ -1195,8 +1145,6 @@ function AddForm({ branches, onAdd }) {
             <Plus size={13} />
             {isTracking ? "Processing…" : "Submit"}
           </GlassButton>
-
-
         </div>
       </GlassCard>
       {isTracking && (
@@ -1216,7 +1164,6 @@ function AddForm({ branches, onAdd }) {
         </div>
       )}
     </>
-
   )
 }
 
@@ -1258,6 +1205,10 @@ function PolicyTable({ policies, onDelete }) {
       getValue(p, 'drivePath', 'drivepath', 'path')
     ).toLowerCase()
 
+    const filePath = String(
+      getValue(p, 'filePath', 'filepath', 'file_path')
+    ).toLowerCase()
+
     const funcString = String(
       getValue(p, 'function', 'functions', 'FUNCTIONS')
     ).toLowerCase()
@@ -1268,6 +1219,7 @@ function PolicyTable({ policies, onDelete }) {
         device.includes(q) ||
         ipAddress.includes(q) ||
         drivePath.includes(q) ||
+        filePath.includes(q) ||
         funcString.includes(q)) &&
       (!filterMode || funcString.includes(filterMode.toLowerCase()))
     )
@@ -1416,14 +1368,14 @@ function PolicyTable({ policies, onDelete }) {
           <table className="w-full border-collapse">
             <thead>
               <tr className={isDark ? 'bg-white/[0.015]' : 'bg-slate-50/70'}>
-                {['#', 'Branch', 'Device', 'Function', 'Drive Path'].map(
+                {['Sr. No', 'Branch', 'Device', 'Function', 'File Path', 'Drive Path'].map(
                   (h, i) => (
                     <th
                       key={h}
                       className={`
                         text-left text-[10px] font-semibold uppercase tracking-wider
                         px-4 py-3
-                        ${i === 0 ? 'w-[30px]' : ''}
+                        ${i === 0 ? 'w-[70px]' : ''}
                         ${isDark ? 'text-slate-600' : 'text-slate-400'}
                       `}
                     >
@@ -1475,6 +1427,7 @@ function PolicyTable({ policies, onDelete }) {
                   'hostname'
                 )
                 const func = getValue(p, 'function', 'functions', 'FUNCTIONS')
+                const filePath = getValue(p, 'filePath', 'filepath', 'file_path')
                 const drivePath = getValue(p, 'drivePath', 'drivepath', 'path')
 
                 return (
@@ -1517,28 +1470,30 @@ function PolicyTable({ policies, onDelete }) {
                       <FunctionBadge value={func || 'N/A'} />
                     </td>
 
+                    {/* File Path */}
                     <td
                       className={`
                         px-4 py-3 text-[11px] font-mono
                         ${isDark ? 'text-slate-400' : 'text-slate-500'}
                       `}
                     >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="
-                            w-6 h-6 rounded-md flex items-center justify-center
-                            bg-[#7094ff]/10 border border-[#7094ff]/15
-                          "
-                        >
-                          <Folder size={11} className="text-[#7094ff]" />
-                        </div>
+                      <span className="truncate block max-w-[280px]">
+                        {filePath || 'N/A'}
+                      </span>
+                    </td>
 
-                        <span className="truncate max-w-[280px]">
-                          {drivePath ||
-                            getValue(p, 'mode', 'modeOfAccess', 'mode_access') ||
-                            'N/A'}
-                        </span>
-                      </div>
+                    {/* Drive Path */}
+                    <td
+                      className={`
+                        px-4 py-3 text-[11px] font-mono
+                        ${isDark ? 'text-slate-400' : 'text-slate-500'}
+                      `}
+                    >
+                      <span className="truncate block max-w-[280px]">
+                        {drivePath ||
+                          getValue(p, 'mode', 'modeOfAccess', 'mode_access') ||
+                          'N/A'}
+                      </span>
                     </td>
 
                     <td className="px-4 py-3 text-right">
@@ -1685,8 +1640,29 @@ export default function DriveControl() {
     loadPageData()
   }, [])
 
-  const handleDelete = (id) => {
-    setPolicies((prev) => prev.filter((policy) => policy.id !== id))
+  const handleDelete = async (id) => {
+    const confirmed = await showAlert({
+      icon: 'warning',
+      title: 'Delete Policy?',
+      text: 'This drive policy will be permanently removed.',
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+    })
+    if (!confirmed) return
+
+    try {
+      await dashboardService.deleteDrivePolicy(id)
+      setPolicies((prev) => prev.filter((policy) => policy.id !== id))
+    } catch (err) {
+      console.error('Error deleting drive policy:', err)
+      await showAlert({
+        icon: 'error',
+        title: 'Delete Failed',
+        text: err?.response?.data?.message || 'Could not delete the policy.',
+        confirmButtonText: 'OK',
+      })
+    }
   }
 
   return (

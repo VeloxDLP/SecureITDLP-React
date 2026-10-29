@@ -358,9 +358,10 @@ function ManageWhitelisted() {
         device: selectedDevices,
       };
 
+      // alert("Add to whitelist "+JSON.stringify(requestData));
       console.log("Whitelist Application Request:", requestData);
 
-      const response = await dashboardService.getApplicationWhitelisted();
+      const response = await dashboardService.getApplicationWhitelisted(requestData);
       console.log("Application Whitelisted Response:", response);
 
       const result = Array.isArray(response?.data) ? response.data : [];
