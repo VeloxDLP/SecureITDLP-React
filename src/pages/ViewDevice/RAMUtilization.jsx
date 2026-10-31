@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Cpu, Database, CalendarDays, CircleGauge } from "lucide-react";
 
@@ -27,7 +26,7 @@ function RAMUtilization() {
       padding: 16,
       boxSizing: "border-box",
       color: "#e8edff",
-      background: "#0b1422",
+      background: "#020617",            // 👈 CARD BACKGROUND
       border: "1px solid #1d2b43",
       borderRadius: 12,
       fontFamily: "Inter, system-ui, sans-serif",
@@ -78,7 +77,7 @@ function RAMUtilization() {
       gap: 5,
       padding: "5px 9px",
       color: "#c69aff",
-      background: "#291744",
+      background: "#020617",            // 👈 LIVE BADGE BACKGROUND
       borderRadius: 20,
       fontSize: 9,
     },
@@ -96,7 +95,7 @@ function RAMUtilization() {
       width: 20,
       height: 22,
       color: "#aab8d0",
-      background: "#142137",
+      background: "#020617",            // 👈 COLLAPSE BUTTON BACKGROUND
       border: "1px solid #293b56",
       borderRadius: 4,
       fontSize: 15,

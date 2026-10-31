@@ -1,18 +1,17 @@
 import React from "react";
 import { Search, ChevronUp, CalendarDays, Minus, Database, HardDrive, Activity, Server } from "lucide-react";
 
-import CPUUtilization from "./CPUUtilization"; 
-// Note: Ensure your CPUUtilization component also accepts a theme or uses the same context
+import CPUUtilization from "./CPUUtilization";
 
 // --- SUB-COMPONENT: RAM Utilization ---
 const RAMCard = ({ isDark }) => {
   const theme = {
-    bg: isDark ? "#111827" : "#ffffff",
+    bg: isDark ? "#020617" : "#ffffff",        // 👈 card bg
     border: isDark ? "#1e293b" : "#e2e8f0",
     text: isDark ? "#e8eef7" : "#0f172a",
     textMuted: isDark ? "#8da2b9" : "#64748b",
     textLight: isDark ? "#94a3b8" : "#94a3b8",
-    cardBg: isDark ? "#0b1120" : "#f8fafc",
+    cardBg: isDark ? "#020617" : "#f8fafc",    // 👈 inner card bg
     borderLight: isDark ? "#1e293b" : "#e2e8f0",
     gridLine: isDark ? "#1e293b" : "#e2e8f0",
     btnActive: isDark ? "#1e3a8a" : "#dbeafe",
@@ -211,17 +210,14 @@ const HardwareDetails = ({ isDark }) => {
 
 
 // --- MAIN PAGE COMPONENT ---
-function DeviceDetail({ isDark = true }) { // Defaulting to true, but pass your useTheme() value
+function DeviceDetail({ isDark = true }) {
   return (
     <div className={`device-detail-container ${isDark ? 'dark' : 'light'}`}>
       
       {/* Top Row: CPU & RAM */}
       <div className="device-utilization-grid">
-        <div className="device-utilization-card" style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            {/* Note: You will need to pass isDark to CPUUtilization as well if it has hardcoded colors */}
-            <CPUUtilization isDark={isDark} />
-          </div>
+        <div className="device-utilization-card">
+          <CPUUtilization isDark={isDark} />
         </div>
         <div className="device-utilization-card">
           <RAMCard isDark={isDark} />
@@ -239,14 +235,12 @@ function DeviceDetail({ isDark = true }) { // Defaulting to true, but pass your 
         html, body {
           margin: 0;
           padding: 0;
-          overflow: hidden;
         }
 
         /* --- THEME VARIABLES --- */
         .device-detail-container {
           width: 100%;
-          height: 100vh;
-          overflow-y: auto; 
+          min-height: 100vh;
           box-sizing: border-box;
           font-family: "Inter", system-ui, sans-serif;
           padding: 24px;
@@ -255,12 +249,12 @@ function DeviceDetail({ isDark = true }) { // Defaulting to true, but pass your 
 
         .device-detail-container.dark {
           color: #e8eef7;
-          background: #060b13; 
+          // background: #020617;            /* 👈 page bg (was empty) */
         }
 
-        .device-detail-container.light {
+        .device-detail-container.light {                                           
           color: #0f172a;
-          background: #f8fafc; 
+          /* background: #f8fafc; */
         }
 
         /* Top Grid */
@@ -286,6 +280,20 @@ function DeviceDetail({ isDark = true }) { // Defaulting to true, but pass your 
           align-items: stretch; 
         }
 
+        /* --- FOOTER --- */
+        .device-footer {
+          margin-top: 24px;
+          padding-top: 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 11px;
+          border-top: 1px solid;
+        }
+
+        .dark .device-footer { border-color: #1e293b; color: #94a3b8; }
+        .light .device-footer { border-color: #e2e8f0; color: #64748b; }
+
         /* --- CARD STYLES (Theme Dependent) --- */
         .inner-card {
           border-radius: 12px;
@@ -296,7 +304,7 @@ function DeviceDetail({ isDark = true }) { // Defaulting to true, but pass your 
         }
 
         .dark .inner-card {
-          background: #111827;
+          background: #020617;            /* 👈 card bg (was #111827) */
           border: 1px solid #1e293b;
         }
 
@@ -447,6 +455,7 @@ function DeviceDetail({ isDark = true }) { // Defaulting to true, but pass your 
         @media (max-width: 600px) {
           .device-detail-container { padding: 16px; }
           .hw-grid { grid-template-columns: 1fr; }
+          .device-footer { flex-direction: column; gap: 6px; text-align: center; }
         }
       `}</style>
     </div>
