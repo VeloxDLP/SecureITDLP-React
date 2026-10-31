@@ -142,6 +142,15 @@ const NAV = [
     scope: '/devices',
   },
 
+
+{
+  label: 'USB Encryption',
+  icon: Usb,
+  path: '/UsbEncryption',
+  roles: ['admin', 'superadmin'],
+  scope: '/devices',
+},
+
 ];
 
 

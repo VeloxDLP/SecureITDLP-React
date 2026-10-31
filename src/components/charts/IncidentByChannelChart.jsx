@@ -177,8 +177,8 @@ const IncidentByChannel = ({ data = {} }) => {
         color: CHANNEL_COLORS.Drive,
       },
       {
-        name: "Peripherals",
-        value: getChannelValue(data, "Peripheral"),
+        name: "peripheral",
+        value: getChannelValue(data, "peripheral"),
         color: CHANNEL_COLORS.Peripherals,
       },
     ];
@@ -437,7 +437,7 @@ const IncidentByChannel = ({ data = {} }) => {
 
     return [
       "BRANCH",
-      "USERNAME",
+      "File Name",
       "EVENT TYPE",
       "DEVICE / FILE DETAILS",
       "TIMESTAMP",

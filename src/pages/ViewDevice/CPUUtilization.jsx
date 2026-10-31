@@ -53,7 +53,7 @@ function CPUUtilization() {
       padding: 16,
       boxSizing: "border-box",
       color: "#e8eef7",
-      background: "#0c1725",
+      background: "#020617",
       border: "1px solid #25374a",
       borderRadius: 14,
       fontFamily: "Inter, system-ui, sans-serif",
@@ -379,7 +379,7 @@ function CPUUtilization() {
                   x2={x}
                   y2="120"
                   stroke="#26364a"
-                   strokeDasharray="2 3"
+                  strokeDasharray="2 3"
                 />
               ))}
 
