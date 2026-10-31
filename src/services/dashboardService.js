@@ -472,6 +472,14 @@ export const dashboardService = {
     return data;
   },
 
+  addBlacklistFromWhitelist: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.APPLICATION_CONTROL.BLACKLIST_APPLICATION,
+      requestData,
+    );
+    return data;
+  },
+
   getApplicationDetails: async (hostname) => {
     const { data } = await axiosInstance.get(
       `${API_ENDPOINTS.APPLICATION_CONTROL.VIEW_APPLICATION_DETAILS}/${encodeURIComponent(hostname)}`,
