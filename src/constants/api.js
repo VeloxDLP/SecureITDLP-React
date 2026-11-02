@@ -83,7 +83,10 @@ Drive_Control: {
   ADD_DRIVE_POLICY:"/DrivePolicy/addDrivePolicy"
 },
 
-
+SELF_PROTECTION:{
+  ADD_SELF_PROTECTION_POLICY:"/SelfProtection/addSelfProtectionPolicy",
+  GET_SELF_PROTECTION_POLICY:"/SelfProtection/GetSelfProtectionPolicy"
+},
 
 NETWORK_POLICY: {
   GETNETWORKPOLICY: "/NetworkDLP/GetDistinctPolicy",

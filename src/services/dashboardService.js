@@ -314,6 +314,13 @@ export const dashboardService = {
     return data;
   },
 
+   getSelf_protection_Policies: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.SELF_PROTECTION.GET_SELF_PROTECTION_POLICY,
+    );
+    return data;
+  },
+
   // [Drive API]
   getDrivePolicies: async () => {
     const { data } = await axiosInstance.get(
@@ -350,6 +357,14 @@ export const dashboardService = {
   addUSBPolicy: async (requestData) => {
     const { data } = await axiosInstance.post(
       API_ENDPOINTS.USB_Policy.ADD_USB_POLICY,
+      requestData,
+    );
+    return data;
+  },
+
+  addSelfProtectionPolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.SELF_PROTECTION.ADD_SELF_PROTECTION_POLICY,
       requestData,
     );
     return data;

@@ -701,18 +701,18 @@ function GlassButton({
    BADGE
 ========================================================= */
 function Badge({ mode }) {
-  const normalMode = String(mode || "").toLowerCase();
+  const normalMode = String(mode || "").toUpperCase();
 
   const base =
     "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border";
 
-  if (normalMode === "allow") {
+  if (normalMode === "ON") {
     return (
       <span
         className={`${base} bg-emerald-500/10 text-emerald-500 border-emerald-500/20`}
       >
         <Check size={10} />
-        Allow
+        ON
       </span>
     );
   }
@@ -722,9 +722,16 @@ function Badge({ mode }) {
       className={`${base} bg-rose-500/10 text-rose-500 border-rose-500/20`}
     >
       <AlertTriangle size={10} />
-      Prevent
+      {normalMode || "N/A"}
     </span>
   );
+}
+
+// Formats the API's ISO timestamp in the viewer's local time
+function formatDateTime(value) {
+  if (!value) return "N/A";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("en-GB");
 }
 
 /* =========================================================
@@ -844,7 +851,7 @@ function AddForm({ branches, onAdd }) {
     if (!isValid || isTracking) return;
 
     try {
-      const response = await dashboardService.addUSBPolicy({
+      const response = await dashboardService.addSelfProtectionPolicy({
         branch: form.branch,
         devices: selectedDevices,
         mode: form.mode,
@@ -1021,19 +1028,17 @@ function PolicyTable({ policies, onDelete }) {
   const filtered = safePolicies.filter((p) => {
     const q = search.toLowerCase();
 
-    const branch = String(p.branchName || "");
-    const ip = String(p.ipAddress || "");
-    const device = String(p.deviceName || "");
-    const mode = String(p.modeAccess || "");
-    const ctime = String(p.ctime || "");
+    const branch = String(p.branch || "");
+    const hostname = String(p.hostname || "");
+    const mode = String(p.mode || "");
+    const updatedAt = formatDateTime(p.updatedAt);
 
     return (
       (!q ||
         branch.toLowerCase().includes(q) ||
-        ip.toLowerCase().includes(q) ||
-        device.toLowerCase().includes(q) ||
+        hostname.toLowerCase().includes(q) ||
         mode.toLowerCase().includes(q) ||
-        ctime.toLowerCase().includes(q)) &&
+        updatedAt.toLowerCase().includes(q)) &&
       (!filterMode ||
         mode.toLowerCase() === filterMode.toLowerCase())
     );
@@ -1056,8 +1061,8 @@ function PolicyTable({ policies, onDelete }) {
 
   const filterOptions = [
     { value: "", label: "All" },
-    { value: "Allow", label: "Allow" },
-    { value: "Prevent", label: "Prevent" },
+    { value: "ON", label: "ON" },
+    { value: "OFF", label: "OFF" },
   ];
 
   return (
@@ -1153,11 +1158,10 @@ function PolicyTable({ policies, onDelete }) {
             <thead>
               <tr>
                 <th className={`${thCls} w-[7%]`}>SR NO</th>
-                <th className={`${thCls} w-[18%]`}>BRANCH</th>
-                <th className={`${thCls} w-[22%]`}>IP ADDRESS</th>
-                <th className={`${thCls} w-[20%]`}>DEVICE</th>
-                <th className={`${thCls} w-[12%]`}>MODE</th>
-                <th className={`${thCls} w-[13%]`}>CREATED TIME</th>
+                <th className={`${thCls} w-[23%]`}>BRANCH</th>
+                <th className={`${thCls} w-[28%]`}>HOST</th>
+                <th className={`${thCls} w-[14%]`}>MODE</th>
+                <th className={`${thCls} w-[20%]`}>UPDATED AT</th>
                 <th className={`${thCls} w-[8%] text-right`}>ACTION</th>
               </tr>
             </thead>
@@ -1165,12 +1169,7 @@ function PolicyTable({ policies, onDelete }) {
             <tbody>
               {filtered.map((p, i) => (
                 <tr
-                  key={`
-                    ${p.branchName || "branch"}-
-                    ${p.ipAddress || "ip"}-
-                    ${p.deviceName || "device"}-
-                    ${i}
-                  `}
+                  key={p.id ?? i}
                   className={`
                     border-b last:border-b-0 transition-colors duration-150
                     ${
@@ -1194,26 +1193,18 @@ function PolicyTable({ policies, onDelete }) {
                         isDark ? "text-slate-200" : "text-slate-700"
                       }`}
                     >
-                      {p.branchName || "N/A"}
+                      {p.branch || "N/A"}
                     </span>
                   </td>
 
-                  <td
-                    className={`${tdCls} font-mono text-[10px] ${
-                      isDark ? "text-slate-400" : "text-slate-500"
-                    }`}
-                  >
-                    {p.ipAddress || "N/A"}
-                  </td>
-
-                  <td className={tdCls}>{p.deviceName || "N/A"}</td>
+                  <td className={tdCls}>{p.hostname || "N/A"}</td>
 
                   <td className={tdCls}>
-                    <Badge mode={p.modeAccess} />
+                    <Badge mode={p.mode} />
                   </td>
 
                   <td className={`${tdCls} text-[10px] text-slate-500`}>
-                    {p.ctime || "N/A"}
+                    {formatDateTime(p.updatedAt)}
                   </td>
 
                   <td className={`${tdCls} text-right`}>
@@ -1294,7 +1285,7 @@ export default function SelfProtection() {
     try {
       const [ALLBranch, SelfProtectionPolicies] = await Promise.all([
         dashboardService.getBranch(),
-        dashboardService.getUSBPolicies(), // Keep the backend API call name as is, unless it's changed in your service
+        dashboardService.getSelf_protection_Policies(),
       ]);
 
       setBranches(ALLBranch.data || []);
@@ -1322,12 +1313,12 @@ export default function SelfProtection() {
     setTab("view");
   };
 
-  const allowedCount = policies.filter(
-    (p) => String(p.modeAccess || "").toLowerCase() === "allow"
+  const onCount = policies.filter(
+    (p) => String(p.mode || "").toUpperCase() === "ON"
   ).length;
 
-  const preventedCount = policies.filter(
-    (p) => String(p.modeAccess || "").toLowerCase() === "prevent"
+  const offCount = policies.filter(
+    (p) => String(p.mode || "").toUpperCase() === "OFF"
   ).length;
 
   return (
@@ -1374,14 +1365,14 @@ export default function SelfProtection() {
             variant="chip_allow"
             className="px-3 py-1.5 text-[11px] font-semibold cursor-default"
           >
-            {allowedCount} Allowed
+            {onCount} ON
           </GlassButton>
 
           <GlassButton
             variant="chip_prevent"
             className="px-3 py-1.5 text-[11px] font-semibold cursor-default"
           >
-            {preventedCount} Prevented
+            {offCount} OFF
           </GlassButton>
         </div>
       </div>
