@@ -550,6 +550,13 @@ getHardwareDetailsByHost: async (hostName) => {
   return data;
 },
 
+  getCpuRamDetailsByHost: async (hostName) => {
+    const { data } = await axiosInstance.get(
+      `${API_ENDPOINTS.ASSET_INVENTORY.CPU_RAM_DETAILS}/${encodeURIComponent(hostName)}`
+    );
+    return data;
+  },
+
   getOperatingSystemByHost: async (hostName) => {
     const { data } = await axiosInstance.get(
       `${API_ENDPOINTS.ASSET_INVENTORY.OS_INFO}/${hostName}`

@@ -1,50 +1,35 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Cpu, CalendarDays, Minus } from "lucide-react";
+import {
+  ZOOM_OPTIONS,
+  buildLinePoints,
+  formatStamp,
+  getChartRange,
+  getTimeTicks,
+  toRatio,
+} from "./cpuRamChart";
 
-// Helper to generate a slightly varied static data point
-const generatePoint = (index) => {
-  const x = (index / 99) * 360;
-  // Creates a subtle, realistic looking wave that hugs the bottom (0%)
-  const y =
-    106 +
-    Math.sin(index * 0.7) * 0.7 +
-    Math.sin(index * 0.19) * 0.8 +
-    Math.cos(index * 1.7) * 0.25;
-  return { x, y };
-};
+// Chart y coordinates: 0% sits at y=106, 100% at y=10
+const toChartY = (value) => 106 - value * 0.96;
+const toBrushY = (value) => 25 - value * 0.22;
 
-function CPUUtilization() {
-  // Generate static initial data
-  const [dataPoints, setDataPoints] = useState(() =>
-    Array.from({ length: 100 }, (_, i) => generatePoint(i))
-  );
+function CPUUtilization({ cores, baseSpeed, samples = [], status = "connecting" }) {
+  const [zoom, setZoom] = useState("1M");
 
-  // Effect to simulate dynamic real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDataPoints((prev) => {
-        // Remove the first point, shift everything left
-        const newPoints = prev.slice(1);
-        // Add a new point at the end based on a static mock formula
-        const nextIndex = 100 + (Date.now() % 10); 
-        newPoints.push({
-          x: 360,
-          y: 106 + Math.sin(nextIndex * 0.7) * 0.7 + Math.cos(nextIndex * 0.25) * 0.5,
-        });
-        
-        // Recalculate X coordinates so the line stretches perfectly from 0 to 360
-        return newPoints.map((p, i) => ({
-          x: (i / 99) * 360,
-          y: p.y
-        }));
-      });
-    }, 1000); // Updates every 1 second
+  const latest = samples[samples.length - 1];
+  const cpuUsage = latest?.cpuUsage;
+  const isLive = status === "live";
 
-    return () => clearInterval(interval);
-  }, []);
+  const range = getChartRange(samples, zoom);
+  const fullRange = getChartRange(samples, "All");
+  const dynamicPointsStr = buildLinePoints(samples, "cpuUsage", range, toChartY);
+  const brushPointsStr = buildLinePoints(samples, "cpuUsage", fullRange, toBrushY);
 
-  // Convert the array of objects into the SVG polyline string format ("x,y x,y")
-  const dynamicPointsStr = dataPoints.map((p) => `${p.x},${p.y}`).join(" ");
+  // Zoom window highlighted on the mini chart
+  const brushX = fullRange
+    ? ((range.start - fullRange.start) / (fullRange.end - fullRange.start)) * 360
+    : 0;
+  const brushWidth = 360 - brushX;
 
   const styles = {
     card: {
@@ -184,7 +169,7 @@ function CPUUtilization() {
     },
     metrics: {
       display: "grid",
-      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
       marginTop: 16,
       paddingTop: 12,
       borderTop: "1px solid #223247",
@@ -258,7 +243,7 @@ function CPUUtilization() {
 
         <div style={styles.date} className="cpu-date-responsive">
           <CalendarDays size={12} />
-          <span>2026-Sep-25 5:17 PM</span>
+          <span>{formatStamp(latest?.time)}</span>
           <button
             aria-label="Collapse"
             style={{
@@ -309,7 +294,7 @@ function CPUUtilization() {
                 stroke="url(#cpuGradient)"
                 strokeWidth="11"
                 strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 65 * 0.005} ${2 * Math.PI * 65}`}
+                strokeDasharray={`${2 * Math.PI * 65 * toRatio(cpuUsage)} ${2 * Math.PI * 65}`}
                 transform="rotate(-90 80 80)"
               />
 
@@ -318,7 +303,14 @@ function CPUUtilization() {
 
             <div style={styles.gaugeCenter}>
               <strong style={{ fontSize: 36, lineHeight: 1 }}>
-                0<span style={{ fontSize: 17 }}>%</span>
+                {cpuUsage === undefined ? (
+                  "-"
+                ) : (
+                  <>
+                    {Number(cpuUsage).toFixed(1)}
+                    <span style={{ fontSize: 17 }}>%</span>
+                  </>
+                )}
               </strong>
               <small style={{ marginTop: 6, color: "#9cb0c8", fontSize: 10 }}>
                 CPU Usage
@@ -326,25 +318,40 @@ function CPUUtilization() {
             </div>
           </div>
 
-          <div style={styles.live}>
+          <div
+            style={{
+              ...styles.live,
+              ...(isLive ? {} : { color: "#9cb0c8", background: "#172538" }),
+            }}
+          >
             <span
               style={{
                 width: 6,
                 height: 6,
-                background: "#00e5aa",
+                background: isLive ? "#00e5aa" : "#9cb0c8",
                 borderRadius: "50%",
               }}
             />
-            Live
+            {isLive ? "Live" : status === "connecting" ? "Connecting" : "Offline"}
           </div>
         </div>
 
         <div style={styles.chartSection}>
           <div style={styles.toolbar}>
             <span style={{ marginRight: 2 }}>Zoom</span>
-            <button style={{ ...styles.button, ...styles.activeButton }}>1M</button>
-            <button style={styles.button}>5M</button>
-            <button style={styles.button}>All</button>
+            {ZOOM_OPTIONS.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setZoom(item)}
+                style={{
+                  ...styles.button,
+                  ...(zoom === item ? styles.activeButton : {}),
+                }}
+              >
+                {item}
+              </button>
+            ))}
           </div>
 
           <div style={styles.chart}>
@@ -371,7 +378,7 @@ function CPUUtilization() {
                 />
               ))}
 
-              {[0, 72, 144, 216, 288, 360].map((x) => (
+              {[0, 120, 240, 360].map((x) => (
                 <line
                   key={x}
                   x1={x}
@@ -392,47 +399,25 @@ function CPUUtilization() {
                 vectorEffect="non-scaling-stroke"
               />
 
-              <circle cx="225" cy="106" r="3" fill="#00e6a2" />
-              <circle
-                cx="225"
-                cy="106"
-                r="7"
-                fill="none"
-                stroke="#00e6a2"
-                strokeOpacity="0.35"
-              />
-              <circle cx="359" cy="106" r="3" fill="#00e6a2" />
+              {latest && (
+                <>
+                  <circle cx="360" cy={toChartY(Number(cpuUsage) || 0)} r="3" fill="#00e6a2" />
+                  <circle
+                    cx="360"
+                    cy={toChartY(Number(cpuUsage) || 0)}
+                    r="7"
+                    fill="none"
+                    stroke="#00e6a2"
+                    strokeOpacity="0.35"
+                  />
+                </>
+              )}
             </svg>
 
-            <div
-              style={{
-                position: "absolute",
-                top: "28%",
-                left: "40%",
-                display: "flex",
-                gap: 6,
-                padding: 7,
-                background: "#15283a",
-                border: "1px solid #2d455e",
-                borderRadius: 5,
-                fontSize: 8,
-              }}
-            >
-              <span style={{ color: "#00e5aa" }}>●</span>
-              <div>
-                <div>CPU Utilization: 0</div>
-                <small style={{ color: "#9bb0c8" }}>
-                  Wednesday, Oct 28, 18:07:48
-                </small>
-              </div>
-            </div>
-
-            <div style={styles.xLabels}>
-              {["18:07:20", "18:07:30", "18:07:40", "18:07:50", "18:08:00", "18:08:10"].map(
-                (time) => (
-                  <span key={time}>{time}</span>
-                )
-              )}
+                        <div style={styles.xLabels}>
+              {getTimeTicks(range).map((time, index) => (
+                <span key={index}>{time}</span>
+              ))}
             </div>
           </div>
 
@@ -462,25 +447,29 @@ function CPUUtilization() {
               />
 
               <polyline
-                points={dynamicPointsStr} // Reusing the dynamic points for the mini chart for consistency
+                points={brushPointsStr}
                 fill="none"
                 stroke="#00b995"
                 strokeWidth="1"
-                transform="scale(1, 0.15) translate(0, 160)" // Scaling down to fit the brush box
+                vectorEffect="non-scaling-stroke"
               />
 
-              <rect
-                x="285"
-                y="3"
-                width="58"
-                height="22"
-                rx="2"
-                fill="#254c70"
-                fillOpacity="0.65"
-                stroke="#527ca5"
-              />
-              <rect x="282" y="5" width="4" height="18" rx="1" fill="#8bc4ff" />
-              <rect x="342" y="5" width="4" height="18" rx="1" fill="#8bc4ff" />
+              {fullRange && (
+                <>
+                  <rect
+                    x={brushX}
+                    y="3"
+                    width={brushWidth}
+                    height="22"
+                    rx="2"
+                    fill="#254c70"
+                    fillOpacity="0.65"
+                    stroke="#527ca5"
+                  />
+                  <rect x={brushX} y="5" width="4" height="18" rx="1" fill="#8bc4ff" />
+                  <rect x="356" y="5" width="4" height="18" rx="1" fill="#8bc4ff" />
+                </>
+              )}
             </svg>
 
             <button style={styles.button}>›</button>
@@ -490,16 +479,15 @@ function CPUUtilization() {
 
       <div style={styles.metrics}>
         {[
-          { label: "Cores", value: "8 / 16" },
-          { label: "Frequency", value: "3.2 GHz" },
-          { label: "Temperature", value: "56 °C" },
+          { label: "Cores", value: cores ?? "-" },
+          { label: "Base Speed", value: baseSpeed ?? "-" },
         ].map((metric, index) => (
           <div
             key={metric.label}
             style={{
               ...styles.metric,
               ...(index === 0 ? { paddingLeft: 0 } : {}),
-              ...(index === 2 ? { paddingRight: 0, borderRight: "none" } : {}),
+              ...(index === 1 ? { paddingRight: 0, borderRight: "none" } : {}),
             }}
             className="cpu-metric-responsive"
           >

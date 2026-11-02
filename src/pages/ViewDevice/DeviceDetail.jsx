@@ -15,10 +15,41 @@ import {
 } from "lucide-react";
 
 import CPUUtilization from "./CPUUtilization";
+import useCpuRamLive from "./useCpuRamLive";
+import {
+  ZOOM_OPTIONS,
+  buildLinePoints,
+  formatPercent,
+  formatStamp,
+  getChartRange,
+  getOneMinuteChange,
+  getTimeTicks,
+  toRatio,
+} from "./cpuRamChart";
 import { dashboardService } from "../../services/dashboardService";
 
-// --- SUB-COMPONENT: RAM Utilization (Static) ---
-const RAMCard = ({ isDark }) => {
+// API sends total RAM in MB; the RAM card shows GB
+const formatRam = (mb) => {
+  const value = Number(mb ?? NaN);
+  return Number.isFinite(value) ? `${(value / 1024).toFixed(2)} GB` : "-";
+};
+
+// RAM chart y coordinates: 0% sits at y=120, 100% at y=0
+const toRamChartY = (value) => 120 - value * 1.2;
+
+// --- SUB-COMPONENT: RAM Utilization (LIVE) ---
+const RAMCard = ({ isDark, totalMemory = "-", samples = [], status = "connecting" }) => {
+  const [zoom, setZoom] = useState("1M");
+
+  const latest = samples[samples.length - 1];
+  const ramUsage = latest?.ramUsage;
+  const isLive = status === "live";
+
+  const range = getChartRange(samples, zoom);
+  const linePoints = buildLinePoints(samples, "ramUsage", range, toRamChartY);
+  const firstX = linePoints.split(" ")[0].split(",")[0];
+  const change = getOneMinuteChange(samples, "ramUsage");
+
   const theme = {
     bg: isDark ? "#020617" : "#ffffff",
     border: isDark ? "#1e293b" : "#e2e8f0",
@@ -49,11 +80,11 @@ const RAMCard = ({ isDark }) => {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", background: theme.liveBg, color: theme.liveText, borderRadius: 20, fontSize: 10 }}>
-            <span style={{ width: 6, height: 6, background: theme.liveText, borderRadius: "50%" }} /> Live
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", background: isLive ? theme.liveBg : theme.btnDefault, color: isLive ? theme.liveText : theme.btnDefaultText, borderRadius: 20, fontSize: 10 }}>
+            <span style={{ width: 6, height: 6, background: isLive ? theme.liveText : theme.btnDefaultText, borderRadius: "50%" }} /> {isLive ? "Live" : status === "connecting" ? "Connecting" : "Offline"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, color: theme.textMuted, fontSize: 10 }}>
-            <CalendarDays size={12} /> 2026-Sep-25 5:17 PM
+            <CalendarDays size={12} /> {formatStamp(latest?.time)}
             <button style={{ background: theme.btnDefault, border: "none", color: theme.btnDefaultText, borderRadius: 4, width: 20, height: 20, display: "grid", placeItems: "center", cursor: "pointer" }}><Minus size={12} /></button>
           </div>
         </div>
@@ -63,7 +94,7 @@ const RAMCard = ({ isDark }) => {
         <div style={{ position: "relative", width: 140, height: 140 }}>
           <svg viewBox="0 0 160 160" style={{ width: "100%", height: "100%" }}>
             <circle cx="80" cy="80" r="65" fill="none" stroke={theme.gridLine} strokeWidth="12" />
-            <circle cx="80" cy="80" r="65" fill="none" stroke="url(#ramGradient)" strokeWidth="12" strokeDasharray={`${2 * Math.PI * 65 * 0.96} ${2 * Math.PI * 65}`} strokeLinecap="round" transform="rotate(-90 80 80)" />
+            <circle cx="80" cy="80" r="65" fill="none" stroke="url(#ramGradient)" strokeWidth="12" strokeDasharray={`${2 * Math.PI * 65 * toRatio(ramUsage)} ${2 * Math.PI * 65}`} strokeLinecap="round" transform="rotate(-90 80 80)" />
             <defs>
               <linearGradient id="ramGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#6366f1" />
@@ -72,7 +103,7 @@ const RAMCard = ({ isDark }) => {
             </defs>
           </svg>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            <strong style={{ fontSize: 28, color: theme.text }}>96.0%</strong>
+            <strong style={{ fontSize: 28, color: theme.text }}>{formatPercent(ramUsage)}</strong>
             <span style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>Used</span>
           </div>
         </div>
@@ -80,44 +111,64 @@ const RAMCard = ({ isDark }) => {
         <div style={{ position: "relative", height: 120 }}>
           <div style={{ position: "absolute", top: -20, right: 0, display: "flex", gap: 4, fontSize: 9 }}>
             <span style={{ color: theme.textMuted, padding: "2px 4px" }}>Zoom</span>
-            <button style={{ background: theme.btnActive, color: theme.btnActiveText, border: "none", borderRadius: 3, padding: "2px 6px" }}>1M</button>
-            <button style={{ background: theme.btnDefault, color: theme.btnDefaultText, border: "none", borderRadius: 3, padding: "2px 6px" }}>5M</button>
-            <button style={{ background: theme.btnDefault, color: theme.btnDefaultText, border: "none", borderRadius: 3, padding: "2px 6px" }}>All</button>
+            {ZOOM_OPTIONS.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setZoom(item)}
+                style={{
+                  background: zoom === item ? theme.btnActive : theme.btnDefault,
+                  color: zoom === item ? theme.btnActiveText : theme.btnDefaultText,
+                  border: "none",
+                  borderRadius: 3,
+                  padding: "2px 6px",
+                  cursor: "pointer",
+                }}
+              >
+                {item}
+              </button>
+            ))}
           </div>
           <svg viewBox="0 0 360 120" preserveAspectRatio="none" style={{ width: "100%", height: "100%", overflow: "visible" }}>
-            {[0, 50, 100].map(y => <line key={y} x1="0" y1={y} x2="360" y2={y} stroke={theme.gridLine} strokeDasharray="3 3" />)}
+            {[0, 60, 120].map(y => <line key={y} x1="0" y1={y} x2="360" y2={y} stroke={theme.gridLine} strokeDasharray="3 3" />)}
             <defs>
               <linearGradient id="ramArea" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#a855f7" stopOpacity={isDark ? "0.4" : "0.2"} />
                 <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
               </linearGradient>
             </defs>
-            <path d="M 0 90 L 30 60 L 45 75 L 70 20 L 100 70 L 130 40 L 160 80 L 200 60 L 240 90 L 290 10 L 320 60 L 350 50 L 360 25 L 360 120 L 0 120 Z" fill="url(#ramArea)" />
-            <path d="M 0 90 L 30 60 L 45 75 L 70 20 L 100 70 L 130 40 L 160 80 L 200 60 L 240 90 L 290 10 L 320 60 L 350 50 L 360 25" fill="none" stroke="#c084fc" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
-            <circle cx="360" cy="25" r="3" fill="#c084fc" />
-            <g fontSize="8" fill={theme.textMuted}>
-              <text x="0" y="130">17:12</text><text x="60" y="130">17:13</text><text x="120" y="130">17:14</text><text x="180" y="130">17:15</text><text x="240" y="130">17:16</text><text x="300" y="130">17:17</text><text x="340" y="130">17:17</text>
-            </g>
-          </svg>
+            {linePoints && (
+              <>
+                <polygon points={`${firstX},120 ${linePoints} 360,120`} fill="url(#ramArea)" />
+                <polyline points={linePoints} fill="none" stroke="#c084fc" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+                <circle cx="360" cy={toRamChartY(Number(ramUsage) || 0)} r="3" fill="#c084fc" />
+              </>
+            )}
+            </svg>
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: -14, display: "flex", justifyContent: "space-between", fontSize: 8, color: theme.textMuted }}>
+            {getTimeTicks(range).map((time, index) => (
+              <span key={index}>{time}</span>
+            ))}
+          </div>
         </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, borderTop: `1px solid ${theme.border}`, paddingTop: 16 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
           <Database size={16} color="#a855f7" style={{ marginTop: 2 }} />
-          <div><p style={{ margin: 0, fontSize: 10, color: theme.textMuted }}>Used Memory</p><p style={{ margin: "2px 0", fontSize: 14, fontWeight: 600, color: theme.text }}>15.36 GB</p><p style={{ margin: 0, fontSize: 9, color: theme.textMuted }}>of 16.00 GB</p></div>
+          <div><p style={{ margin: 0, fontSize: 10, color: theme.textMuted }}>Used Memory</p><p style={{ margin: "2px 0", fontSize: 14, fontWeight: 600, color: theme.text }}>{formatRam(latest?.ramUsedMb)}</p><p style={{ margin: 0, fontSize: 9, color: theme.textMuted }}>of {totalMemory}</p></div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
           <Server size={16} color="#3b82f6" style={{ marginTop: 2 }} />
-          <div><p style={{ margin: 0, fontSize: 10, color: theme.textMuted }}>Free Memory</p><p style={{ margin: "2px 0", fontSize: 14, fontWeight: 600, color: theme.text }}>0.64 GB</p><p style={{ margin: 0, fontSize: 9, color: theme.textMuted }}>of 16.00 GB</p></div>
+          <div><p style={{ margin: 0, fontSize: 10, color: theme.textMuted }}>Free Memory</p><p style={{ margin: "2px 0", fontSize: 14, fontWeight: 600, color: theme.text }}>{formatRam(latest?.ramFreeMb)}</p><p style={{ margin: 0, fontSize: 9, color: theme.textMuted }}>of {totalMemory}</p></div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
           <Activity size={16} color="#6366f1" style={{ marginTop: 2 }} />
-          <div><p style={{ margin: 0, fontSize: 10, color: theme.textMuted }}>Usage</p><p style={{ margin: "2px 0", fontSize: 14, fontWeight: 600, color: theme.text }}>96.0%</p><p style={{ margin: 0, fontSize: 9, color: "#ef4444" }}>▲ 2.4% (1 min)</p></div>
+          <div><p style={{ margin: 0, fontSize: 10, color: theme.textMuted }}>Usage</p><p style={{ margin: "2px 0", fontSize: 14, fontWeight: 600, color: theme.text }}>{formatPercent(ramUsage)}</p>{change !== null && <p style={{ margin: 0, fontSize: 9, color: change > 0 ? "#ef4444" : "#10b981" }}>{change > 0 ? "▲" : "▼"} {Math.abs(change).toFixed(1)}% (1 min)</p>}</div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
           <HardDrive size={16} color={theme.textMuted} style={{ marginTop: 2 }} />
-          <div style={{ width: "100%" }}><p style={{ margin: 0, fontSize: 10, color: theme.textMuted }}>Total Memory</p><p style={{ margin: "2px 0", fontSize: 14, fontWeight: 600, color: theme.text }}>16.00 GB</p><div style={{ width: "100%", height: 4, background: theme.gridLine, borderRadius: 2, marginTop: 4 }}><div style={{ width: "96%", height: "100%", background: "#a855f7", borderRadius: 2 }}></div></div></div>
+          <div style={{ width: "100%" }}><p style={{ margin: 0, fontSize: 10, color: theme.textMuted }}>Total Memory</p><p style={{ margin: "2px 0", fontSize: 14, fontWeight: 600, color: theme.text }}>{totalMemory}</p><div style={{ width: "100%", height: 4, background: theme.gridLine, borderRadius: 2, marginTop: 4 }}><div style={{ width: `${toRatio(ramUsage) * 100}%`, height: "100%", background: "#a855f7", borderRadius: 2 }}></div></div></div>
         </div>
       </div>
     </div>
@@ -225,7 +276,7 @@ const DriveDetails = ({ isDark, hostName }) => {
 };
 
 // --- SUB-COMPONENT: OS Details (LIVE) ---
-const OSDetails = ({ isDark, hostName }) => {
+const OSDetails = ({ isDark, hostName, onLoad }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -236,7 +287,11 @@ const OSDetails = ({ isDark, hostName }) => {
     (async () => {
       try {
         const response = await dashboardService.getOperatingSystemByHost(hostName);
-        if (!cancelled) setData(response?.data?.[0] || null);
+        if (!cancelled) {
+          const first = response?.data?.[0] || null;
+          setData(first);
+          onLoad?.(first);
+        }
       } catch (err) {
         if (!cancelled) {
           if (err?.response?.status !== 404) {
@@ -250,7 +305,7 @@ const OSDetails = ({ isDark, hostName }) => {
       }
     })();
     return () => { cancelled = true; };
-  }, [hostName]);
+  }, [hostName, onLoad]);
 
   return (
     <div className={`inner-card ${isDark ? 'dark' : 'light'}`} style={{ height: "100%" }}>
@@ -297,7 +352,7 @@ const OSDetails = ({ isDark, hostName }) => {
 };
 
 // --- SUB-COMPONENT: Hardware Details (LIVE) ---
-const HardwareDetails = ({ isDark, hostName }) => {
+const HardwareDetails = ({ isDark, hostName, onLoad }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -317,7 +372,10 @@ const HardwareDetails = ({ isDark, hostName }) => {
         const response = await dashboardService.getHardwareDetailsByHost(hostName);
         const first = Array.isArray(response?.data) ? response.data[0] : null;
         if (!first) throw new Error("No hardware details available");
-        if (!cancelled) setData(first);
+        if (!cancelled) {
+          setData(first);
+          onLoad?.(first);
+        }
       } catch (err) {
         if (!cancelled) {
           if (err?.response?.status !== 404) {
@@ -331,7 +389,7 @@ const HardwareDetails = ({ isDark, hostName }) => {
       }
     })();
     return () => { cancelled = true; };
-  }, [hostName]);
+  }, [hostName, onLoad]);
 
   return (
     <div className={`inner-card ${isDark ? "dark" : "light"}`}>
@@ -426,6 +484,14 @@ function DeviceDetail({ isDark = true }) {
 
   const hostName = location.state?.hostName || location.state?.device?.host || "PRATHAMESH-B";
 
+  // Filled by the Hardware / OS cards once they load, shared with the CPU / RAM cards
+  const [hardware, setHardware] = useState(null);
+  const [osInfo, setOsInfo] = useState(null);
+
+  // Live CPU / RAM readings, refreshed every 5 sec
+  const { samples, status } = useCpuRamLive(hostName);
+  const latestSample = samples[samples.length - 1];
+
   return (
     <div className={`device-detail-container ${isDark ? 'dark' : 'light'}`}>
       
@@ -477,22 +543,33 @@ function DeviceDetail({ isDark = true }) {
       {/* Top Row: CPU & RAM */}
       <div className="device-utilization-grid">
         <div className="device-utilization-card">
-          <CPUUtilization isDark={isDark} />
+          <CPUUtilization
+            isDark={isDark}
+            cores={hardware?.cpuCores}
+            baseSpeed={hardware?.cpuBaseSpeed}
+            samples={samples}
+            status={status}
+          />
         </div>
         <div className="device-utilization-card">
-          <RAMCard isDark={isDark} />
+          <RAMCard
+            isDark={isDark}
+            totalMemory={formatRam(latestSample?.ramTotalMb ?? osInfo?.totalRamMb)}
+            samples={samples}
+            status={status}
+          />
         </div>
       </div>
 
       {/* Bottom Row 1: Drive & OS Details */}
       <div className="device-info-grid-2">
         <DriveDetails isDark={isDark} hostName={hostName} />
-        <OSDetails isDark={isDark} hostName={hostName} />
+        <OSDetails isDark={isDark} hostName={hostName} onLoad={setOsInfo} />
       </div>
 
            {/* Bottom Row 2: Hardware Details */}
       <div style={{ marginTop: 8 }}> {/* 👈 CHANGE THIS (was 24) */}
-        <HardwareDetails isDark={isDark} hostName={hostName} />
+        <HardwareDetails isDark={isDark} hostName={hostName} onLoad={setHardware} />
       </div>
 
      

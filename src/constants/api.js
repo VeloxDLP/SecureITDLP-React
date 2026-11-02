@@ -91,6 +91,7 @@ Drive_Control: {
     HARDWARE_DETAILS: "/AssetInventory/GetHardwareDetails",
     OS_INFO: "/AssetInventory/AssetOS",
     DRIVE_DETAILS: "/AssetInventory/GetDriveDetailinfo",
+    CPU_RAM_DETAILS: "/AssetInventory/GetCpuRamDetails",
   },
 
 SELF_PROTECTION:{

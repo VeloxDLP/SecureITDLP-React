@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Cpu, Database, CalendarDays, CircleGauge } from "lucide-react";
 
-function RAMUtilization() {
+function RAMUtilization({ totalMemory = "-" }) {
   const [zoom, setZoom] = useState("1M");
 
   const chartPoints = Array.from({ length: 100 }, (_, i) => {
@@ -458,7 +458,7 @@ function RAMUtilization() {
           <div>
             <div style={styles.metricLabel}>Used Memory</div>
             <strong style={styles.metricValue}>15.36 GB</strong>
-            <div style={styles.metricSub}>of 16.00 GB</div>
+            <div style={styles.metricSub}>of {totalMemory}</div>
           </div>
         </div>
 
@@ -467,7 +467,7 @@ function RAMUtilization() {
           <div>
             <div style={styles.metricLabel}>Free Memory</div>
             <strong style={styles.metricValue}>0.64 GB</strong>
-            <div style={styles.metricSub}>of 16.00 GB</div>
+            <div style={styles.metricSub}>of {totalMemory}</div>
           </div>
         </div>
 
@@ -489,7 +489,7 @@ function RAMUtilization() {
           <Cpu size={16} style={{ ...styles.metricIcon, color: "#765dff" }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={styles.metricLabel}>Total Memory</div>
-            <strong style={styles.metricValue}>16.00 GB</strong>
+            <strong style={styles.metricValue}>{totalMemory}</strong>
             <div
               style={{
                 height: 6,
