@@ -19,6 +19,7 @@ import { dashboardService } from "../../services/dashboardService";
 // TABLE COLUMNS
 // ======================================================
 const incidentColumns = [
+  
   { accessor: "hostname", header: "HOSTNAME" },
   { accessor: "ipaddress", header: "IP ADDRESS" },
   { accessor: "keyword", header: "KEYWORD" },
@@ -26,7 +27,7 @@ const incidentColumns = [
 ];
 
 // ======================================================
-// FORMAT DATE AS YYYY-MM-DD
+// FORMAT DATE AS YYYY-MM-DD (for API)
 // ======================================================
 const formatDateForApi = (date) => {
   const year = date.getFullYear();
@@ -36,17 +37,24 @@ const formatDateForApi = (date) => {
 };
 
 // ======================================================
-// GET LAST 7 DAYS
+// YYYY-MM-DD -> DD-MM-YYYY (for header display)
 // ======================================================
-const getLast7Days = () => {
-  const dates = [];
-  const today = new Date();
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-    dates.push(formatDateForApi(date));
-  }
-  return dates;
+const formatDateForDisplay = (isoDate) => {
+  if (!isoDate) return "";
+  const [y, m, d] = isoDate.split("-");
+  return `${d}-${m}-${y}`;
+};
+
+// ======================================================
+// FALLBACK: derive date from point index.
+// Assumes data is ordered oldest -> newest, one point per
+// day, and the last point is today.
+// Best fix: add `date: "YYYY-MM-DD"` to each chart data item.
+// ======================================================
+const getDateFromIndex = (index, length) => {
+  const d = new Date();
+  d.setDate(d.getDate() - (length - 1 - index));
+  return formatDateForApi(d);
 };
 
 // ======================================================
@@ -66,9 +74,9 @@ const CustomTooltip = ({ active, payload, isDark }) => {
         <p className={`mt-1 text-sm font-semibold ${isDark ? "text-emerald-400" : "text-emerald-600"}`}>
           {payload[0]?.value}% usage
         </p>
-        <p className={`mt-1 text-xs ${isDark ? "text-emerald-400/70" : "text-emerald-500"}`}>
+        {/* <p className={`mt-1 text-xs ${isDark ? "text-emerald-400/70" : "text-emerald-500"}`}>
           Click to view details →
-        </p>
+        </p> */}
       </div>
     );
   }
@@ -91,7 +99,7 @@ export default function ClipboardIncident({
   const [isMounted, setIsMounted] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
-  const [selectedCategory, setSelectedCategory] = useState("Clipboard Incidents");
+  const [selectedDate, setSelectedDate] = useState(""); // YYYY-MM-DD
   const [search, setSearch] = useState("");
   const [modalData, setModalData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -120,39 +128,22 @@ export default function ClipboardIncident({
   }, [isOpen]);
 
   // ====================================================
-  // FETCH LAST 7 DAYS CLIPBOARD DATA
+  // FETCH CLIPBOARD DATA FOR ONE SELECTED DATE
   // ====================================================
-  const fetchClipboardData = async () => {
+  const fetchClipboardData = async (date) => {
     try {
       setLoading(true);
       setApiError("");
 
-      const last7Days = getLast7Days();
+      const response = await dashboardService.getClipboardModal(date);
 
-      const responses = await Promise.all(
-        last7Days.map(async (date) => {
-          try {
-            const response = await dashboardService.getClipboardModal(date);
-            return response;
-          } catch (error) {
-            console.error(`Clipboard API error for ${date}:`, error);
-            return null;
-          }
-        })
-      );
-
-      const combinedData = [];
-      responses.forEach((response) => {
-        if (response && response.success === true && Array.isArray(response.data)) {
-          response.data.forEach((item) => {
-            combinedData.push(item);
-          });
-        }
-      });
-
-      setModalData(combinedData);
+      if (response && response.success === true && Array.isArray(response.data)) {
+        setModalData(response.data);
+      } else {
+        setModalData([]);
+      }
     } catch (error) {
-      console.error("Error fetching clipboard modal data:", error);
+      console.error(`Clipboard API error for ${date}:`, error);
       setApiError("Unable to load clipboard incident data.");
       setModalData([]);
     } finally {
@@ -161,10 +152,11 @@ export default function ClipboardIncident({
   };
 
   // ====================================================
-  // OPEN MODAL
+  // OPEN MODAL (with clicked date)
   // ====================================================
-  const openModal = async (category) => {
-    setSelectedCategory(category || "Clipboard Incidents");
+  const openModal = async (date) => {
+    if (!date) return;
+    setSelectedDate(date);
     setSearch("");
     setCurrentPage(1);
     setModalData([]);
@@ -172,8 +164,31 @@ export default function ClipboardIncident({
     setLoading(true);
     setIsMounted(true);
 
-    await fetchClipboardData();
+    await fetchClipboardData(date);
     requestAnimationFrame(() => setIsOpen(true));
+  };
+
+  // ====================================================
+  // CHART CLICK -> find clicked date
+  // ====================================================
+  const handleChartClick = (state) => {
+    if (!state) return;
+
+    let index = state.activeTooltipIndex;
+
+    // fallback for older recharts versions
+    if (index === undefined || index === null) {
+      index = data.findIndex((d) => d.x === state.activeLabel);
+    }
+
+    index = Number(index);
+    if (Number.isNaN(index) || index < 0) return;
+
+    const point = data[index];
+    if (!point) return;
+
+    const date = point.date || getDateFromIndex(index, data.length);
+    openModal(date);
   };
 
   // ====================================================
@@ -190,7 +205,7 @@ export default function ClipboardIncident({
       setIsMounted(false);
       setIsClosing(false);
       setModalData([]);
-      setSelectedCategory("Clipboard Incidents");
+      setSelectedDate("");
       setSearch("");
       setCurrentPage(1);
       setApiError("");
@@ -246,7 +261,7 @@ export default function ClipboardIncident({
           <AreaChart
             data={data}
             margin={{ top: 8, right: 8, left: -10, bottom: 0 }}
-            onClick={() => openModal("Clipboard Incidents")}
+            onClick={handleChartClick}
             className="cursor-pointer"
           >
             <defs>
@@ -311,14 +326,11 @@ export default function ClipboardIncident({
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
               <div className="min-w-0">
                 <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
-                  Clipboard Incident Details -
-                  <span className="ml-1 text-emerald-600 dark:text-emerald-400">
-                    {selectedCategory}
+                  Clipboard Incident Details
+                  <span className="ml-2 text-red-500 dark:text-red-400">
+                    {formatDateForDisplay(selectedDate)}
                   </span>
                 </h2>
-                <p className="mt-1 text-[10px] text-slate-400 dark:text-white/30">
-                  Last 7 Days
-                </p>
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
@@ -337,11 +349,7 @@ export default function ClipboardIncident({
                   />
                 </div>
 
-                {/* ==================================================
-                    CLOSE BUTTON – COMPLETELY STABLE
-                    NO TRANSFORMS, NO SCALING, NO ROTATION
-                    Only background and color changes on hover
-                ================================================== */}
+                {/* CLOSE BUTTON */}
                 <button
                   type="button"
                   onClick={closeModal}
@@ -414,7 +422,7 @@ export default function ClipboardIncident({
                       ) : (
                         <tr>
                           <td colSpan={incidentColumns.length} className="px-3 py-10 text-center text-slate-400 dark:text-white/30">
-                            No clipboard incidents found for the last 7 days.
+                            No clipboard incidents found for {formatDateForDisplay(selectedDate)}.
                           </td>
                         </tr>
                       )}
@@ -428,7 +436,7 @@ export default function ClipboardIncident({
                 {!loading && modalData.length > 0 && (
                   <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-[12px] text-slate-500 dark:text-white/40">
-                      Showing {startRecord}-{endRecord} of {filteredRows.length}
+                       Showing {startRecord}-{endRecord} of {filteredRows.length}
                     </span>
 
                     <div className="flex items-center gap-2">

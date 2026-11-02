@@ -28,7 +28,7 @@ const NAV = [
     scope: '/app-control',
     children: [
       {
-        label: ' Manage Mode',
+        label: 'Manage Mode',
         icon: AppWindow,
         path: '/ApplicationControl',
       },
@@ -37,14 +37,12 @@ const NAV = [
         icon: Eye,
         path: '/ViewApplication',
       },
-
-          {
+      {
         label: 'Manage Blacklisted',
         icon: Eye,
         path: '/ManageBlackListed',
       },
-
-               {
+      {
         label: 'Manage Whitelisted',
         icon: Eye,
         path: '/ManageWhitelisted',
@@ -73,7 +71,7 @@ const NAV = [
     scope: '/printercontrol',
   },
 
-  { 
+  {
     label: 'Data Classification',
     icon: ScanSearch,
     path: '/DataClassification',
@@ -118,15 +116,7 @@ const NAV = [
     scope: '/devices',
   },
 
-  //   {
-  //   label: 'OS Dashboard',
-  //   icon: Monitor,
-  //   path: '/DeviceDetails',
-  //   roles: ['admin', 'superadmin'],
-  //   scope: '/devices',
-  // },
-
-   {
+  {
     label: 'OS Dashboard',
     icon: Monitor,
     path: '/OSDashboard',
@@ -134,7 +124,7 @@ const NAV = [
     scope: '/devices',
   },
 
-     {
+  {
     label: 'Self Protection',
     icon: Monitor,
     path: '/SelfProtection',
@@ -142,18 +132,14 @@ const NAV = [
     scope: '/devices',
   },
 
-
-{
-  label: 'USB Encryption',
-  icon: Usb,
-  path: '/UsbEncryption',
-  roles: ['admin', 'superadmin'],
-  scope: '/devices',
-},
-
-];
-
-
+  {
+    label: 'USB Encryption',
+    icon: Usb,
+    path: '/UsbEncryption',
+    roles: ['admin', 'superadmin'],
+    scope: '/devices',
+  },
+]
 
 const ACTIVE = 'bg-[#7094ff] text-white shadow-lg shadow-[#7094ff]/20'
 const INACTIVE = `
@@ -169,24 +155,24 @@ const hasAccess = (userRole, itemRoles) => {
 }
 
 const hasScopeAccess = (userScope, requiredScope) => {
-  if (!requiredScope) return true;
+  if (!requiredScope) return true
 
-  return userScope.includes(requiredScope.toLowerCase());
-};
+  return userScope.includes(requiredScope.toLowerCase())
+}
 
-// function NavItem({ item, collapsed, userRole }) {
 function NavItem({ item, collapsed, userRole, userScope }) {
-  const Icon = item.icon;
-  const [open, setOpen] = useState(false);
+  const Icon = item.icon
+  const { isDark } = useTheme()
+  const [open, setOpen] = useState(false)
 
   // Check if user has access to this item
   if (!hasAccess(userRole, item.roles)) {
-  return null;
-}
+    return null
+  }
 
-if (!hasScopeAccess(userScope, item.scope)) {
-  return null;
-}
+  if (!hasScopeAccess(userScope, item.scope)) {
+    return null
+  }
 
   // Parent menu with children
   if (item.children) {
@@ -194,19 +180,20 @@ if (!hasScopeAccess(userScope, item.scope)) {
     const accessibleChildren = item.children.filter(child =>
       hasAccess(userRole, child.roles) &&
       hasScopeAccess(userScope, child.scope || item.scope)
-    );
+    )
 
     if (accessibleChildren.length === 0) {
-      return null; // Hide parent if no accessible children
+      return null // Hide parent if no accessible children
     }
 
     return (
-      <div className="mx-2 relative">
+      // `group` lives on the wrapper so hovering the icon reveals the flyout
+      <div className="mx-2 relative group">
         <button
           onClick={() => setOpen(!open)}
           className="w-full flex items-center justify-between px-3 py-2 rounded-xl
                      text-[13px] font-medium text-[#888]
-                     hover:text-[#e0e0e0] hover:bg-white/[0.06] relative group"
+                     hover:text-[#e0e0e0] hover:bg-white/[0.06]"
         >
           <div className="flex items-center gap-3">
             <Icon size={16} />
@@ -216,31 +203,66 @@ if (!hasScopeAccess(userScope, item.scope)) {
           {!collapsed && (
             <ChevronRight
               size={14}
-              className={`transition-transform ${
-                open ? "rotate-90" : ""
-              }`}
+              className={`transition-transform ${open ? 'rotate-90' : ''}`}
             />
           )}
         </button>
 
-        {/* Tooltip when collapsed */}
+        {/* Collapsed: hover flyout showing title + sub-items */}
         {collapsed && (
-          <span className="pointer-events-none absolute left-full ml-3 z-[200]
-                           flex items-center gap-1.5 px-2.5 py-1 rounded-lg
-                           text-[12px] font-semibold whitespace-nowrap
-                           opacity-0 -translate-x-1 scale-95
-                           group-hover:opacity-100 group-hover:translate-x-0 group-hover:scale-100
-                           transition-all duration-150 ease-out shadow-xl
-                           bg-[#2a2a2a] text-[#e0e0e0] border border-white/[0.08]">
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#555]" />
-            {item.label}
-          </span>
+          <div
+            className="absolute left-full top-0 pl-3 z-[200]
+                       invisible opacity-0 -translate-x-1
+                       group-hover:visible group-hover:opacity-100 group-hover:translate-x-0
+                       transition-all duration-150 ease-out"
+          >
+            <div
+              className={`min-w-[190px] rounded-xl border shadow-xl p-1.5 ${
+                isDark
+                  ? 'bg-[#020617] border-white/[0.07]'
+                  : 'bg-[#f0f4f7] border-slate-200'
+              }`}
+            >
+              <p
+                className={`px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider ${
+                  isDark ? 'text-[#888]' : 'text-slate-400'
+                }`}
+              >
+                {item.label}
+              </p>
+
+              {accessibleChildren.map((child) => {
+                const ChildIcon = child.icon
+
+                return (
+                  <NavLink
+                    key={child.label}
+                    to={child.path}
+                    className={({ isActive }) =>
+                      `flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12px] font-medium whitespace-nowrap
+                      ${
+                        isActive
+                          ? 'bg-[#7094ff] text-white'
+                          : isDark
+                          ? 'text-[#bbb] hover:text-white hover:bg-white/[0.08]'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }`
+                    }
+                  >
+                    <ChildIcon size={13} />
+                    <span>{child.label.trim()}</span>
+                  </NavLink>
+                )
+              })}
+            </div>
+          </div>
         )}
 
+        {/* Expanded: normal dropdown */}
         {!collapsed && open && (
           <div className="ml-6 mt-1 flex flex-col gap-1">
             {accessibleChildren.map((child) => {
-              const ChildIcon = child.icon;
+              const ChildIcon = child.icon
 
               return (
                 <NavLink
@@ -250,20 +272,20 @@ if (!hasScopeAccess(userScope, item.scope)) {
                     `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px]
                     ${
                       isActive
-                        ? "bg-[#7094ff] text-white"
-                        : "text-[#888] hover:text-[#e0e0e0] hover:bg-white/[0.06]"
+                        ? 'bg-[#7094ff] text-white'
+                        : 'text-[#888] hover:text-[#e0e0e0] hover:bg-white/[0.06]'
                     }`
                   }
                 >
                   <ChildIcon size={14} />
-                  <span>{child.label}</span>
+                  <span>{child.label.trim()}</span>
                 </NavLink>
-              );
+              )
             })}
           </div>
         )}
       </div>
-    );
+    )
   }
 
   // Normal menu item
@@ -293,7 +315,7 @@ if (!hasScopeAccess(userScope, item.scope)) {
         </span>
       )}
     </NavLink>
-  );
+  )
 }
 
 function FooterBtn({ icon: Icon, label, collapsed, onClick, danger }) {
@@ -339,21 +361,18 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await logout()
     } finally {
-      navigate("/login", { replace: true });
+      navigate('/login', { replace: true })
     }
-  };
+  }
 
-  // Get user role (assuming user object has a role property)
-  const userRole = user?.role?.toLowerCase() || 'admin';
-  // alert("User scope value"+user.scope);
+  const userRole = user?.role?.toLowerCase() || 'admin'
   const userScope = user?.scope
     ?.split(',')
     .map(scope => scope.trim().toLowerCase())
-    .filter(Boolean) || [];
+    .filter(Boolean) || []
 
-  console.log("User Scope:", userScope);
   return (
     <aside
       className={`
@@ -368,8 +387,10 @@ export default function Sidebar() {
       }}
     >
       {/* Nav */}
-      <nav className="flex-1 py-3 flex flex-col gap-0.5"
-        style={{ overflowY: 'auto', overflow: 'visible' }}>
+      <nav
+        className="flex-1 py-3 flex flex-col gap-0.5"
+        style={{ overflowY: 'auto', overflow: 'visible' }}
+      >
         {NAV.map(item => (
           <NavItem
             key={item.label}
@@ -387,17 +408,23 @@ export default function Sidebar() {
         ${collapsed ? 'justify-center items-center' : 'items-center px-3'}
       `}>
         {collapsed ? (
-          <button onClick={toggle} title="Expand sidebar"
+          <button
+            onClick={toggle}
+            title="Expand sidebar"
             className="w-8 h-8 rounded-lg flex items-center justify-center
                        text-[#666] hover:text-[#ccc] hover:bg-white/[0.08]
-                       transition-all duration-150">
+                       transition-all duration-150"
+          >
             <ChevronRight size={14} />
           </button>
         ) : (
-          <button onClick={toggle} title="Collapse sidebar"
+          <button
+            onClick={toggle}
+            title="Collapse sidebar"
             className="ml-auto w-8 h-8 rounded-lg flex items-center justify-center
                        text-[#666] hover:text-[#ccc] hover:bg-white/[0.08]
-                       transition-all duration-150">
+                       transition-all duration-150"
+          >
             <ChevronLeft size={14} />
           </button>
         )}
@@ -413,7 +440,7 @@ export default function Sidebar() {
             icon={ClipboardMinus}
             label="Reports"
             collapsed={collapsed}
-            onClick={() => navigate("/reports")}
+            onClick={() => navigate('/reports')}
           />
         )}
 
@@ -422,7 +449,7 @@ export default function Sidebar() {
             icon={Settings}
             label="Settings"
             collapsed={collapsed}
-            onClick={() => navigate("/Setting")}
+            onClick={() => navigate('/Setting')}
           />
         )}
 
@@ -459,3 +486,4 @@ export default function Sidebar() {
     </aside>
   )
 }
+

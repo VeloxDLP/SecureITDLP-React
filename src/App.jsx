@@ -29,6 +29,7 @@ import SecurityRing from './pages/SecurityRing.jsx'
 import OSDashboard from './pages/OSDashboard/OSDashboard.jsx'
 import SelfProtection from './pages/SelfProtection/SelfProtection.jsx'
 import UsbEncryption from './pages/USBEncryption/UsbEncryption.jsx'
+import EndpointPolicyDashboard from './pages/DeviceActivePolicy/DeviceActivePolicy.jsx'
 
 // import ViewApplication from "./pages/ViewApplication/ViewApplication.jsx";
 // import DriveControl from './pages/DriveControl.jsx'
@@ -86,7 +87,7 @@ function AppRoutes() {
         <Route path="ApplicationControl" element={<ApplicationControl></ApplicationControl>} />
         <Route path="ManageBlacklisted" element={<ManageBlacklisted></ManageBlacklisted>} />
 <Route path="OSDashboard" element={<OSDashboard></OSDashboard>}/>
-{/* <Route path="DeviceActivePolicy" element={DeviceAct} */}
+<Route path="DeviceActivePolicy" element={<EndpointPolicyDashboard></EndpointPolicyDashboard>}/>
 <Route path="UsbEncryption" element={<UsbEncryption></UsbEncryption>}/>
 <Route path="SelfProtection" element={<SelfProtection></SelfProtection>}/>
          <Route path="ManageWhitelisted" element={<ManageWhitelisted></ManageWhitelisted>}/>

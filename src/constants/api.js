@@ -38,6 +38,9 @@ export const API_ENDPOINTS = {
    EMAIL_INCIDENT_DATA: "/DashboardModal/EmailModalData",
    
   },
+DeviceActivePollicy: {
+  DEVICE_ACTIVE_POLICY: "/Devicepolicy/DeviceActivePolicy",
+},
 
 VIEWDEVICE: {
     VIEW_DEVICE:              "/DeviceManager/allDevices",
@@ -83,6 +86,12 @@ Drive_Control: {
   ADD_DRIVE_POLICY:"/DrivePolicy/addDrivePolicy"
 },
 
+
+  ASSET_INVENTORY: {
+    HARDWARE_DETAILS: "/AssetInventory/GetHardwareDetails",
+    OS_INFO: "/AssetInventory/AssetOS",
+    DRIVE_DETAILS: "/AssetInventory/GetDriveDetailinfo",
+  },
 
 
 NETWORK_POLICY: {

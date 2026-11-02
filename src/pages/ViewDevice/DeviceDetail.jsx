@@ -1,17 +1,31 @@
-import React from "react";
-import { Search, ChevronUp, CalendarDays, Minus, Database, HardDrive, Activity, Server } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  Search,
+  ChevronUp,
+  CalendarDays,
+  Minus,
+  Database,
+  HardDrive,
+  Activity,
+  Server,
+  Loader2,
+  AlertCircle,
+  ArrowLeft,
+} from "lucide-react";
 
 import CPUUtilization from "./CPUUtilization";
+import { dashboardService } from "../../services/dashboardService";
 
-// --- SUB-COMPONENT: RAM Utilization ---
+// --- SUB-COMPONENT: RAM Utilization (Static) ---
 const RAMCard = ({ isDark }) => {
   const theme = {
-    bg: isDark ? "#020617" : "#ffffff",        // 👈 card bg
+    bg: isDark ? "#020617" : "#ffffff",
     border: isDark ? "#1e293b" : "#e2e8f0",
     text: isDark ? "#e8eef7" : "#0f172a",
     textMuted: isDark ? "#8da2b9" : "#64748b",
     textLight: isDark ? "#94a3b8" : "#94a3b8",
-    cardBg: isDark ? "#020617" : "#f8fafc",    // 👈 inner card bg
+    cardBg: isDark ? "#020617" : "#f8fafc",
     borderLight: isDark ? "#1e293b" : "#e2e8f0",
     gridLine: isDark ? "#1e293b" : "#e2e8f0",
     btnActive: isDark ? "#1e3a8a" : "#dbeafe",
@@ -24,8 +38,6 @@ const RAMCard = ({ isDark }) => {
 
   return (
     <div style={{ width: "100%", height: "100%", background: theme.bg, borderRadius: 12, padding: 20, boxSizing: "border-box", border: `1px solid ${theme.border}`, color: theme.text, fontFamily: "Inter, system-ui, sans-serif", display: "flex", flexDirection: "column" }}>
-      
-      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 38, height: 38, background: theme.liveBg, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: theme.liveText }}>
@@ -47,7 +59,6 @@ const RAMCard = ({ isDark }) => {
         </div>
       </div>
 
-      {/* Main Chart Area */}
       <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: 20, alignItems: "center", marginBottom: 20, flex: 1 }}>
         <div style={{ position: "relative", width: 140, height: 140 }}>
           <svg viewBox="0 0 160 160" style={{ width: "100%", height: "100%" }}>
@@ -67,33 +78,30 @@ const RAMCard = ({ isDark }) => {
         </div>
 
         <div style={{ position: "relative", height: 120 }}>
-           <div style={{ position: "absolute", top: -20, right: 0, display: "flex", gap: 4, fontSize: 9 }}>
-             <span style={{ color: theme.textMuted, padding: "2px 4px" }}>Zoom</span>
-             <button style={{ background: theme.btnActive, color: theme.btnActiveText, border: "none", borderRadius: 3, padding: "2px 6px" }}>1M</button>
-             <button style={{ background: theme.btnDefault, color: theme.btnDefaultText, border: "none", borderRadius: 3, padding: "2px 6px" }}>5M</button>
-             <button style={{ background: theme.btnDefault, color: theme.btnDefaultText, border: "none", borderRadius: 3, padding: "2px 6px" }}>All</button>
-           </div>
-           <svg viewBox="0 0 360 120" preserveAspectRatio="none" style={{ width: "100%", height: "100%", overflow: "visible" }}>
-             {[0, 50, 100].map(y => <line key={y} x1="0" y1={y} x2="360" y2={y} stroke={theme.gridLine} strokeDasharray="3 3" />)}
-             <defs>
-               <linearGradient id="ramArea" x1="0" y1="0" x2="0" y2="1">
-                 <stop offset="0%" stopColor="#a855f7" stopOpacity={isDark ? "0.4" : "0.2"} />
-                 <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
-               </linearGradient>
-             </defs>
-             
-             <path d="M 0 90 L 30 60 L 45 75 L 70 20 L 100 70 L 130 40 L 160 80 L 200 60 L 240 90 L 290 10 L 320 60 L 350 50 L 360 25 L 360 120 L 0 120 Z" fill="url(#ramArea)" />
-             <path d="M 0 90 L 30 60 L 45 75 L 70 20 L 100 70 L 130 40 L 160 80 L 200 60 L 240 90 L 290 10 L 320 60 L 350 50 L 360 25" fill="none" stroke="#c084fc" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
-             
-             <circle cx="360" cy="25" r="3" fill="#c084fc" />
-             <g fontSize="8" fill={theme.textMuted}>
-                <text x="0" y="130">17:12</text><text x="60" y="130">17:13</text><text x="120" y="130">17:14</text><text x="180" y="130">17:15</text><text x="240" y="130">17:16</text><text x="300" y="130">17:17</text><text x="340" y="130">17:17</text>
-             </g>
-           </svg>
+          <div style={{ position: "absolute", top: -20, right: 0, display: "flex", gap: 4, fontSize: 9 }}>
+            <span style={{ color: theme.textMuted, padding: "2px 4px" }}>Zoom</span>
+            <button style={{ background: theme.btnActive, color: theme.btnActiveText, border: "none", borderRadius: 3, padding: "2px 6px" }}>1M</button>
+            <button style={{ background: theme.btnDefault, color: theme.btnDefaultText, border: "none", borderRadius: 3, padding: "2px 6px" }}>5M</button>
+            <button style={{ background: theme.btnDefault, color: theme.btnDefaultText, border: "none", borderRadius: 3, padding: "2px 6px" }}>All</button>
+          </div>
+          <svg viewBox="0 0 360 120" preserveAspectRatio="none" style={{ width: "100%", height: "100%", overflow: "visible" }}>
+            {[0, 50, 100].map(y => <line key={y} x1="0" y1={y} x2="360" y2={y} stroke={theme.gridLine} strokeDasharray="3 3" />)}
+            <defs>
+              <linearGradient id="ramArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#a855f7" stopOpacity={isDark ? "0.4" : "0.2"} />
+                <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path d="M 0 90 L 30 60 L 45 75 L 70 20 L 100 70 L 130 40 L 160 80 L 200 60 L 240 90 L 290 10 L 320 60 L 350 50 L 360 25 L 360 120 L 0 120 Z" fill="url(#ramArea)" />
+            <path d="M 0 90 L 30 60 L 45 75 L 70 20 L 100 70 L 130 40 L 160 80 L 200 60 L 240 90 L 290 10 L 320 60 L 350 50 L 360 25" fill="none" stroke="#c084fc" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+            <circle cx="360" cy="25" r="3" fill="#c084fc" />
+            <g fontSize="8" fill={theme.textMuted}>
+              <text x="0" y="130">17:12</text><text x="60" y="130">17:13</text><text x="120" y="130">17:14</text><text x="180" y="130">17:15</text><text x="240" y="130">17:16</text><text x="300" y="130">17:17</text><text x="340" y="130">17:17</text>
+            </g>
+          </svg>
         </div>
       </div>
 
-      {/* Footer Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, borderTop: `1px solid ${theme.border}`, paddingTop: 16 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
           <Database size={16} color="#a855f7" style={{ marginTop: 2 }} />
@@ -116,15 +124,57 @@ const RAMCard = ({ isDark }) => {
   );
 };
 
-// --- SUB-COMPONENT: Drive Details Table ---
-const DriveDetails = ({ isDark }) => {
-  const drives = [
-    { ip: "10.30.13.60", atm: "SIANBY95", date: "2/02/2026", time: "72 hrs" },
-    { ip: "10.30.13.75", atm: "SIANBY95", date: "2/02/2026", time: "28 hrs" },
-    { ip: "10.30.13.75", atm: "SIANBY95", date: "2/02/2026", time: "42 hrs" },
-    { ip: "10.30.13.75", atm: "SIANBY95", date: "2/02/2026", time: "10hrs" },
-    { ip: "10.30.13.75", atm: "SIANBY95", date: "2/02/2026", time: "9 hrs" },
-  ];
+// --- SUB-COMPONENT: Shared DataRow ---
+const DataRow = ({ label, value }) => (
+  <div className="hw-row">
+    <div className="hw-label" style={{ flexShrink: 0 }}>
+      <span className="dot"></span>
+      {label}
+    </div>
+    <div
+      className="hw-value"
+      title={value || "-"}
+      style={{
+        maxWidth: "65%",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+        textAlign: "right",
+        fontWeight: 500,
+      }}
+    >
+      {value || "-"}
+    </div>
+  </div>
+);
+
+// --- SUB-COMPONENT: Drive Details (LIVE) ---
+const DriveDetails = ({ isDark, hostName }) => {
+  const [drives, setDrives] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!hostName) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await dashboardService.getDriveDetailsByHost(hostName);
+        if (!cancelled) setDrives(Array.isArray(response?.data) ? response.data : []);
+      } catch (err) {
+        if (!cancelled) {
+          if (err?.response?.status !== 404) {
+            setError(err.message || "Failed to load drives");
+          } else {
+            setDrives([]);
+          }
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [hostName]);
 
   return (
     <div className={`inner-card ${isDark ? 'dark' : 'light'}`} style={{ height: "100%" }}>
@@ -132,88 +182,298 @@ const DriveDetails = ({ isDark }) => {
         <h3>Drive Details</h3>
         <div className="search-box">
           <Search size={12} className="search-icon" />
-          <input type="text" placeholder="Search Identifiers" />
+          <input type="text" placeholder="Search..." />
         </div>
       </div>
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>IP Address</th>
-              <th>ATM ID</th>
-              <th>Date</th>
-              <th>Time Taken</th>
-            </tr>
-          </thead>
-          <tbody>
-            {drives.map((drive, idx) => (
-              <tr key={idx}>
-                <td>{drive.ip}</td>
-                <td>{drive.atm}</td>
-                <td>{drive.date}</td>
-                <td>{drive.time}</td>
+      
+      {loading ? (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, color: "#94a3b8", fontSize: 11 }}>
+          <Loader2 size={16} className="animate-spin" style={{ marginRight: 8 }} /> Loading drives…
+        </div>
+      ) : error ? (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", fontSize: 11 }}>
+          <AlertCircle size={16} style={{ marginRight: 8 }} /> {error}
+        </div>
+      ) : (
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Drive</th>
+                <th>Total</th>
+                <th>Free</th>
+                <th>File System</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {drives.length > 0 ? drives.map((d, idx) => (
+                <tr key={idx}>
+                  <td>{d.drive || "-"}</td>
+                  <td>{d.totalGb ? `${d.totalGb} GB` : "-"}</td>
+                  <td>{d.freeGb ? `${d.freeGb} GB` : "-"}</td>
+                  <td>{d.fileSystem || "-"}</td>
+                </tr>
+              )) : (
+                <tr><td colSpan={4} style={{ textAlign: "center", padding: "24px" }}>No drives found</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
 
-// --- SUB-COMPONENT: Hardware Details Card ---
-const HardwareDetails = ({ isDark }) => {
-  const DataRow = ({ label, value = "No" }) => (
-    <div className="hw-row">
-      <div className="hw-label">
-        <span className="dot"></span>
-        {label}
-      </div>
-      <div className="hw-value">{value}</div>
-    </div>
-  );
+// --- SUB-COMPONENT: OS Details (LIVE) ---
+const OSDetails = ({ isDark, hostName }) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!hostName) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await dashboardService.getOperatingSystemByHost(hostName);
+        if (!cancelled) setData(response?.data?.[0] || null);
+      } catch (err) {
+        if (!cancelled) {
+          if (err?.response?.status !== 404) {
+            setError(err.message || "Failed to load OS details");
+          } else {
+            setData(null);
+          }
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [hostName]);
 
   return (
-    <div className={`inner-card ${isDark ? 'dark' : 'light'}`}>
+    <div className={`inner-card ${isDark ? 'dark' : 'light'}`} style={{ height: "100%" }}>
       <div className="inner-card-header">
-        <h3>Hardware Details</h3>
-        <button className="collapse-btn">
-          <ChevronUp size={14} />
-        </button>
+        <h3>OS Details</h3>
+        <button className="collapse-btn"><ChevronUp size={14} /></button>
       </div>
-      <div className="hw-section">
-        <p className="hw-section-title">Identity</p>
-        <div className="hw-grid">
-          <DataRow label="Serial No." />
-          <DataRow label="Mac Address" />
+
+      {loading ? (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, color: "#94a3b8", fontSize: 11 }}>
+          <Loader2 size={16} className="animate-spin" style={{ marginRight: 8 }} /> Loading OS…
         </div>
-      </div>
-      <div className="hw-section">
-        <p className="hw-section-title">Processor</p>
-        <div className="hw-grid">
-          <DataRow label="Processor" />
-          <DataRow label="BIOS Info" />
+      ) : error ? (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", fontSize: 11 }}>
+          <AlertCircle size={16} style={{ marginRight: 8 }} /> {error}
         </div>
-      </div>
-      <div className="hw-section">
-        <p className="hw-section-title">Storage & Memory</p>
-        <div className="hw-grid">
-          <DataRow label="All Drives" />
-          <DataRow label="Ram Size" />
-          <DataRow label="Hard Disk Model" />
-          <DataRow label="Graphic Card" />
-        </div>
-      </div>
+      ) : !data ? (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, color: "#94a3b8", fontSize: 11 }}>No OS data available</div>
+      ) : (
+        <>
+          <div className="hw-section">
+            <p className="hw-section-title">System</p>
+            <div className="hw-grid" style={{ marginBottom: 6 }}>
+              <DataRow label="OS" value={data.os} />
+              <DataRow label="Version" value={data.version} />
+            </div>
+            <div className="hw-grid">
+              <DataRow label="Architecture" value={data.architecture} />
+              <DataRow label="Installed" value={data.installDate} />
+            </div>
+          </div>
+
+          <div className="hw-section">
+            <p className="hw-section-title">Memory</p>
+            <div className="hw-grid">
+              <DataRow label="Total RAM" value={data.totalRamMb ? `${data.totalRamMb} MB` : "-"} />
+              <DataRow label="Last Check-in" value={data.updatedAt ? new Date(data.updatedAt).toLocaleDateString() : "-"} />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
+// --- SUB-COMPONENT: Hardware Details (LIVE) ---
+const HardwareDetails = ({ isDark, hostName }) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!hostName) {
+      setError("Host name is required");
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        const response = await dashboardService.getHardwareDetailsByHost(hostName);
+        const first = Array.isArray(response?.data) ? response.data[0] : null;
+        if (!first) throw new Error("No hardware details available");
+        if (!cancelled) setData(first);
+      } catch (err) {
+        if (!cancelled) {
+          if (err?.response?.status !== 404) {
+            setError(err?.response?.data?.message || err?.message || "Failed to load hardware details");
+          } else {
+            setData(null);
+          }
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [hostName]);
+
+  return (
+    <div className={`inner-card ${isDark ? "dark" : "light"}`}>
+      <div className="inner-card-header">
+        <h3>Hardware Details</h3>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {hostName && (
+            <span style={{ fontSize: 9, padding: "2px 6px", background: isDark ? "#0b1120" : "#f1f5f9", border: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`, borderRadius: 4, color: isDark ? "#94a3b8" : "#64748b", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={hostName}>
+              {hostName}
+            </span>
+          )}
+          <button className="collapse-btn"><ChevronUp size={14} /></button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "#94a3b8", fontSize: 11, padding: 24 }}>
+          <Loader2 size={16} className="animate-spin" /> Loading hardware…
+        </div>
+      ) : error ? (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, color: "#ef4444", fontSize: 11, textAlign: "center", padding: 24 }}>
+          <AlertCircle size={20} />
+          <span>{error}</span>
+        </div>
+      ) : !data ? (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 11, padding: 24 }}>
+          No hardware data available
+        </div>
+      ) : (
+        <>
+          <div className="hw-section">
+            <p className="hw-section-title">Processor</p>
+            <div className="hw-grid" style={{ marginBottom: 4 }}>
+              <DataRow label="Processor" value={data.processor} />
+              <DataRow label="BIOS" value={data.bios} />
+            </div>
+            <div className="hw-grid">
+              <DataRow label="CPU Cores" value={data.cpuCores} />
+              <DataRow label="Base Speed" value={data.cpuBaseSpeed} />
+            </div>
+          </div>
+
+          <div className="hw-section">
+            <p className="hw-section-title">Memory & Graphics</p>
+            <div className="hw-grid">
+              <DataRow label="RAM Size" value={data.ramSize ? `${data.ramSize}` : "-"} />
+              <DataRow label="Graphic Card" value={data.graphicCard} />
+            </div>
+          </div>
+
+          <div className="hw-section">
+            <p className="hw-section-title">Storage & Motherboard</p>
+            <div className="hw-grid">
+              <DataRow label="Drives" value={data.drives} />
+              <DataRow label="Motherboard" value={data.motherboard} />
+            </div>
+          </div>
+
+          <div className="hw-section">
+            <p className="hw-section-title">Identity</p>
+            <div className="hw-grid">
+              <DataRow label="MAC Address" value={data.macAddress} />
+              <DataRow label="Updated" value={formatDate(data.updatedAt)} />
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// Helper
+function formatDate(iso) {
+  if (!iso) return "-";
+  try {
+    return new Date(iso).toLocaleString("en-IN", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
 
 // --- MAIN PAGE COMPONENT ---
 function DeviceDetail({ isDark = true }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const hostName = location.state?.hostName || location.state?.device?.host || "PRATHAMESH-B";
+
   return (
     <div className={`device-detail-container ${isDark ? 'dark' : 'light'}`}>
       
+      {/* 🛠️ HEADER: Matches the Screenshot */}
+      <div 
+        style={{
+          background: isDark ? "#020617" : "#ffffff",
+          border: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`,
+          borderRadius: 12,
+          padding: "20px 24px",
+          marginBottom: 8,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: isDark ? "#f8fafc" : "#0f172a" }}>
+            Endpoint Details
+          </h2>
+          <p style={{ margin: 0, fontSize: 12, color: isDark ? "#94a3b8" : "#64748b" }}>
+            System Configuration For <span style={{ color: isDark ? "#818cf8" : "#4f46e5", fontWeight: 600 }}>{hostName}</span>
+          </p>
+        </div>
+
+        <button 
+          onClick={() => navigate(-1)} 
+          style={{ 
+            background: "#6366f1", // Purple/Indigo matching screenshot
+            border: "none", 
+            color: "#ffffff", 
+            cursor: "pointer",
+            padding: "8px 16px",
+            borderRadius: 6,
+            fontSize: 12,
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            transition: "background 0.2s"
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = "#4f46e5"}
+          onMouseLeave={(e) => e.currentTarget.style.background = "#6366f1"}
+        >
+          <ArrowLeft size={16} /> Back
+        </button>
+      </div>
+
       {/* Top Row: CPU & RAM */}
       <div className="device-utilization-grid">
         <div className="device-utilization-card">
@@ -224,240 +484,296 @@ function DeviceDetail({ isDark = true }) {
         </div>
       </div>
 
-      {/* Bottom Row: 3 Cards in One Line */}
-      <div className="device-info-grid">
-        <DriveDetails isDark={isDark} />
-        <HardwareDetails isDark={isDark} />
-        <HardwareDetails isDark={isDark} />
+      {/* Bottom Row 1: Drive & OS Details */}
+      <div className="device-info-grid-2">
+        <DriveDetails isDark={isDark} hostName={hostName} />
+        <OSDetails isDark={isDark} hostName={hostName} />
       </div>
 
-      <style>{`
-        html, body {
-          margin: 0;
-          padding: 0;
-        }
+           {/* Bottom Row 2: Hardware Details */}
+      <div style={{ marginTop: 8 }}> {/* 👈 CHANGE THIS (was 24) */}
+        <HardwareDetails isDark={isDark} hostName={hostName} />
+      </div>
 
-        /* --- THEME VARIABLES --- */
-        .device-detail-container {
-          width: 100%;
-          min-height: 100vh;
-          box-sizing: border-box;
-          font-family: "Inter", system-ui, sans-serif;
-          padding: 24px;
-          transition: background-color 0.3s, color 0.3s;
-        }
+     
+<style>{`
+  * {
+    box-sizing: border-box;
+  }
 
-        .device-detail-container.dark {
-          color: #e8eef7;
-          // background: #020617;            /* 👈 page bg (was empty) */
-        }
+    .device-detail-container {
+    width: 100%;
+    min-height: 100vh;
+    padding: 8px; /* 👈 CHANGE THIS (was 24px) */
+    font-family: "Inter", system-ui, sans-serif;
+  }
 
-        .device-detail-container.light {                                           
-          color: #0f172a;
-          /* background: #f8fafc; */
-        }
+  /* Header */
+  .device-detail-header {
+    margin-bottom: 8px !important;
+    border-radius: 8px !important;
+  }
 
-        /* Top Grid */
-        .device-utilization-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 24px;
-          margin-bottom: 24px;
-          align-items: stretch; 
-        }
+    /* CPU & RAM */
+  .device-utilization-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px; /* 👈 CHANGE THIS (controls space between CPU and RAM) */
+    margin-bottom: 8px; /* 👈 CHANGE THIS (controls space below them) */
+    align-items: stretch;
+  }
 
-        .device-utilization-card {
-          min-width: 0;
-          width: 100%;
-          display: flex;
-        }
+  .device-utilization-card {
+    min-width: 0;
+    width: 100%;
+    display: flex;
+  }
 
-        /* Bottom Grid */
-        .device-info-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr)); 
-          gap: 24px;
-          align-items: stretch; 
-        }
+    /* Drive & OS */
+  .device-info-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px; /* 👈 CHANGE THIS */
+    margin-bottom: 8px; /* 👈 CHANGE THIS */
+    align-items: stretch;
+  }
 
-        /* --- FOOTER --- */
-        .device-footer {
-          margin-top: 24px;
-          padding-top: 16px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 11px;
-          border-top: 1px solid;
-        }
+  /* Hardware */
+  .hardware-wrapper {
+    width: 100%;
+    margin-top: 0;
+    padding: 0;
+  }
 
-        .dark .device-footer { border-color: #1e293b; color: #94a3b8; }
-        .light .device-footer { border-color: #e2e8f0; color: #64748b; }
+  /* All cards */
+  .inner-card {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
 
-        /* --- CARD STYLES (Theme Dependent) --- */
-        .inner-card {
-          border-radius: 12px;
-          padding: 12px 16px; 
-          display: flex;
-          flex-direction: column;
-          transition: background-color 0.3s, border-color 0.3s;
-        }
+  .dark .inner-card {
+    background: #020617;
+    border: 1px solid #1e293b;
+  }
 
-        .dark .inner-card {
-          background: #020617;            /* 👈 card bg (was #111827) */
-          border: 1px solid #1e293b;
-        }
+  .light .inner-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+  }
 
-        .light .inner-card {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-        }
+  /* Card headers */
+  .inner-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
 
-        .inner-card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 12px; 
-        }
+  .inner-card-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
 
-        .inner-card-header h3 {
-          margin: 0;
-          font-size: 14px; 
-          font-weight: 600;
-        }
+  .dark .inner-card-header h3 {
+    color: #f1f5f9;
+  }
 
-        .dark .inner-card-header h3 { color: #f1f5f9; }
-        .light .inner-card-header h3 { color: #0f172a; }
+  .light .inner-card-header h3 {
+    color: #0f172a;
+  }
 
-        .collapse-btn {
-          border: none;
-          border-radius: 4px;
-          display: grid;
-          place-items: center;
-          width: 20px;
-          height: 20px;
-          cursor: pointer;
-        }
+  /* Search */
+  .search-box {
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+    padding: 4px 8px;
+    gap: 4px;
+  }
 
-        .dark .collapse-btn { background: #1e293b; color: #94a3b8; }
-        .light .collapse-btn { background: #f1f5f9; color: #64748b; }
+  .dark .search-box {
+    background: #0b1120;
+    border: 1px solid #1e293b;
+  }
 
-        .search-box {
-          display: flex;
-          align-items: center;
-          border-radius: 6px;
-          padding: 4px 8px; 
-          gap: 4px;
-        }
+  .light .search-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+  }
 
-        .dark .search-box { background: #0b1120; border: 1px solid #1e293b; }
-        .light .search-box { background: #f8fafc; border: 1px solid #e2e8f0; }
+  .search-box input {
+    background: transparent;
+    border: none;
+    font-size: 10px;
+    outline: none;
+    width: 100px;
+  }
 
-        .search-box input {
-          background: transparent;
-          border: none;
-          font-size: 10px;
-          outline: none;
-          width: 100px;
-        }
+  .dark .search-box input {
+    color: #94a3b8;
+  }
 
-        .dark .search-box input { color: #94a3b8; }
-        .light .search-box input { color: #64748b; }
+  .light .search-box input {
+    color: #64748b;
+  }
 
-        .search-icon { color: #64748b; }
+  /* Tables */
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+  }
 
-        .table-container { width: 100%; }
+  .inner-card table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
 
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 11px;
-        }
+  .inner-card th {
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 500;
+  }
 
-        th {
-          text-align: left;
-          padding: 8px 10px; 
-          font-weight: 500;
-        }
+  .dark .inner-card th {
+    background: #0b1120;
+    color: #94a3b8;
+  }
 
-        .dark th { background: #0b1120; color: #94a3b8; }
-        .light th { background: #f1f5f9; color: #64748b; }
+  .light .inner-card th {
+    background: #f1f5f9;
+    color: #64748b;
+  }
 
-        th:first-child { border-radius: 4px 0 0 4px; }
-        th:last-child { border-radius: 0 4px 4px 0; }
-        
-        td {
-          padding: 8px 10px; 
-          border-bottom: 1px solid;
-        }
+  .inner-card td {
+    padding: 8px 10px;
+    border-bottom: 1px solid;
+    white-space: nowrap;
+  }
 
-        .dark td { border-color: #1e293b; color: #cbd5e1; }
-        .light td { border-color: #e2e8f0; color: #334155; }
+  .dark .inner-card td {
+    border-color: #1e293b;
+    color: #cbd5e1;
+  }
 
-        tr:last-child td { border-bottom: none; }
+  .light .inner-card td {
+    border-color: #e2e8f0;
+    color: #334155;
+  }
 
-        .hw-section { margin-bottom: 8px; }
-        .hw-section:last-child { margin-bottom: 0; }
+  /* Hardware details */
+  .hw-section {
+    margin-bottom: 6px;
+  }
 
-        .hw-section-title {
-          margin: 0 0 6px 0; 
-          font-size: 10px;
-          font-weight: 500;
-        }
+  .hw-section:last-child {
+    margin-bottom: 0;
+  }
 
-        .dark .hw-section-title { color: #94a3b8; }
-        .light .hw-section-title { color: #64748b; }
+  .hw-section-title {
+    margin: 0 0 4px;
+    font-size: 10px;
+    font-weight: 500;
+  }
 
-        .hw-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 6px; 
-        }
+  .dark .hw-section-title {
+    color: #94a3b8;
+  }
 
-        .hw-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 6px 10px; 
-          border-radius: 4px;
-          font-size: 10px;
-        }
+  .light .hw-section-title {
+    color: #64748b;
+  }
 
-        .dark .hw-row { background: #0b1120; }
-        .light .hw-row { background: #f8fafc; }
+  .hw-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
 
-        .hw-label {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
+  .hw-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    min-width: 0;
+  }
 
-        .dark .hw-label { color: #cbd5e1; }
-        .light .hw-label { color: #334155; }
+  .dark .hw-row {
+    background: #0b1120;
+  }
 
-        .dot {
-          width: 6px;
-          height: 6px;
-          background: #10b981;
-          border-radius: 50%;
-        }
+  .light .hw-row {
+    background: #f8fafc;
+  }
 
-        .dark .hw-value { color: #94a3b8; }
-        .light .hw-value { color: #64748b; }
+  .hw-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
 
-        /* Responsive */
-        @media (max-width: 1200px) {
-          .device-info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        }
-        @media (max-width: 900px) {
-          .device-info-grid, .device-utilization-grid { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 600px) {
-          .device-detail-container { padding: 16px; }
-          .hw-grid { grid-template-columns: 1fr; }
-          .device-footer { flex-direction: column; gap: 6px; text-align: center; }
-        }
-      `}</style>
+  .dot {
+    width: 6px;
+    height: 6px;
+    flex-shrink: 0;
+    background: #10b981;
+    border-radius: 50%;
+  }
+
+  /* Loading and error */
+  .loading-state,
+  .error-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    font-size: 11px;
+  }
+
+  .loading-state {
+    color: #94a3b8;
+  }
+
+  .error-state {
+    color: #ef4444;
+  }
+
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .device-info-grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .device-utilization-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .device-detail-container {
+      padding: 12px;
+    }
+
+    .hw-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+`}</style>
+
     </div>
   );
 }
