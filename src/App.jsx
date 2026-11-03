@@ -78,7 +78,7 @@ function AppRoutes() {
         <Route path="blacklisting" element={<PlaceholderPage title="App Blacklisting" />} />
         <Route path="web" element={<WebsiteProtection />} />
         <Route path="DriveControl" element={<DriveControl></DriveControl>} />
-        <Route path="self-protection" element={<PlaceholderPage title="Self Protection" />} />
+        {/* <Route path="self-protection" element={<PlaceholderPage title="Self Protection" />} /> */}
         <Route path="PrinterControl" element={<PrinterControl />} />
         <Route path="ActivePolicy" element={<ActivePolicy />} />
         <Route path="NetworkPolicy" element={<NetworkPolicy />} />
@@ -86,16 +86,16 @@ function AppRoutes() {
         <Route path="DataClassification" element={<DataClassification></DataClassification>} />
         <Route path="ApplicationControl" element={<ApplicationControl></ApplicationControl>} />
         <Route path="ManageBlacklisted" element={<ManageBlacklisted></ManageBlacklisted>} />
-<Route path="OSDashboard" element={<OSDashboard></OSDashboard>}/>
-<Route path="DeviceActivePolicy" element={<EndpointPolicyDashboard></EndpointPolicyDashboard>}/>
-<Route path="UsbEncryption" element={<UsbEncryption></UsbEncryption>}/>
-<Route path="SelfProtection" element={<SelfProtection></SelfProtection>}/>
-         <Route path="ManageWhitelisted" element={<ManageWhitelisted></ManageWhitelisted>}/>
+        <Route path="OSDashboard" element={<OSDashboard></OSDashboard>} />
+        <Route path="DeviceActivePolicy" element={<EndpointPolicyDashboard></EndpointPolicyDashboard>} />
+        <Route path="UsbEncryption" element={<UsbEncryption></UsbEncryption>} />
+        <Route path="SelfProtection" element={<SelfProtection></SelfProtection>} />
+        <Route path="ManageWhitelisted" element={<ManageWhitelisted></ManageWhitelisted>} />
         <Route path="ViewApplication" element={<ViewApplication></ViewApplication>} />
-       <Route path="DeviceDetails" element={<DriveDetail></DriveDetail>}/>
-         <Route path="Reports"         element={<Reports></Reports>}/>
-            <Route path="Setting" element={<Setting></Setting>} />
-            <Route path="SecurityRing" element={<SecurityRing></SecurityRing>} />
+        <Route path="DeviceDetails" element={<DriveDetail></DriveDetail>} />
+        <Route path="Reports" element={<Reports></Reports>} />
+        <Route path="Setting" element={<Setting></Setting>} />
+        <Route path="SecurityRing" element={<SecurityRing></SecurityRing>} />
 
         <Route path="remediation" element={<PlaceholderPage title="File Remediation" />} />
 

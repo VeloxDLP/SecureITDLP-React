@@ -120,24 +120,21 @@ const NAV = [
     label: 'OS Dashboard',
     icon: Monitor,
     path: '/OSDashboard',
-    roles: ['admin', 'superadmin'],
-    scope: '/devices',
+    scope: '/OSDashboard',
   },
 
   {
     label: 'Self Protection',
     icon: Monitor,
     path: '/SelfProtection',
-    roles: ['admin', 'superadmin'],
-    scope: '/devices',
+    scope: '/SelfProtection',
   },
 
   {
     label: 'USB Encryption',
     icon: Usb,
     path: '/UsbEncryption',
-    roles: ['admin', 'superadmin'],
-    scope: '/devices',
+    scope: '/UsbEncryption',
   },
 ]
 
