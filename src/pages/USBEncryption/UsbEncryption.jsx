@@ -554,22 +554,33 @@ function AddForm({ branches, onAdd }) {
      - "Disable" → never valid → Submit DISABLED
      - ""        → invalid
   --------------------------------------------------------- */
-  const isValid =
+const isValid =
+  form.encryption === "Disable" ||
+  (
     isEnabled &&
     !!form.branch &&
     selectedDevices.length > 0 &&
-    form.password.trim() !== "";
+    form.password.trim() !== ""
+  );
 
   const handleEncryptionChange = (val) => {
-    if (val === "Disable") {
-      setForm({ encryption: val, branch: "", password: "" });
-      setSelectedDevices([]);
-      setFetchedDevices([]);
-      setSubmitted(false);
-    } else {
-      setForm((prev) => ({ ...prev, encryption: val }));
-    }
-  };
+  if (val === "Disable") {
+    setForm({
+      encryption: val,
+      branch: "",
+      password: "",
+    });
+
+    setSelectedDevices([]);
+    setFetchedDevices([]);
+    setSubmitted(false);
+  } else {
+    setForm((prev) => ({
+      ...prev,
+      encryption: val,
+    }));
+  }
+};
 
   const handleBranchChange = async (branch) => {
     if (!isEnabled) return;
@@ -595,33 +606,54 @@ function AddForm({ branches, onAdd }) {
   };
 
   const handleSubmit = async () => {
-    setSubmitted(true);
-    if (!isValid) return;
+  setSubmitted(true);
 
-    const payload = {
-      branch: form.branch,
-      devices: isEnabled ? selectedDevices : [],
-      encryption: form.encryption,
-      password: isEnabled ? form.password : "",
-    };
+  if (!isValid) return;
 
-    try {
-      await dashboardService.addUSBEncryptionPolicy?.(payload);
-
-      if (onAdd) {
-        await onAdd();
-      }
-
-      handleReset();
-    } catch (err) {
-      await showAlert({
-        icon: "error",
-        title: "Policy Failed",
-        text: err?.response?.data?.message || "Error sending policy",
-        confirmButtonText: "Cancel",
-      });
-    }
+  const payload = {
+    encryption: form.encryption,
+    branch: isEnabled ? form.branch : "",
+    devices: isEnabled ? selectedDevices : [],
+    password: isEnabled ? form.password : "",
   };
+
+  // Show payload alert
+  const result = await showAlert({
+    icon: "warning",
+    title: "Confirm USB Encryption Policy",
+    text: JSON.stringify(payload, null, 2),
+    confirmButtonText: "Confirm",
+    cancelButtonText: "Cancel",
+    showCancelButton: true,
+  });
+
+  if (!result?.isConfirmed) return;
+
+  try {
+    await dashboardService.addUSBEncryptionPolicy(payload);
+
+    await showAlert({
+      icon: "success",
+      title: "Success",
+      text: "USB encryption policy submitted successfully.",
+      confirmButtonText: "OK",
+    });
+
+    if (onAdd) {
+      await onAdd();
+    }
+
+    handleReset();
+
+  } catch (err) {
+    await showAlert({
+      icon: "error",
+      title: "Policy Failed",
+      text: err?.response?.data?.message || "Error sending policy",
+      confirmButtonText: "OK",
+    });
+  }
+};
 
   const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5 ${
     isDark ? "text-slate-500" : "text-slate-400"
