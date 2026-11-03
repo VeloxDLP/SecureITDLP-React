@@ -86,6 +86,10 @@ Drive_Control: {
   ADD_DRIVE_POLICY:"/DrivePolicy/addDrivePolicy"
 },
 
+DeviceActivePollicy: {
+  DEVICE_ACTIVE_POLICY: "/Devicepolicy/DeviceActivePolicy",
+},
+
 
   ASSET_INVENTORY: {
     HARDWARE_DETAILS: "/AssetInventory/GetHardwareDetails",

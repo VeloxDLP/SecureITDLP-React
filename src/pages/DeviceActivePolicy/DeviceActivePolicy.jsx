@@ -1,4 +1,6 @@
-import React from "react";
+
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   ShieldCheck,
   Search,
@@ -11,48 +13,266 @@ import {
   ChevronDown,
   Pin,
   Printer,
-  RefreshCw
+  RefreshCw,
+  HardDrive,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
-export default function EndpointPolicyDashboard() {
-  // Reusable progress bar component
-  const ProgressBar = ({ percent }) => {
-    const getColor = (val) => {
-      if (val < 30) return "#fbbf24";
-      if (val < 50) return "#f59e0b";
-      return "#ef4444";
+import { dashboardService } from "../../services/dashboardService";
+
+export default function EndpointPolicyDashboard({
+  computerName: computerNameProp,
+}) {
+  const location = useLocation();
+
+  const computerName =
+    computerNameProp ||
+    location.state?.computerName ||
+    location.state?.hostName ||
+    location.state?.deviceName ||
+    "PRATHAMESH-B";
+
+  const [policyData, setPolicyData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const [searchWhitelist, setSearchWhitelist] = useState("");
+  const [searchBlacklist, setSearchBlacklist] = useState("");
+  const [searchWebsite, setSearchWebsite] = useState("");
+  const [websiteMode, setWebsiteMode] = useState("All");
+
+  // --------------------------------------------------
+  // FETCH DEVICE ACTIVE POLICY API
+  // --------------------------------------------------
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchDeviceActivePolicy = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response =
+          await dashboardService.getDeviceActivePolicy(computerName);
+
+        // Supports both direct response and nested API response
+        const payload = response?.data ?? response;
+
+        const actualData =
+          payload?.data &&
+          typeof payload.data === "object" &&
+          !Array.isArray(payload.data)
+            ? payload.data
+            : payload;
+
+        if (mounted) {
+          setPolicyData(actualData || {});
+        }
+      } catch (err) {
+        console.error("Device Active Policy Error:", err);
+
+        if (mounted) {
+          setError(
+            err?.response?.data?.message ||
+              err?.message ||
+              "Unable to load endpoint policy."
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     };
 
+    fetchDeviceActivePolicy();
+
+    return () => {
+      mounted = false;
+    };
+  }, [computerName, refreshKey]);
+
+  const refreshPolicy = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  // --------------------------------------------------
+  // API RESPONSE DATA
+  // --------------------------------------------------
+
+  const usbPolicy = policyData["USB Policy"];
+  const printerPolicy = policyData["Printer Policy"];
+  const applicationMode = policyData["Application Mode"];
+  const driveDetails = policyData["Drive Details"];
+
+  const websitePolicies = Array.isArray(policyData["Website Control"])
+    ? policyData["Website Control"]
+    : [];
+
+  const blacklistedApplications = Array.isArray(
+    policyData["Blacklisted Applications"]
+  )
+    ? policyData["Blacklisted Applications"]
+    : [];
+
+  // This API response does not currently contain whitelist data.
+  const whitelistedApplications = Array.isArray(
+    policyData["Whitelisted Applications"]
+  )
+    ? policyData["Whitelisted Applications"]
+    : [];
+
+  const networkPolicies = Array.isArray(
+    policyData["Active Network Policies"]
+  )
+    ? policyData["Active Network Policies"]
+    : [];
+
+  const networkPolicy = networkPolicies[0] || {};
+
+  // --------------------------------------------------
+  // HELPERS
+  // --------------------------------------------------
+
+  const formatPolicy = (value) => {
+    if (value === null || value === undefined || value === "") {
+      return "Not Available";
+    }
+
+    if (typeof value === "string") {
+      return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+    }
+
+    return String(value);
+  };
+
+  const getPolicyColor = (value) => {
+    const normalized = String(value || "").toLowerCase();
+
+    if (normalized === "allow" || normalized === "learning") {
+      return "text-[#31d6a0]";
+    }
+
+    if (
+      normalized === "prevent" ||
+      normalized === "block" ||
+      normalized === "not found"
+    ) {
+      return "text-[#ff4757]";
+    }
+
+    return "text-[#4f75ff]";
+  };
+
+  const splitValues = (value) => {
+    if (!value) return [];
+
+    return String(value)
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  };
+
+  const fileTypes = splitValues(networkPolicy.file_types);
+  const keywords = splitValues(networkPolicy.keywords);
+  const channels = splitValues(networkPolicy.channels);
+  const applications = splitValues(networkPolicy.applications);
+
+  const regexValues = splitValues(networkPolicy.regex);
+
+  // --------------------------------------------------
+  // STATUS BADGE
+  // --------------------------------------------------
+
+  const StatusBadge = ({ value }) => {
+    const normalized = String(value || "").toLowerCase();
+
+    const isAllowed = normalized === "allow";
+    const isPrevented =
+      normalized === "prevent" || normalized === "block";
+
     return (
-      <div className="flex items-center gap-2">
-        <div className="w-14 h-1 bg-gray-200 dark:bg-[#1e293b] rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full"
-            style={{ width: `${percent}%`, backgroundColor: getColor(percent) }}
-          ></div>
-        </div>
-        <span className="text-gray-500 dark:text-[#94a3b8] text-[10px] font-medium w-6">{percent}%</span>
-      </div>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-medium ${
+          isAllowed
+            ? "border-[#31d6a0]/30 bg-[#31d6a0]/10 text-[#31d6a0]"
+            : isPrevented
+            ? "border-[#ff4757]/30 bg-[#ff4757]/10 text-[#ff4757]"
+            : "border-[#4f75ff]/30 bg-[#4f75ff]/10 text-[#4f75ff]"
+        }`}
+      >
+        {isAllowed ? (
+          <CheckCircle2 size={10} />
+        ) : (
+          <ShieldAlert size={10} />
+        )}
+
+        {formatPolicy(value)}
+      </span>
     );
   };
 
-  // Reusable Table Component
-   const DataTable = ({ title }) => {
-    const rows = [
-      { appName: "Aximp.ni.exe", appPath: "C:\\WINDOWS\\assembly\\NativeImages_v4.0.30319_32\\Aximp1ed56606ce3e\\253d7580966db877dc76\\Aximp.ni.exe" },
-      { appName: "Aximp.ni.exe", appPath: "C:\\WINDOWS\\assembly\\NativeImages_v4.0.30319_32\\Aximp1ed56606ce3e\\253d7580966db877dc76\\Aximp.ni.exe" },
-      { appName: "Aximp.ni.exe", appPath: "C:\\WINDOWS\\assembly\\NativeImages_v4.0.30319_32\\Aximp1ed56606ce3e\\253d7580966db877dc76\\Aximp.ni.exe" },
-      { appName: "Aximp.ni.exe", appPath: "C:\\WINDOWS\\assembly\\NativeImages_v4.0.30319_32\\Aximp1ed56606ce3e\\253d7580966db877dc76\\Aximp.ni.exe" },
-    ];
+  // --------------------------------------------------
+  // REUSABLE POLICY CARD
+  // --------------------------------------------------
+
+  const PolicyCard = ({ title, value, icon: Icon }) => (
+    <div className="bg-white dark:bg-[#020617] border border-gray-200 dark:border-[#1e293b] rounded-lg p-3.5 flex justify-between items-center transition-colors min-w-0">
+      <div className="flex flex-col gap-0.5 min-w-0">
+        <span className="text-[13px] font-semibold text-gray-900 dark:text-[#f8fafc] leading-tight">
+          {title}
+        </span>
+
+        <span className={`text-[10px] font-medium mt-0.5 ${getPolicyColor(value)}`}>
+          {formatPolicy(value)}
+        </span>
+      </div>
+
+      <div className="w-8 h-8 rounded-full border border-gray-200 dark:border-[#1e293b] flex items-center justify-center shrink-0">
+        <Icon size={19} className={getPolicyColor(value)} />
+      </div>
+    </div>
+  );
+
+  // --------------------------------------------------
+  // REUSABLE APPLICATION TABLE
+  // --------------------------------------------------
+
+  const DataTable = ({ title, rows, search, setSearch }) => {
+    const filteredRows = rows.filter((row) => {
+      const query = search.toLowerCase();
+
+      return (
+        (row.application || "").toLowerCase().includes(query) ||
+        (row.path || "").toLowerCase().includes(query)
+      );
+    });
 
     return (
-      <div className="bg-white dark:bg-[#0f172a] rounded-lg p-3 flex flex-col gap-2 border border-gray-200 dark:border-[#1e293b] transition-colors">
-        <div className="flex justify-between items-center">
-          <h3 className="text-gray-800 dark:text-[#e2e8f0] text-[11px] font-medium">{title}</h3>
+      <div className="bg-white dark:bg-[#020617] rounded-lg p-3 flex flex-col gap-2 border border-gray-200 dark:border-[#1e293b] transition-colors min-w-0">
+        <div className="flex justify-between items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <AppWindow size={14} className="text-[#4f75ff]" />
+
+            <h3 className="text-gray-800 dark:text-[#e2e8f0] text-[11px] font-medium">
+              {title}
+            </h3>
+
+            <span className="bg-gray-100 dark:bg-[#1e293b] text-gray-500 dark:text-[#94a3b8] text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+              {rows.length}
+            </span>
+          </div>
+
           <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#0b1120] border border-gray-200 dark:border-[#1e293b] px-2 py-1 rounded-md">
             <Search size={12} className="text-gray-400 dark:text-[#64748b]" />
+
             <input
               type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search application..."
               className="bg-transparent border-none outline-none text-[10px] text-gray-800 dark:text-[#e2e8f0] placeholder-gray-400 dark:placeholder-[#475569] w-24"
             />
@@ -60,267 +280,395 @@ export default function EndpointPolicyDashboard() {
         </div>
 
         <div className="w-full overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-[#1e293b]">
-                <th className="py-1.5 px-2 text-[9px] font-semibold text-gray-500 dark:text-[#64748b] uppercase tracking-wider w-[25%]">Application Name</th>
-                <th className="py-1.5 px-2 text-[9px] font-semibold text-gray-500 dark:text-[#64748b] uppercase tracking-wider w-[75%]">Application Path</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, idx) => (
-                <tr key={idx} className="border-b border-gray-200 dark:border-[#1e293b] last:border-none hover:bg-gray-50 dark:hover:bg-[#1e293b]/50 transition-colors">
-                  <td className="py-2 px-2 text-[10px] text-gray-800 dark:text-[#e2e8f0] font-medium align-top">
-                    {row.appName}
-                  </td>
-                  <td className="py-2 px-2 text-[9px] text-gray-500 dark:text-[#94a3b8] break-all leading-snug align-top">
-                    {row.appPath}
-                  </td>
+          <div className="max-h-[220px] overflow-y-auto custom-dashboard-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-[#020617]">
+                <tr className="border-b border-gray-200 dark:border-[#1e293b]">
+                  <th className="py-2 px-2 text-[9px] font-semibold text-gray-500 dark:text-[#64748b] uppercase tracking-wider w-[25%]">
+                    Application Name
+                  </th>
+
+                  <th className="py-2 px-2 text-[9px] font-semibold text-gray-500 dark:text-[#64748b] uppercase tracking-wider w-[75%]">
+                    Application Path
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {filteredRows.length > 0 ? (
+                  filteredRows.map((row, idx) => (
+                    <tr
+                      key={`${row.application}-${idx}`}
+                      className="border-b border-gray-200 dark:border-[#1e293b] last:border-none hover:bg-gray-50 dark:hover:bg-[#0b1120] transition-colors"
+                    >
+                      <td className="py-2 px-2 text-[10px] text-gray-800 dark:text-[#e2e8f0] font-medium align-top">
+                        {row.application}
+                      </td>
+
+                      <td className="py-2 px-2 text-[9px] text-gray-500 dark:text-[#94a3b8] break-all leading-snug align-top">
+                        {row.path || "Not Available"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      className="py-5 text-center text-[10px] text-gray-400"
+                    >
+                      {rows.length === 0
+                        ? "No application data available"
+                        : "No matching applications found"}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
   };
 
-  // Website Protection Policies Component
-  const WebsiteProtectionPolicies = () => {
-    const rows = [
-      { branch: "HQ - Mumbai", mode: "Prevent" },
-      { branch: "Branch - Delhi", mode: "Allow" },
-      { branch: "Branch - Bengaluru", mode: "Prevent" },
-      { branch: "HQ - Mumbai", mode: "Allow" },
-      { branch: "Branch - Chennai", mode: "Prevent" },
-    ];
+  // --------------------------------------------------
+  // WEBSITE PROTECTION POLICIES
+  // --------------------------------------------------
+
+  const filteredWebsites = websitePolicies.filter((item) => {
+    const query = searchWebsite.toLowerCase();
+
+    const matchesSearch =
+      (item.website || "").toLowerCase().includes(query) ||
+      (item.mode || "").toLowerCase().includes(query);
+
+    const matchesMode =
+      websiteMode === "All" ||
+      String(item.mode || "").toLowerCase() === websiteMode.toLowerCase();
+
+    return matchesSearch && matchesMode;
+  });
+
+  const WebsiteProtectionPolicies = () => (
+    <div className="bg-white dark:bg-[#020617] rounded-lg border border-gray-200 dark:border-[#1e293b] flex flex-col transition-colors min-w-0">
+      <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-[#1e293b] gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <ShieldAlert size={14} className="text-[#4f75ff]" />
+
+          <h2 className="text-gray-800 dark:text-[#e2e8f0] text-[11px] font-medium m-0">
+            Website Protection Policies
+          </h2>
+
+          <span className="bg-gray-100 dark:bg-[#1e293b] text-gray-500 dark:text-[#94a3b8] text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+            {websitePolicies.length}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#0b1120] border border-gray-200 dark:border-[#1e293b] px-2.5 py-1 rounded-md">
+            <Search size={12} className="text-gray-400 dark:text-[#64748b]" />
+
+            <input
+              type="text"
+              value={searchWebsite}
+              onChange={(e) => setSearchWebsite(e.target.value)}
+              placeholder="Search..."
+              className="bg-transparent border-none outline-none text-[10px] text-gray-800 dark:text-[#e2e8f0] placeholder-gray-400 dark:placeholder-[#475569] w-24"
+            />
+          </div>
+
+          <div className="relative">
+            <select
+              value={websiteMode}
+              onChange={(e) => setWebsiteMode(e.target.value)}
+              className="appearance-none bg-gray-100 dark:bg-[#0b1120] border border-gray-200 dark:border-[#1e293b] px-2.5 py-1 pr-7 rounded-md cursor-pointer text-[10px] text-gray-700 dark:text-[#e2e8f0] outline-none"
+            >
+              <option value="All">All Modes</option>
+              <option value="Allow">Allow</option>
+              <option value="Prevent">Prevent</option>
+            </select>
+
+            <ChevronDown
+              size={12}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full overflow-x-auto">
+        <div className="max-h-[220px] overflow-y-auto custom-dashboard-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-[#020617]">
+              <tr className="border-b border-gray-200 dark:border-[#1e293b]">
+                <th className="py-2 px-3 text-[9px] font-semibold text-gray-500 dark:text-[#64748b] uppercase tracking-wider w-1/2">
+                  Website
+                </th>
+
+                <th className="py-2 px-3 text-[9px] font-semibold text-gray-500 dark:text-[#64748b] uppercase tracking-wider w-1/2">
+                  Mode
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filteredWebsites.length > 0 ? (
+                filteredWebsites.map((row, idx) => (
+                  <tr
+                    key={`${row.website}-${idx}`}
+                    className="border-b border-gray-200 dark:border-[#1e293b] last:border-none hover:bg-gray-50 dark:hover:bg-[#0b1120] transition-colors"
+                  >
+                    <td className="py-2 px-3 text-[10px] text-gray-700 dark:text-[#cbd5e1] break-all">
+                      {row.website}
+                    </td>
+
+                    <td className="py-2 px-3">
+                      <StatusBadge value={row.mode} />
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={2}
+                    className="py-5 text-center text-[10px] text-gray-400"
+                  >
+                    No website policies found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  // --------------------------------------------------
+  // SECURITY POLICY DETAILS
+  // --------------------------------------------------
+
+  const SecurityPolicyDetails = () => {
+    const tagStyle =
+      "px-1.5 py-0.5 text-[11px] rounded bg-white text-gray-700 shadow-sm border border-gray-300 dark:bg-[#0b1120] dark:text-[#cbd5e1] dark:border-[#1e293b] dark:shadow-none transition-colors break-all";
+
+    const TagSection = ({ title, icon: Icon, values }) => (
+      <div className="flex flex-col gap-1.5 min-w-0">
+        <div className="flex items-center gap-1.5 text-[10px] text-gray-600 dark:text-[#cbd5e1]">
+          <Icon size={16} />
+          {title}
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          {values.length > 0 ? (
+            values.map((tag, index) => (
+              <span key={`${tag}-${index}`} className={tagStyle}>
+                {tag}
+              </span>
+            ))
+          ) : (
+            <span className="text-[10px] text-gray-400">
+              No data available
+            </span>
+          )}
+        </div>
+      </div>
+    );
 
     return (
-      <div className="bg-white dark:bg-[#0f172a] rounded-lg border border-gray-200 dark:border-[#1e293b] flex flex-col transition-colors">
-        <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-[#1e293b]">
-          <div className="flex items-center gap-1.5">
-            <ShieldAlert size={14} className="text-[#4f75ff]" />
-            <h2 className="text-gray-800 dark:text-[#e2e8f0] text-[11px] font-medium m-0">Website Protection Policies</h2>
-            <span className="bg-gray-100 dark:bg-[#1e293b] text-gray-500 dark:text-[#94a3b8] text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1">
-              5
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-[#0b1120] border border-gray-200 dark:border-[#1e293b] px-2.5 py-1 rounded-md">
-              <Search size={12} className="text-gray-400 dark:text-[#64748b]" />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="bg-transparent border-none outline-none text-[10px] text-gray-800 dark:text-[#e2e8f0] placeholder-gray-400 dark:placeholder-[#475569] w-24"
+      <div className="bg-white dark:bg-[#020617] rounded-lg p-3 flex flex-col gap-3 border border-gray-200 dark:border-[#1e293b] transition-colors min-w-0">
+        <div className="flex justify-between items-center mb-1 gap-2 flex-wrap">
+          <h3 className="text-gray-800 dark:text-[#e2e8f0] text-[11px] font-medium flex items-center gap-1.5 m-0">
+            <ShieldCheck size={14} className="text-[#4f75ff]" />
+            Security Policy Details
+          </h3>
+
+          <span className="text-[9px] text-gray-400 dark:text-[#64748b]">
+            Active Network Policy
+          </span>
+        </div>
+
+        {networkPolicies.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <TagSection
+                title="File Type"
+                icon={FileText}
+                values={fileTypes}
+              />
+
+              <TagSection
+                title="Keywords"
+                icon={FileText}
+                values={keywords}
               />
             </div>
-            <div className="flex items-center gap-2 bg-gray-100 dark:bg-[#1e293b] px-2.5 py-1 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-[#334155] transition-colors">
-              <span className="text-[10px] text-gray-700 dark:text-[#e2e8f0] font-medium">All Modes</span>
-              <ChevronDown size={12} className="text-gray-500 dark:text-[#94a3b8]" />
-            </div>
-          </div>
-        </div>
 
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-[#1e293b] bg-gray-50 dark:bg-[#0b1120]/50">
-                <th className="py-2 px-3 text-[9px] font-semibold text-gray-500 dark:text-[#64748b] uppercase tracking-wider w-1/2">Branch</th>
-                <th className="py-2 px-3 text-[9px] font-semibold text-gray-500 dark:text-[#64748b] uppercase tracking-wider w-1/2">Mode</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, idx) => (
-                <tr key={idx} className="border-b border-gray-200 dark:border-[#1e293b] last:border-none hover:bg-gray-50 dark:hover:bg-[#1e293b]/30 transition-colors">
-                  <td className="py-2 px-3 text-[10px] text-gray-700 dark:text-[#cbd5e1]">
-                    {row.branch}
-                  </td>
-                  <td className="py-2 px-3">
-                    {row.mode === "Prevent" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#ff4757]/30 bg-[#ff4757]/10 text-[#ff4757] text-[10px] font-medium tracking-wide">
-                        <ShieldAlert size={10} /> Prevent
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#31d6a0]/30 bg-[#31d6a0]/10 text-[#31d6a0] text-[10px] font-medium tracking-wide">
-                        <CheckCircle2 size={10} /> Allow
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            <div className="grid grid-cols-2 gap-3">
+              <TagSection
+                title="Channels"
+                icon={Globe}
+                values={channels}
+              />
+
+              <TagSection
+                title="REGEX"
+                icon={Code}
+                values={regexValues}
+              />
+            </div>
+
+            <TagSection
+              title="Application"
+              icon={AppWindow}
+              values={applications}
+            />
+          </div>
+        ) : (
+          <div className="py-5 text-center text-[10px] text-gray-400">
+            No active network policy found
+          </div>
+        )}
       </div>
     );
   };
 
-  // Security Policy Details Component (Channels & REGEX Side-by-Side)
-  const SecurityPolicyDetails = () => {
-    // Reusable tag style class to keep it clean for both light and dark modes
-    const tagStyle = "px-1.5 py-0.5 text-[11px] rounded bg-white text-gray-700 shadow-sm border border-gray-300 dark:bg-[#1a2744] dark:text-[#cbd5e1] dark:border-[#1b4236] dark:shadow-none transition-colors";
-
-    return (
-      <div className="bg-white dark:bg-[#0f172a] rounded-lg p-3 flex flex-col gap-0 border border-gray-200 dark:border-[#1e293b] transition-colors">
-        
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-gray-800 dark:text-[#e2e8f0] text-[11px] font-medium flex items-center gap-1.5 m-0">
-            <ShieldCheck size={14} className="text-[#4f75ff]" /> Security Policy Details
-          </h3>
-          <span className="text-[9px] text-gray-400 dark:text-[#64748b]">Configure policy source, destination control, details.</span>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          
-          {/* Row 1: File Type & Keywords */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-600 dark:text-[#cbd5e1]">
-                <FileText size={20} /> File Type
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {['PDF', 'Doc', 'xlsx', 'csv', 'txt'].map(tag => (
-                  <span key={tag} className={tagStyle}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-600 dark:text-[#cbd5e1]">
-                <FileText size={20} /> Keywords
-              </div>
-              {/* Horizontally aligned keywords */}
-              <div className="flex flex-wrap gap-1.5">
-                {['salary', 'detail', 'document', 'pancard'].map(tag => (
-                  <span key={tag} className={tagStyle}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Row 2: Channels & REGEX */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-600 dark:text-[#cbd5e1]">
-                <Globe size={20} /> Channels
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {['Browser Upload', 'FTP Transfer', 'Clipboard copy'].map(tag => (
-                  <span key={tag} className={tagStyle}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-600 dark:text-[#cbd5e1]">
-                <Code size={20} /> REGEX
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {['PDF', 'Doc', 'xlsx', 'csv', 'txt'].map(tag => (
-                  <span key={tag} className={tagStyle}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Row 3: Application (Full Width) */}
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5 text-[10px] text-gray-600 dark:text-[#cbd5e1]">
-              <AppWindow size={20} /> Application
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {['Chrome', 'Edge', 'Firefox', 'Brave', 'Safari'].map(tag => (
-                <span key={tag} className={tagStyle}>
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-
-        </div>
-      </div>
-    );
-  };
+  // --------------------------------------------------
+  // MAIN DASHBOARD
+  // --------------------------------------------------
 
   return (
     <div className="w-full font-sans flex flex-col gap-3">
-      
-      {/* 1. HEADER SECTION */}
-      <div className="bg-white dark:bg-[#0f172a] rounded-lg p-3.5 flex flex-col gap-1 border border-gray-200 dark:border-[#1e293b] transition-colors">
-        <h1 className="text-[14px] font-semibold text-gray-900 dark:text-[#f8fafc] m-0 tracking-wide">
-          Endpoint Policy
-        </h1>
-        <p className="text-[10px] text-gray-500 dark:text-[#94a3b8] m-0">
-          Configure policy source, destination control, details.
-        </p>
+      {/* HEADER */}
+      <div className="bg-white dark:bg-[#020617] rounded-lg p-3.5 flex justify-between items-center gap-3 border border-gray-200 dark:border-[#1e293b] transition-colors">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-[14px] font-semibold text-gray-900 dark:text-[#f8fafc] m-0 tracking-wide">
+            Endpoint Policy
+          </h1>
+
+          <p className="text-[10px] text-gray-500 dark:text-[#94a3b8] m-0">
+            Endpoint policy details for {computerName}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={refreshPolicy}
+          disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-gray-200 dark:border-[#1e293b] text-gray-600 dark:text-[#cbd5e1] text-[10px] hover:bg-gray-100 dark:hover:bg-[#0b1120] disabled:opacity-50 transition-colors"
+        >
+          <RefreshCw
+            size={12}
+            className={loading ? "animate-spin" : ""}
+          />
+          Refresh
+        </button>
       </div>
 
-      {/* 2. METRICS CARDS ROW */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-[#1e293b] rounded-lg p-3.5 flex justify-between items-center transition-colors">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[13px] font-semibold text-gray-900 dark:text-[#f8fafc] leading-tight">USB Control</span>
-            <span className="text-[10px] text-gray-400 dark:text-[#94a3b8]"></span>
-            <span className="text-[10px] text-[#ff4757] font-medium mt-0.5">Prevent</span>
-          </div>
-          <div className="w-8 h-8 rounded-full border border-gray-200 dark:border-[#1e293b] flex items-center justify-center shrink-0">
-            <Pin size={20} className="text-[#ff4757]" />
-          </div>
+      {/* LOADING */}
+      {loading && (
+        <div className="bg-white dark:bg-[#020617] rounded-lg border border-gray-200 dark:border-[#1e293b] p-8 flex items-center justify-center gap-2 text-gray-500 dark:text-[#94a3b8] text-[11px]">
+          <Loader2 size={16} className="animate-spin" />
+          Loading endpoint policies...
         </div>
-        
-        <div className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-[#1e293b] rounded-lg p-3.5 flex justify-between items-center transition-colors">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[13px] font-semibold text-gray-900 dark:text-[#f8fafc] leading-tight">Printer Control</span>
-            <span className="text-[10px] text-gray-400 dark:text-[#94a3b8]"></span>
-            <span className="text-[10px] text-[#31d6a0] font-medium mt-0.5">Allow</span>
-          </div>
-          <div className="w-8 h-8 rounded-full border border-gray-200 dark:border-[#1e293b] flex items-center justify-center shrink-0">
-            <Printer size={20} className="text-[#31d6a0]" />
-          </div>
-        </div>
-        
-        <div className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-[#1e293b] rounded-lg p-3.5 flex justify-between items-center transition-colors">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[13px] font-semibold text-gray-900 dark:text-[#f8fafc] leading-tight">Application mode</span>
-            <span className="text-[10px] text-gray-400 dark:text-[#94a3b8]"></span>
-            <span className="text-[10px] text-[#4f75ff] font-medium mt-0.5">Manage</span>
-          </div>
-          <div className="w-8 h-8 rounded-full border border-gray-200 dark:border-[#1e293b] flex items-center justify-center shrink-0">
-            <AppWindow size={20} className="text-[#ff4757]" />
-          </div>
-        </div>
-        
-        <div className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-[#1e293b] rounded-lg p-3.5 flex justify-between items-center transition-colors">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[13px] font-semibold text-gray-900 dark:text-[#f8fafc] leading-tight">Drive Control</span>
-            <span className="text-[10px] text-gray-400 dark:text-[#94a3b8]"></span>
-            <span className="text-[10px] text-[#4f75ff] font-medium mt-0.5">Manage</span>
-          </div>
-          <div className="w-8 h-8 rounded-full border border-gray-200 dark:border-[#1e293b] flex items-center justify-center shrink-0">
-            <RefreshCw size={20} className="text-[#ffd43b]" />
-          </div>
-        </div>
-      </div>
+      )}
 
-      {/* 3. MIDDLE ROW (Two Application Tables) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <DataTable title="Whitelisted Application" />
-        <DataTable title="Blacklisted Application" />
-      </div>
+      {/* ERROR */}
+      {!loading && error && (
+        <div className="bg-white dark:bg-[#020617] rounded-lg border border-red-300 dark:border-red-900 p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-red-500 text-[11px]">
+            <AlertCircle size={16} />
+            {error}
+          </div>
 
-      {/* 4. BOTTOM ROW */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <WebsiteProtectionPolicies />
-        <SecurityPolicyDetails />
-      </div>
+          <button
+            onClick={refreshPolicy}
+            className="text-[10px] px-3 py-1.5 rounded border border-red-300 text-red-500"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* DASHBOARD CONTENT */}
+      {!loading && !error && (
+        <>
+          {/* 1. METRICS CARDS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <PolicyCard
+              title="USB Control"
+              value={usbPolicy}
+              icon={Pin}
+            />
+
+            <PolicyCard
+              title="Printer Control"
+              value={printerPolicy}
+              icon={Printer}
+            />
+
+            <PolicyCard
+              title="Application Mode"
+              value={applicationMode}
+              icon={AppWindow}
+            />
+
+            <PolicyCard
+              title="Drive Control"
+              value={driveDetails}
+              icon={HardDrive}
+            />
+          </div>
+
+          {/* 2. APPLICATION TABLES */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <DataTable
+              title="Whitelisted Application"
+              rows={whitelistedApplications}
+              search={searchWhitelist}
+              setSearch={setSearchWhitelist}
+            />
+
+            <DataTable
+              title="Blacklisted Application"
+              rows={blacklistedApplications}
+              search={searchBlacklist}
+              setSearch={setSearchBlacklist}
+            />
+          </div>
+
+          {/* 3. WEBSITE AND SECURITY POLICY */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <WebsiteProtectionPolicies />
+            <SecurityPolicyDetails />
+          </div>
+        </>
+      )}
+
+      {/* CUSTOM SCROLLBAR */}
+      <style>{`
+        .custom-dashboard-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #334155 transparent;
+        }
+
+        .custom-dashboard-scrollbar::-webkit-scrollbar {
+          width: 5px;
+          height: 5px;
+        }
+
+        .custom-dashboard-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .custom-dashboard-scrollbar::-webkit-scrollbar-thumb {
+          background: #334155;
+          border-radius: 10px;
+        }
+
+        .custom-dashboard-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #64748b;
+        }
+      `}</style>
     </div>
   );
 }

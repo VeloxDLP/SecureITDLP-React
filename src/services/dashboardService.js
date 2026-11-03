@@ -541,6 +541,14 @@ getDeviceActivePolicy: async (computerName) => {
     return data;
   },
 
+getDeviceActivePolicy: async (computerName) => {
+  const { data } = await axiosInstance.get(
+    `${API_ENDPOINTS.DeviceActivePollicy.DEVICE_ACTIVE_POLICY}/${encodeURIComponent(computerName)}`
+  );
+
+  return data;
+},
+
 
 getHardwareDetailsByHost: async (hostName) => {
   const { data } = await axiosInstance.get(
