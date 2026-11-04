@@ -9,6 +9,17 @@ import {
   ChevronRight, ChevronLeft, LogOut, Settings,
   ClipboardMinus,
   Eye,
+  ChartPie,
+  FileLock,
+  Printer,
+  SquarePlus,
+  UserCog,
+  ShieldCogCorner,
+  MonitorCheck,
+  ChartNoAxesCombined,
+  PackageMinus,
+  PackagePlus,
+  Network,
 } from 'lucide-react'
 
 // Define navigation with role-based access
@@ -16,7 +27,7 @@ import {
 const NAV = [
   {
     label: 'Dashboards',
-    icon: LayoutDashboard,
+    icon: ChartNoAxesCombined,
     path: '/dashboard',
     roles: ['admin', 'superadmin']
     // no scope = everyone with role can see it
@@ -38,7 +49,7 @@ const NAV = [
     children: [
       {
         label: 'Manage Mode',
-        icon: AppWindow,
+        icon: Settings,
         path: '/ApplicationControl',
       },
       {
@@ -48,12 +59,12 @@ const NAV = [
       },
       {
         label: 'Manage Blacklisted',
-        icon: Eye,
+        icon: PackagePlus,
         path: '/ManageBlackListed',
       },
       {
         label: 'Manage Whitelisted',
-        icon: Eye,
+        icon: PackageMinus,
         path: '/ManageWhitelisted',
       },
     ],
@@ -72,7 +83,7 @@ const NAV = [
       },
       {
         label: 'USB Encryption',
-        icon: Usb,
+        icon: FileLock,
         path: '/UsbEncryption', 
       },
     ],
@@ -86,7 +97,7 @@ const NAV = [
 
   {
     label: 'Printer Control',
-    icon: Shield,
+    icon: Printer,
     path: '/PrinterControl',
     scope: '/printercontrol',
   },
@@ -107,22 +118,22 @@ const NAV = [
 
   {
     label: 'Security Policy',
-    icon: FolderSearch,
+    icon: ShieldCogCorner,
     scope: '/networkpolicy',
     children: [
       {
         label: 'Create Security Policy',
-        icon: FolderSearch,
+        icon: SquarePlus,
         path: '/NetworkPolicy',
       },
       {
         label: 'Apply Security Policy',
-        icon: FolderSearch,
+        icon: MonitorCheck,
         path: '/ApplyNetworkPolicy',
       },
       {
         label: 'Active Policy',
-        icon: FolderSearch,
+        icon: Eye,
         path: '/ActivePolicy',
       },
     ],
@@ -131,14 +142,14 @@ const NAV = [
 
   {
     label: 'OS Dashboard',
-    icon: Monitor,
+    icon: Network,
     path: '/OSDashboard',
     scope: '/OSDashboard',
   },
 
   {
     label: 'Self Protection',
-    icon: Monitor,
+    icon: ShieldCheck,
     path: '/SelfProtection',
     scope: '/SelfProtection',
   },
@@ -456,7 +467,7 @@ export default function Sidebar() {
 
         {userScope.includes('/setting') && (
           <FooterBtn
-            icon={Settings}
+            icon={UserCog}
             label="Settings"
             collapsed={collapsed}
             onClick={() => navigate('/Setting')}
