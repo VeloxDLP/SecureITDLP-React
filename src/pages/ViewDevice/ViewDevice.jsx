@@ -6,6 +6,7 @@ import {
   Plus,
   Minus,
   Info,
+  ShieldCheck,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { dashboardService } from "../../services/dashboardService";
@@ -359,7 +360,7 @@ export default function DeviceDashboard() {
     detailItemRow: {
       display: "flex",
       alignItems: "center",
-      gap: "60px",
+      gap: "8px",
     },
 
     eyeButton: {
@@ -496,30 +497,39 @@ export default function DeviceDashboard() {
   };
 
   /* =========================================================
-     VIEW BUTTON
+     BUTTON HANDLERS
   ========================================================= */
 
+  // Button 1 → Device Details
   const handleEyeClick = (device) => {
     console.log("Opening Drive Detail for device:", device);
 
-navigate("/DeviceDetails", {
-  state: {
-    device: device,
-  },
-});
+    navigate("/DeviceDetails", {
+      state: {
+        device: device,
+      },
+    });
+  };
+
+  // Button 2 → Device Active Policy (FIXED ROUTE)
+  const handlePolicyClick = (device) => {
+    console.log("Opening Active Policy for device:", device);
+
+    navigate("/DeviceActivePolicy", {
+      state: {
+        computerName: device.host,
+        device: device,
+      },
+    });
   };
 
   /* =========================================================
-     LOADING
+     LOADING / ERROR
   ========================================================= */
 
   if (loading) {
     return <div style={styles.loading}>Loading devices...</div>;
   }
-
-  /* =========================================================
-     ERROR
-  ========================================================= */
 
   if (error && viewDeviceData.length === 0) {
     return <div style={styles.error}>{error}</div>;
@@ -533,10 +543,7 @@ navigate("/DeviceDetails", {
     <div style={styles.page}>
       <div style={styles.panel}>
 
-        {/* ===================================================
-            HEADER
-        =================================================== */}
-
+        {/* HEADER */}
         <div style={styles.panelHeader}>
           <h2 style={styles.panelTitle}>View Devices</h2>
 
@@ -562,79 +569,29 @@ navigate("/DeviceDetails", {
           </div>
         </div>
 
-        {/* ===================================================
-            TABLE
-        =================================================== */}
-
+        {/* TABLE */}
         <div style={styles.tableWrap}>
 
           {/* TABLE HEADER */}
-
           <div style={styles.headerRowCard}>
-            <div
-              style={{
-                ...styles.headerCell,
-                flex: 0.5,
-              }}
-            >
-              Branch Name
-            </div>
-
-            <div
-              style={{
-                ...styles.headerCell,
-                flex: 0.8,
-              }}
-            >
-              Host Name
-            </div>
-
-            <div
-              style={{
-                ...styles.headerCell,
-                flex: 0.7,
-              }}
-            >
-              Device IP
-            </div>
-
-            <div
-              style={{
-                ...styles.headerCell,
-                flex: 0.8,
-              }}
-            >
-              User Name
-            </div>
+            <div style={{ ...styles.headerCell, flex: 0.5 }}>Branch Name</div>
+            <div style={{ ...styles.headerCell, flex: 0.8 }}>Host Name</div>
+            <div style={{ ...styles.headerCell, flex: 0.7 }}>Device IP</div>
+            <div style={{ ...styles.headerCell, flex: 0.8 }}>User Name</div>
           </div>
 
-          {/* =================================================
-              SCROLLABLE ROWS
-          ================================================= */}
-
-          <div
-            style={styles.scrollableRows}
-            className="custom-scrollbar"
-          >
+          {/* SCROLLABLE ROWS */}
+          <div style={styles.scrollableRows} className="custom-scrollbar">
             {filtered.length === 0 ? (
-              <div style={styles.noData}>
-                No devices found
-              </div>
+              <div style={styles.noData}>No devices found</div>
             ) : (
               filtered.map((d, i) => (
-                <div
-                  key={i}
-                  style={styles.rowGroup}
-                >
+                <div key={i} style={styles.rowGroup}>
 
-                  {/* =================================================
-                      MAIN ROW
-                  ================================================= */}
-
+                  {/* MAIN ROW */}
                   <div
                     style={{
                       ...styles.rowCard,
-
                       ...(expanded === i && {
                         background: isDark
                           ? "rgba(79,108,247,0.05)"
@@ -643,9 +600,7 @@ navigate("/DeviceDetails", {
                     }}
                     onClick={() => toggleExpand(i)}
                   >
-
                     {/* PLUS / MINUS */}
-
                     <button
                       style={getPlusButtonStyle(d.agentStatus)}
                       title="Toggle details"
@@ -655,32 +610,15 @@ navigate("/DeviceDetails", {
                       }}
                     >
                       {expanded === i ? (
-                        <Minus
-                          size={12}
-                          color="#ffffff"
-                          strokeWidth={4}
-                        />
+                        <Minus size={12} color="#ffffff" strokeWidth={4} />
                       ) : (
-                        <Plus
-                          size={12}
-                          color="#ffffff"
-                          strokeWidth={4}
-                        />
+                        <Plus size={12} color="#ffffff" strokeWidth={4} />
                       )}
                     </button>
 
-                    {/* BRANCH */}
-
-                    <div
-                      style={{
-                        ...styles.cell,
-                        flex: 0.5,
-                      }}
-                    >
+                    <div style={{ ...styles.cell, flex: 0.5 }}>
                       {d.branch || "N/A"}
                     </div>
-
-                    {/* HOST */}
 
                     <div style={{ flex: 0.8 }}>
                       <span style={styles.hostLink}>
@@ -688,36 +626,18 @@ navigate("/DeviceDetails", {
                       </span>
                     </div>
 
-                    {/* DEVICE IP */}
-
-                    <div
-                      style={{
-                        ...styles.cell,
-                        flex: 0.7,
-                      }}
-                    >
+                    <div style={{ ...styles.cell, flex: 0.7 }}>
                       {d.ip || "N/A"}
                     </div>
 
-                    {/* USER */}
-
-                    <div
-                      style={{
-                        ...styles.cell,
-                        flex: 0.8,
-                      }}
-                    >
+                    <div style={{ ...styles.cell, flex: 0.8 }}>
                       {d.user || "N/A"}
                     </div>
                   </div>
 
-                  {/* =================================================
-                      DETAILS
-                  ================================================= */}
-
+                  {/* DETAILS */}
                   {expanded === i && (
                     <div style={styles.detailsPanel}>
-
                       <div style={styles.detailsHeading}>
                         <Info size={13} />
                         Device Details
@@ -728,68 +648,41 @@ navigate("/DeviceDetails", {
                       <div style={styles.detailsGrid}>
 
                         {/* AGENT STATUS */}
-
                         <div style={styles.detailItem}>
-                          <div style={styles.detailLabel}>
-                            Agent Status
-                          </div>
-
-                          <span
-                            style={getStatusStyle(
-                              d.agentStatus
-                            )}
-                          >
-                            <span
-                              style={getStatusDot(
-                                d.agentStatus
-                              )}
-                            />
-
+                          <div style={styles.detailLabel}>Agent Status</div>
+                          <span style={getStatusStyle(d.agentStatus)}>
+                            <span style={getStatusDot(d.agentStatus)} />
                             {d.agentStatus || "N/A"}
                           </span>
                         </div>
 
                         {/* LAST COMMUNICATION */}
-
                         <div style={styles.detailItem}>
                           <div style={styles.detailLabel}>
                             Last Agent Communication
                           </div>
-
                           <div style={styles.detailValue}>
                             {d.lastComm || "N/A"}
                           </div>
                         </div>
 
                         {/* ZONE */}
-
                         <div style={styles.detailItem}>
-                          <div style={styles.detailLabel}>
-                            Zone
-                          </div>
-
+                          <div style={styles.detailLabel}>Zone</div>
                           <div style={styles.detailValue}>
                             {d.zone || "N/A"}
                           </div>
                         </div>
 
-                        {/* SERVER IP */}
-
+                        {/* SERVER IP + 2 BUTTONS */}
                         <div style={styles.detailItem}>
-                          <div style={styles.detailLabel}>
-                            Server IP
-                          </div>
-
+                          <div style={styles.detailLabel}>Server IP</div>
                           <div style={styles.detailItemRow}>
-
                             <div style={styles.detailValue}>
                               {d.serverIp || "N/A"}
                             </div>
 
-                            {/* =================================================
-                                VIEW BUTTON
-                            ================================================= */}
-
+                            {/* BUTTON 1 — VIEW DEVICE DETAILS */}
                             <button
                               type="button"
                               style={styles.eyeButton}
@@ -798,38 +691,58 @@ navigate("/DeviceDetails", {
                                 handleEyeClick(d);
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.background =
-                                  isDark
-                                    ? "#0f1f3a"
-                                    : "#eff6ff";
-
-                                e.currentTarget.style.borderColor =
-                                  "#4f6cf7";
-
-                                e.currentTarget.style.color =
-                                  isDark
-                                    ? "#ffffff"
-                                    : "#1e293b";
+                                e.currentTarget.style.background = isDark
+                                  ? "#0f1f3a"
+                                  : "#eff6ff";
+                                e.currentTarget.style.borderColor = "#4f6cf7";
+                                e.currentTarget.style.color = isDark
+                                  ? "#ffffff"
+                                  : "#1e293b";
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.background =
-                                  "transparent";
-
-                                e.currentTarget.style.borderColor =
-                                  isDark
-                                    ? "#1a2a4a"
-                                    : "#e2e8f0";
-
-                                e.currentTarget.style.color =
-                                  isDark
-                                    ? "#8b95ad"
-                                    : "#64748b";
+                                e.currentTarget.style.background = "transparent";
+                                e.currentTarget.style.borderColor = isDark
+                                  ? "#1a2a4a"
+                                  : "#e2e8f0";
+                                e.currentTarget.style.color = isDark
+                                  ? "#8b95ad"
+                                  : "#64748b";
                               }}
                             >
                               <Eye size={16} />
                               View
                             </button>
 
+                            {/* BUTTON 2 — ACTIVE POLICY */}
+                            <button
+                              type="button"
+                              style={styles.eyeButton}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePolicyClick(d);
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = isDark
+                                  ? "#0f1f3a"
+                                  : "#eff6ff";
+                                e.currentTarget.style.borderColor = "#4f6cf7";
+                                e.currentTarget.style.color = isDark
+                                  ? "#ffffff"
+                                  : "#1e293b";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "transparent";
+                                e.currentTarget.style.borderColor = isDark
+                                  ? "#1a2a4a"
+                                  : "#e2e8f0";
+                                e.currentTarget.style.color = isDark
+                                  ? "#8b95ad"
+                                  : "#64748b";
+                              }}
+                            >
+                              <ShieldCheck size={16} />
+                              Policy
+                            </button>
                           </div>
                         </div>
 

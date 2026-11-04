@@ -23,6 +23,15 @@ const NAV = [
   },
 
   {
+    label: 'View Devices',
+    icon: Monitor,
+    path: '/devices',
+    roles: ['admin', 'superadmin'],
+    scope: '/devices',
+  },
+  
+
+  {
     label: 'Application Control',
     icon: AppWindow,
     scope: '/app-control',
@@ -51,12 +60,23 @@ const NAV = [
   },
 
   {
-    label: 'USB Protection',
+    
+ label: 'USB Control',
     icon: Usb,
-    path: '/usb',
     scope: '/usb',
-  },
-
+    children: [
+      {
+        label: 'USB Protection',
+        icon: Usb,
+        path: '/usb', 
+      },
+      {
+        label: 'USB Encryption',
+        icon: Usb,
+        path: '/UsbEncryption', 
+      },
+    ],
+} ,
   {
     label: 'Website Control',
     icon: Globe,
@@ -108,13 +128,6 @@ const NAV = [
     ],
   },
 
-  {
-    label: 'View Devices',
-    icon: Monitor,
-    path: '/devices',
-    roles: ['admin', 'superadmin'],
-    scope: '/devices',
-  },
 
   {
     label: 'OS Dashboard',
@@ -130,12 +143,12 @@ const NAV = [
     scope: '/SelfProtection',
   },
 
-  {
-    label: 'USB Encryption',
-    icon: Usb,
-    path: '/UsbEncryption',
-    scope: '/UsbEncryption',
-  },
+  // {
+  //   label: 'USB Encryption',
+  //   icon: Usb,
+  //   path: '/UsbEncryption',
+  //   scope: '/UsbEncryption',
+  // },
 ]
 
 const ACTIVE = 'bg-[#7094ff] text-white shadow-lg shadow-[#7094ff]/20'

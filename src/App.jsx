@@ -78,7 +78,6 @@ function AppRoutes() {
         <Route path="blacklisting" element={<PlaceholderPage title="App Blacklisting" />} />
         <Route path="web" element={<WebsiteProtection />} />
         <Route path="DriveControl" element={<DriveControl></DriveControl>} />
-        {/* <Route path="self-protection" element={<PlaceholderPage title="Self Protection" />} /> */}
         <Route path="PrinterControl" element={<PrinterControl />} />
         <Route path="ActivePolicy" element={<ActivePolicy />} />
         <Route path="NetworkPolicy" element={<NetworkPolicy />} />
@@ -96,9 +95,7 @@ function AppRoutes() {
         <Route path="Reports" element={<Reports></Reports>} />
         <Route path="Setting" element={<Setting></Setting>} />
         <Route path="SecurityRing" element={<SecurityRing></SecurityRing>} />
-
         <Route path="remediation" element={<PlaceholderPage title="File Remediation" />} />
-
         <Route path="rollback" element={<PlaceholderPage title="Policy Roll Back" />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

@@ -244,7 +244,7 @@ function CPUUtilization({ cores, baseSpeed, samples = [], status = "connecting" 
         <div style={styles.date} className="cpu-date-responsive">
           <CalendarDays size={12} />
           <span>{formatStamp(latest?.time)}</span>
-          <button
+          <button                                                                                                                                       
             aria-label="Collapse"
             style={{
               display: "grid",
