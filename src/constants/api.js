@@ -103,6 +103,11 @@ SELF_PROTECTION:{
   GET_SELF_PROTECTION_POLICY:"/SelfProtection/GetSelfProtectionPolicy"
 },
 
+WEBSITE_CONTROL:{
+  SAVE_WEBSITE:"/WebsiteControl/SaveWebsite",
+  // GET_SELF_PROTECTION_POLICY:"/SelfProtection/GetSelfProtectionPolicy"
+},
+
 NETWORK_POLICY: {
   GETNETWORKPOLICY: "/NetworkDLP/GetDistinctPolicy",
   GETPOLICYBYNAME: "/NetworkDLP/GetPolicy", 

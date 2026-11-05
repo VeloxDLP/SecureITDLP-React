@@ -269,7 +269,7 @@ export const dashboardService = {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.VIEWDEVICE.GET_LIVE_POLICY_STATUS,
       {
-        params: { eventIds }, 
+        params: { eventIds },
       },
     );
     return data;
@@ -314,7 +314,7 @@ export const dashboardService = {
     return data;
   },
 
-   getSelf_protection_Policies: async () => {
+  getSelf_protection_Policies: async () => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.SELF_PROTECTION.GET_SELF_PROTECTION_POLICY,
     );
@@ -329,7 +329,7 @@ export const dashboardService = {
     return data;
   },
 
-   addDrivePolicy: async (requestData) => {
+  addDrivePolicy: async (requestData) => {
     const { data } = await axiosInstance.post(
       API_ENDPOINTS.Drive_Control.ADD_DRIVE_POLICY,
       requestData,
@@ -402,11 +402,11 @@ export const dashboardService = {
   },
 
   getEventWiseModalData: async (eventType) => {
-  const { data } = await axiosInstance.get(
-    `${API_ENDPOINTS.DASHBOARD.EVENT_WISE_MODAL_DATA}/${encodeURIComponent(eventType)}`,
-  );
-  return data;
-},
+    const { data } = await axiosInstance.get(
+      `${API_ENDPOINTS.DASHBOARD.EVENT_WISE_MODAL_DATA}/${encodeURIComponent(eventType)}`,
+    );
+    return data;
+  },
 
   getIncidentByChannelModal: async (channel) => {
     const { data } = await axiosInstance.post(
@@ -458,7 +458,7 @@ export const dashboardService = {
 
   getApplicationPolicies: async () => {
     const { data } = await axiosInstance.get(
-      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_CONTROLDATA, 
+      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_CONTROLDATA,
     );
     return data;
   },
@@ -495,40 +495,48 @@ export const dashboardService = {
     return data;
   },
 
- getApplicationBlacklisted: async (requestData) => {
-  const { data } = await axiosInstance.post(
-    API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BLACKLISTED,
-    requestData,
-    {
-      headers: { "Content-Type": "application/json" },
-    }
-  );
-  return data;
-},
-
-    saveNetworkPolicy: async (requestData) => {
+  getApplicationBlacklisted: async (requestData) => {
     const { data } = await axiosInstance.post(
-      API_ENDPOINTS.NETWORK_POLICY.SAVE_NEWTORK_POLICY, requestData,);
+      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_BLACKLISTED,
+      requestData,
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
     return data;
   },
 
-     ApplyNetworkPolicy: async (requestData) => {
-    const { data } = await axiosInstance.post(
-      API_ENDPOINTS.NETWORK_POLICY.APPLY_NETWORK_POLICY, requestData,);
-    return data;
-  },
-     DeleteNetworkPolicy: async (requestData) => {
-    const { data } = await axiosInstance.post(
-      API_ENDPOINTS.NETWORK_POLICY.DELETE_NETWORK_POLICY, requestData,);
-    return data;
-  },
-getDeviceActivePolicy: async (computerName) => {
-  const { data } = await axiosInstance.get(
-    `${API_ENDPOINTS.DeviceActivePollicy.DEVICE_ACTIVE_POLICY}/${computerName}`,
-  );
+  //[Network policy API]
 
-  return data;
-},
+  saveNetworkPolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.NETWORK_POLICY.SAVE_NEWTORK_POLICY,
+      requestData,
+    );
+    return data;
+  },
+
+  ApplyNetworkPolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.NETWORK_POLICY.APPLY_NETWORK_POLICY,
+      requestData,
+    );
+    return data;
+  },
+  DeleteNetworkPolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.NETWORK_POLICY.DELETE_NETWORK_POLICY,
+      requestData,
+    );
+    return data;
+  },
+  getDeviceActivePolicy: async (computerName) => {
+    const { data } = await axiosInstance.get(
+      `${API_ENDPOINTS.DeviceActivePollicy.DEVICE_ACTIVE_POLICY}/${computerName}`,
+    );
+
+    return data;
+  },
 
   getApplicationsByHost: async (devices) => {
     const { data } = await axiosInstance.post(
@@ -541,33 +549,44 @@ getDeviceActivePolicy: async (computerName) => {
     return data;
   },
 
-getDeviceActivePolicy: async (computerName) => {
-  const { data } = await axiosInstance.get(
-    `${API_ENDPOINTS.DeviceActivePollicy.DEVICE_ACTIVE_POLICY}/${encodeURIComponent(computerName)}`
-  );
+  //[Website Control]
+  saveNewWebsite: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.WEBSITE_CONTROL.SAVE_WEBSITE,
+      requestData,
+    );
+    return data;
+  },
 
-  return data;
-},
+  //[Device Policy Details API]
+  getDeviceActivePolicy: async (computerName) => {
+    const { data } = await axiosInstance.get(
+      `${API_ENDPOINTS.DeviceActivePollicy.DEVICE_ACTIVE_POLICY}/${encodeURIComponent(computerName)}`,
+    );
 
+    return data;
+  },
 
-getHardwareDetailsByHost: async (hostName) => {
-  const { data } = await axiosInstance.get(
-    `${API_ENDPOINTS.ASSET_INVENTORY.HARDWARE_DETAILS}/${hostName}`,
-  );
+  //[Asset Inventory API]
 
-  return data;
-},
+  getHardwareDetailsByHost: async (hostName) => {
+    const { data } = await axiosInstance.get(
+      `${API_ENDPOINTS.ASSET_INVENTORY.HARDWARE_DETAILS}/${hostName}`,
+    );
+
+    return data;
+  },
 
   getCpuRamDetailsByHost: async (hostName) => {
     const { data } = await axiosInstance.get(
-      `${API_ENDPOINTS.ASSET_INVENTORY.CPU_RAM_DETAILS}/${encodeURIComponent(hostName)}`
+      `${API_ENDPOINTS.ASSET_INVENTORY.CPU_RAM_DETAILS}/${encodeURIComponent(hostName)}`,
     );
     return data;
   },
 
   getOperatingSystemByHost: async (hostName) => {
     const { data } = await axiosInstance.get(
-      `${API_ENDPOINTS.ASSET_INVENTORY.OS_INFO}/${hostName}`
+      `${API_ENDPOINTS.ASSET_INVENTORY.OS_INFO}/${hostName}`,
     );
     return data;
   },
@@ -575,19 +594,18 @@ getHardwareDetailsByHost: async (hostName) => {
   // ----- NEW: Drive Details -----
   getDriveDetailsByHost: async (hostName) => {
     const { data } = await axiosInstance.get(
-      `${API_ENDPOINTS.ASSET_INVENTORY.DRIVE_DETAILS}/${hostName}`
+      `${API_ENDPOINTS.ASSET_INVENTORY.DRIVE_DETAILS}/${hostName}`,
     );
     return data;
   },
 
-  
-
-   getApplicationWhitelisted: async (requestData) => {
+  getApplicationWhitelisted: async (requestData) => {
     const { data } = await axiosInstance.post(
-      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_WHITELISTED, requestData,);
+      API_ENDPOINTS.APPLICATION_CONTROL.APPLICATION_WHITELISTED,
+      requestData,
+    );
     return data;
   },
-
 
   getAllNetworkPolicy: async () => {
     const { data } = await axiosInstance.get(
@@ -611,44 +629,42 @@ getHardwareDetailsByHost: async (hostName) => {
     return data;
   },
 
-getTotalScannedFiles: async () => {
-  const { data } = await axiosInstance.get(
-    API_ENDPOINTS.DATA_CLASSIFICATION.TOTAL_SCANNED_FILES
-  );
-  return data;
-},
+  getTotalScannedFiles: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.DATA_CLASSIFICATION.TOTAL_SCANNED_FILES,
+    );
+    return data;
+  },
 
   getLabelCounts: async () => {
     const { data } = await axiosInstance.get(
-      API_ENDPOINTS.DATA_CLASSIFICATION.LABEL_COUNTS
+      API_ENDPOINTS.DATA_CLASSIFICATION.LABEL_COUNTS,
     );
     return data;
   },
 
-    getClassificationFiles: async () => {
+  getClassificationFiles: async () => {
     const { data } = await axiosInstance.get(
-      API_ENDPOINTS.DATA_CLASSIFICATION.MASTER
+      API_ENDPOINTS.DATA_CLASSIFICATION.MASTER,
     );
     return data;
   },
-
 
   getFilesByLabel: async (label) => {
     const { data } = await axiosInstance.get(
-      `${API_ENDPOINTS.DATA_CLASSIFICATION.FILES_BY_LABEL}/${encodeURIComponent(label)}`
+      `${API_ENDPOINTS.DATA_CLASSIFICATION.FILES_BY_LABEL}/${encodeURIComponent(label)}`,
     );
     return data;
   },
 
-getIpAddressesByBranchAndOs: async (requestData) => {
-  const { data } = await axiosInstance.post(
-    API_ENDPOINTS.VIEWDEVICE.IP_ADDRESSES_BY_BRANCH_AND_OS,
-    requestData,
-    { headers: { "Content-Type": "application/json" } },
-  );
-  return data;   
-},
-  
+  getIpAddressesByBranchAndOs: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.VIEWDEVICE.IP_ADDRESSES_BY_BRANCH_AND_OS,
+      requestData,
+      { headers: { "Content-Type": "application/json" } },
+    );
+    return data;
+  },
 
   getActivePolicyModal: async (policyName) => {
     const { data } = await axiosInstance.get(
@@ -658,24 +674,17 @@ getIpAddressesByBranchAndOs: async (requestData) => {
   },
   getExtensionCounts: async () => {
     const { data } = await axiosInstance.get(
-      API_ENDPOINTS.DATA_CLASSIFICATION.EXTENSION_COUNTS
+      API_ENDPOINTS.DATA_CLASSIFICATION.EXTENSION_COUNTS,
     );
     return data;
   },
 
-    getFilesByExtension: async (extension) => {
+  getFilesByExtension: async (extension) => {
     const { data } = await axiosInstance.get(
-      `${API_ENDPOINTS.DATA_CLASSIFICATION.FILES_BY_EXTENSION}/${encodeURIComponent(extension)}`
+      `${API_ENDPOINTS.DATA_CLASSIFICATION.FILES_BY_EXTENSION}/${encodeURIComponent(extension)}`,
     );
     return data;
   },
-
-
-  
-
-
-  
-
 };
 
 

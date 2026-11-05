@@ -699,6 +699,195 @@ function GlassCard({ children, className = '' }) {
   )
 }
 
+function AddWebsite() {
+  const { isDark } = useTheme()
+  const [website, setWebsite] = useState('')
+  const [websites, setWebsites] = useState([])
+
+  const handleAddWebsite = () => {
+    const value = website.trim()
+
+    if (!value) return
+
+    if (websites.some(site => site.toLowerCase() === value.toLowerCase())) {
+      showAlert({
+        icon: 'warning',
+        title: 'Duplicate Website',
+        text: 'This website is already added.',
+      })
+      return
+    }
+
+    setWebsites(prev => [...prev, value])
+    setWebsite('')
+  }
+
+  const handleRemoveWebsite = index => {
+    setWebsites(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleReset = () => {
+    setWebsite('')
+    setWebsites([])
+  }
+
+ const handleSubmit = async () => {
+  if (websites.length === 0) {
+    showAlert({
+      icon: 'warning',
+      title: 'No Websites Added',
+      text: 'Please add at least one website before submitting.',
+    })
+    return
+  }
+
+  const payload = {
+    website: websites,
+  }
+
+  try {
+    const response = await dashboardService.saveNewWebsite(payload);
+
+    // Axios response contains the backend ApiResponse inside response.data
+    const result = response.data
+    // alert(response.data);
+    if (result == "success") {
+      showAlert({
+        icon: 'success',
+        title: 'Success',
+        text: result.message || 'Websites saved successfully.',
+      })
+
+      setWebsites([])
+      setWebsite('')
+    } else {
+      showAlert({
+        icon: 'error',
+        title: 'Save Failed',
+        text: result.message || 'Unable to save websites.',
+      })
+    }
+
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.response?.data?.data ||
+      error.message ||
+      'Something went wrong while saving websites.'
+
+    showAlert({
+      icon: 'error',
+      title: 'Website Already Exists / Error',
+      text: errorMessage,
+    })
+
+    console.error('Save Website Error:', error)
+  }
+}
+
+ return (
+  <GlassCard className="p-6 mb-5">
+
+    <div className="max-w-2xl">
+
+      <label className={`block text-[12px] font-medium mb-2
+        ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+        Website
+      </label>
+
+      <div className={`flex items-center gap-2 px-3 rounded-lg border
+        ${isDark
+          ? 'bg-[#111827] border-white/[0.10]'
+          : 'bg-white border-slate-200'}`}>
+
+        <input
+          type="text"
+          value={website}
+          onChange={e => setWebsite(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleAddWebsite()
+            }
+          }}
+          placeholder="www.test.com"
+          className={`flex-1 min-w-0 py-3 text-[13px] outline-none bg-transparent
+            ${isDark
+              ? 'text-slate-200 placeholder-slate-500'
+              : 'text-slate-700 placeholder-slate-400'}`}
+        />
+
+        <button
+          type="button"
+          onClick={handleAddWebsite}
+          disabled={!website.trim()}
+          className="w-7 h-7 rounded-md flex items-center justify-center
+            bg-[#597DFF] text-white hover:bg-[#4569e8]
+            disabled:opacity-40 transition-all"
+        >
+          <Plus size={17} />
+        </button>
+      </div>
+
+      <div className="flex justify-end mt-2">
+        <span className="text-[10px] text-[#597DFF]">
+          {websites.length} website(s) added
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {websites.map((site, index) => (
+          <div
+            key={`${site}-${index}`}
+            className={`flex items-center gap-2 px-3 py-1.5
+              rounded-full border text-[12px]
+              ${isDark
+                ? 'bg-[#1e293b] border-white/[0.08] text-slate-200'
+                : 'bg-[#f0f5ff] border-[#dce6f8] text-slate-700'}`}
+          >
+            {site}
+
+            <button
+              type="button"
+              onClick={() => handleRemoveWebsite(index)}
+              className="text-slate-400 hover:text-rose-500"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        ))}
+      </div>
+
+    </div>
+
+    {/* ACTION BUTTONS — RIGHT CORNER OF FULL CARD */}
+    <div className="flex items-center justify-end gap-3 mt-6">
+
+      <GlassButton
+        onClick={handleReset}
+        variant="default"
+        className="px-4 py-2"
+      >
+        <RotateCcw size={13} /> Reset
+      </GlassButton>
+
+      <GlassButton
+        onClick={handleSubmit}
+        variant="primary"
+        disabled={websites.length === 0}
+        className="px-5 py-2 font-semibold"
+      >
+        <Check size={13} /> Submit
+      </GlassButton>
+
+    </div>
+
+  </GlassCard>
+)
+}
+
+
+
 /* ─────────────────────────────────────────────────────────────
    ADD FORM — Device (multi-select) + Websites (multi-select)
 ───────────────────────────────────────────────────────────── */
@@ -1051,11 +1240,18 @@ function PolicyTable({ policies, onDelete }) {
 ───────────────────────────────────────────────────────────── */
 function TabBar({ active, onChange }) {
   const { isDark } = useTheme()
+
+  // const tabs = [
+  //   { id: 'add', label: 'Website Blacklist', icon: Plus },
+  //   { id: 'addgrp', label: 'Website Group Blacklist', icon: Plus },
+  //   { id: 'view', label: 'View Policies', icon: Eye },
+  // ]
   const tabs = [
-    { id: 'add', label: 'Website Blacklist', icon: Plus },
-    { id: 'addgrp', label: 'Website Group Blacklist', icon: Plus },
-    { id: 'view', label: 'View Policies', icon: Eye },
-  ]
+  { id: 'addwebsite', label: 'Add Website', icon: Plus },
+  { id: 'add', label: 'Website Blacklist', icon: Plus },
+  { id: 'addgrp', label: 'Website Group Blacklist', icon: Plus },
+  { id: 'view', label: 'View Policies', icon: Eye },
+]
 
   return (
     <div
@@ -1094,7 +1290,8 @@ function TabBar({ active, onChange }) {
 ───────────────────────────────────────────────────────────── */
 export default function WebsiteProtection() {
   const { isDark } = useTheme()
-  const [tab, setTab] = useState('add')
+  // const [tab, setTab] = useState('add')
+  const [tab, setTab] = useState('addwebsite')
   const [policies, setPolicies] = useState(DUMMY_POLICIES)
   const [branches, setBranches] = useState([])
 
@@ -1164,7 +1361,7 @@ export default function WebsiteProtection() {
       </div>
 
       <TabBar active={tab} onChange={setTab} />
-
+      {tab === 'addwebsite' && <AddWebsite />}
       {tab === 'add' && <AddForm branches={branches} onAdd={p => { handleAdd(p); setTab('view') }} />}
       {tab === 'addgrp' && <AddForm branches={branches} onAdd={p => { handleAdd(p); setTab('view') }} />}
       {tab === 'view' && <PolicyTable policies={policies} onDelete={handleDelete} />}
