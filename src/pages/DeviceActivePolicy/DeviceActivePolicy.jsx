@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ShieldCheck,
   Search,
@@ -17,6 +16,7 @@ import {
   HardDrive,
   Loader2,
   AlertCircle,
+  ArrowLeft,
 } from "lucide-react";
 
 import { dashboardService } from "../../services/dashboardService";
@@ -25,6 +25,7 @@ export default function EndpointPolicyDashboard({
   computerName: computerNameProp,
 }) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const computerName =
     computerNameProp ||
@@ -118,7 +119,6 @@ export default function EndpointPolicyDashboard({
     ? policyData["Blacklisted Applications"]
     : [];
 
-  // This API response does not currently contain whitelist data.
   const whitelistedApplications = Array.isArray(
     policyData["Whitelisted Applications"]
   )
@@ -180,7 +180,6 @@ export default function EndpointPolicyDashboard({
   const keywords = splitValues(networkPolicy.keywords);
   const channels = splitValues(networkPolicy.channels);
   const applications = splitValues(networkPolicy.applications);
-
   const regexValues = splitValues(networkPolicy.regex);
 
   // --------------------------------------------------
@@ -550,18 +549,42 @@ export default function EndpointPolicyDashboard({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={refreshPolicy}
-          disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-gray-200 dark:border-[#1e293b] text-gray-600 dark:text-[#cbd5e1] text-[10px] hover:bg-gray-100 dark:hover:bg-[#0b1120] disabled:opacity-50 transition-colors"
-        >
-          <RefreshCw
-            size={12}
-            className={loading ? "animate-spin" : ""}
-          />
-          Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={refreshPolicy}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-gray-200 dark:border-[#1e293b] text-gray-600 dark:text-[#cbd5e1] text-[10px] hover:bg-gray-100 dark:hover:bg-[#0b1120] disabled:opacity-50 transition-colors"
+          >
+            <RefreshCw
+              size={12}
+              className={loading ? "animate-spin" : ""}
+            />
+            Refresh
+          </button>
+
+          {/* EXACT BACK BUTTON STYLE */}
+          <button 
+            onClick={() => navigate(-1)} 
+            style={{ 
+              background: "transparent",
+              border: "none", 
+              color: "inherit",
+              cursor: "pointer",
+              padding: "6px 8px",
+              borderRadius: 6,
+              fontSize: 13,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              transition: "background 0.2s"
+            }}
+            className="text-gray-500 dark:text-[#94a3b8] hover:bg-gray-100 dark:hover:bg-[#0b1120] hover:text-gray-900 dark:hover:text-[#f8fafc]"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+        </div>
       </div>
 
       {/* LOADING */}
@@ -672,3 +695,5 @@ export default function EndpointPolicyDashboard({
     </div>
   );
 }
+
+

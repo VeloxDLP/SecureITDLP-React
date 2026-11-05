@@ -1172,7 +1172,7 @@ export default function ReportCenter() {
               isDark
                 ? "text-gray-400"
                 : "text-gray-500"
-            }
+            }                                                             
           `}
         >
           Configure policy, source, destination,
@@ -1281,7 +1281,7 @@ export default function ReportCenter() {
                         `}
                       >
                         {module.name}
-                      </span>
+                      </ span>
                     </span>
 
                     <span className="flex items-center gap-2">

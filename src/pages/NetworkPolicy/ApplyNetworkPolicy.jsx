@@ -686,7 +686,10 @@ function ApplyNetworkPolicy() {
                   <span>{detailsError}</span>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-x-10 gap-y-6 min-w-0">
+                /* Changed grid to a standard 2-column layout */
+                <div className="grid grid-cols-2 gap-x-8 gap-y-6 min-w-0">
+                  
+                  {/* 1. File Type */}
                   {details.fileType.length > 0 && (
                     <div>
                       <SectionHeader icon={Folder} iconColor="#4F7CFF">
@@ -702,6 +705,7 @@ function ApplyNetworkPolicy() {
                     </div>
                   )}
 
+                  {/* 2. Channels */}
                   {details.channels.length > 0 && (
                     <div>
                       <SectionHeader icon={Share2} iconColor="#4F7CFF">
@@ -717,6 +721,7 @@ function ApplyNetworkPolicy() {
                     </div>
                   )}
 
+                  {/* 3. Keywords */}
                   {details.keywords.length > 0 && (
                     <div>
                       <SectionHeader icon={FolderOpen} iconColor="#4F7CFF">
@@ -732,8 +737,9 @@ function ApplyNetworkPolicy() {
                     </div>
                   )}
 
+                  {/* 4. REGEX */}
                   {details.regex.length > 0 && (
-                    <div className="col-span-2">
+                    <div>
                       <SectionHeader icon={Folder} iconColor="#4F7CFF">
                         REGEX
                       </SectionHeader>
@@ -747,6 +753,7 @@ function ApplyNetworkPolicy() {
                     </div>
                   )}
 
+                  {/* 5. Application (Full Width) */}
                   {details.application.length > 0 && (
                     <div className="col-span-2">
                       <SectionHeader icon={Share2} iconColor="#4F7CFF">

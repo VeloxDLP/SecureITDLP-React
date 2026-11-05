@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Monitor,
   Laptop,
@@ -12,6 +11,7 @@ import {
   Save,
   ChevronDown,
   Loader2,
+  Search,
 } from "lucide-react";
 
 import { useTheme } from "../../context/ThemeContext";
@@ -41,8 +41,24 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
   const [newBranch, setNewBranch] = useState("");
   const [saving, setSaving] = useState(false);
   const [modalError, setModalError] = useState("");
+  
+  // Custom Dropdown States
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef(null);
 
   const getRequestKey = (osName, branch) => `${osName}::${branch}`;
+
+  // Close custom dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // --------------------------------------------------
   // LOAD BRANCHES
@@ -55,11 +71,7 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       try {
         const res = await dashboardService.getBranch();
 
-        const list =
-          res?.data?.branches ||
-          res?.data ||
-          res?.branches ||
-          [];
+        const list = res?.data?.branches || res?.data || res?.branches || [];
 
         if (Array.isArray(list) && list.length > 0) {
           const names = list
@@ -107,7 +119,6 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
 
     const requestKey = getRequestKey(osName, branch);
 
-    // Use already loaded data if available
     if (devicesData[requestKey]) {
       return;
     }
@@ -123,14 +134,12 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
     }));
 
     try {
-      const res =
-        await dashboardService.getIpAddressesByBranchAndOs({
-          BRANCH_NAME: branch,
-          OS_TYPE: OS_TO_BACKEND[osName] || osName,
-        });
+      const res = await dashboardService.getIpAddressesByBranchAndOs({
+        BRANCH_NAME: branch,
+        OS_TYPE: OS_TO_BACKEND[osName] || osName,
+      });
 
       const responseData = res?.data;
-
       const ips = Array.isArray(responseData)
         ? responseData
         : Array.isArray(responseData?.data)
@@ -143,7 +152,6 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       }));
     } catch (err) {
       console.error("Fetch IPs failed:", err);
-
       setErrors((prev) => ({
         ...prev,
         [requestKey]: err?.message || "Failed to fetch devices",
@@ -160,21 +168,27 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
   // OPEN MODIFY BRANCH MODAL
   // --------------------------------------------------
 
-  const handleOpenModify = (osName, branch, ip) => {
+  const handleOpenModify = (osName, branch, device) => {
+    const deviceId = typeof device === "object" ? (device.ip || device.id) : device;
+    const deviceName = typeof device === "object" ? (device.hostname || device.name || device.ip) : device;
+
     setSelectedDevice({
       osName,
       branch,
-      ip,
+      ip: deviceId,
+      name: deviceName,
     });
 
     setNewBranch(branch);
     setModalError("");
+    setSearchQuery("");
+    setIsDropdownOpen(false);
     setOpenMenu(null);
     setShowModifyModal(true);
   };
 
   // --------------------------------------------------
-  // SAVE MODIFIED BRANCH
+  // SAVE MODIFIED BRANCH & SHOW ALERT
   // --------------------------------------------------
 
   const handleSaveBranch = async () => {
@@ -183,12 +197,22 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       return;
     }
 
-    const { osName, branch: oldBranch, ip } = selectedDevice;
+    const { osName, branch: oldBranch, ip, name } = selectedDevice;
 
     if (oldBranch === newBranch) {
       setShowModifyModal(false);
       return;
     }
+
+    const payload = {
+      deviceName: name,
+      deviceIp: ip,
+      osType: OS_TO_BACKEND[osName] || osName,
+      currentBranch: oldBranch,
+      newBranch: newBranch,
+    };
+
+    alert(`Payload being sent:\n\n${JSON.stringify(payload, null, 2)}`);
 
     const oldKey = getRequestKey(osName, oldBranch);
     const newKey = getRequestKey(osName, newBranch);
@@ -197,38 +221,34 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       setSaving(true);
       setModalError("");
 
-      // Optional backend callback.
-      // Pass an API update function through onUpdateDeviceBranch.
       if (onUpdateDeviceBranch) {
-        await onUpdateDeviceBranch({
-          deviceIp: ip,
-          osType: OS_TO_BACKEND[osName] || osName,
-          oldBranch,
-          newBranch,
-        });
+        await onUpdateDeviceBranch(payload);
       }
 
-      // Update the dashboard data locally
       setDevicesData((prev) => {
         const oldDevices = prev[oldKey] || [];
         const newDevices = prev[newKey] || [];
 
         return {
           ...prev,
-          [oldKey]: oldDevices.filter((device) => device !== ip),
-          [newKey]: newDevices.includes(ip)
+          [oldKey]: oldDevices.filter((d) => {
+            const dId = typeof d === "object" ? (d.ip || d.id) : d;
+            return dId !== ip;
+          }),
+          [newKey]: newDevices.some((d) => {
+            const dId = typeof d === "object" ? (d.ip || d.id) : d;
+            return dId === ip;
+          })
             ? newDevices
-            : [...newDevices, ip],
+            : [...newDevices, typeof name !== 'undefined' ? { ip: ip, hostname: name } : ip],
         };
       });
 
-      // Show the destination branch after modification
       setSelectedBranches((prev) => ({
         ...prev,
         [osName]: newBranch,
       }));
 
-      // If destination branch has not been loaded, fetch it next time
       if (!devicesData[newKey]) {
         setDevicesData((prev) => ({
           ...prev,
@@ -240,7 +260,6 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       setSelectedDevice(null);
     } catch (err) {
       console.error("Modify branch failed:", err);
-
       setModalError(
         err?.response?.data?.message ||
           err?.message ||
@@ -252,26 +271,26 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
   };
 
   // --------------------------------------------------
-  // STYLES
+  // THEME STYLES (DYNAMIC BASED ON isDark)
   // --------------------------------------------------
 
   const cardBackground = isDark ? "#020617" : "#ffffff";
-  const innerBackground = isDark ? "#0a101d" : "#ffffff";
+  const innerBackground = isDark ? "#0a101d" : "#f8fafc";
   const borderColor = isDark ? "#1e293b" : "#e2e8f0";
   const textColor = isDark ? "#e2e8f0" : "#1e293b";
   const mutedColor = isDark ? "#94a3b8" : "#64748b";
+  const activeBlue = "#4f6cf7";
+  const modalBackground = isDark ? "rgb(2, 6, 23)" : "#ffffff"; // Fixed for Light Mode
 
   const styles = {
     page: {
-      fontFamily:
-        "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       color: isDark ? "#cbd5e1" : "#1e293b",
       padding: "20px",
       margin: 0,
       minHeight: "100vh",
       boxSizing: "border-box",
     },
-
     headerCard: {
       background: cardBackground,
       border: `1px solid ${borderColor}`,
@@ -279,27 +298,23 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       padding: "20px",
       marginBottom: "16px",
     },
-
     panelTitle: {
       fontSize: "16px",
       fontWeight: 600,
       color: textColor,
       margin: 0,
     },
-
     panelSubtitle: {
       fontSize: "12px",
       color: mutedColor,
       marginTop: "4px",
     },
-
     grid: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
       gap: "16px",
       alignItems: "start",
     },
-
     columnCard: {
       background: cardBackground,
       border: `1px solid ${borderColor}`,
@@ -309,27 +324,23 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       flexDirection: "column",
       gap: "16px",
     },
-
     columnHeader: {
       display: "flex",
       alignItems: "center",
       gap: "8px",
       marginBottom: "4px",
     },
-
     columnTitle: {
       fontSize: "14px",
       fontWeight: 600,
       color: textColor,
       margin: 0,
     },
-
     branchList: {
       display: "flex",
       flexDirection: "column",
       gap: "10px",
     },
-
     branchBtn: {
       width: "100%",
       display: "flex",
@@ -346,13 +357,11 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       color: isDark ? "#cbd5e1" : "#475569",
       boxSizing: "border-box",
     },
-
     branchBtnActive: {
       background: innerBackground,
-      border: "1px solid #4f6cf7",
+      border: `1px solid ${activeBlue}`,
       color: textColor,
     },
-
     treeContainer: {
       marginTop: "8px",
       paddingLeft: "20px",
@@ -361,7 +370,6 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       flexDirection: "column",
       gap: "8px",
     },
-
     treeVerticalLine: {
       position: "absolute",
       left: "20px",
@@ -371,7 +379,6 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       background: borderColor,
       zIndex: 0,
     },
-
     treeRow: {
       display: "flex",
       alignItems: "center",
@@ -380,7 +387,6 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       paddingLeft: "16px",
       minWidth: 0,
     },
-
     treeHorizontalLine: {
       position: "absolute",
       left: "0px",
@@ -389,7 +395,6 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       height: "1px",
       background: borderColor,
     },
-
     deviceItem: {
       flex: 1,
       minWidth: 0,
@@ -404,14 +409,12 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       color: isDark ? "#cbd5e1" : "#475569",
       fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
     },
-
     emptyText: {
       fontSize: "12px",
       color: mutedColor,
       padding: "8px 0",
       paddingLeft: "16px",
     },
-
     errorText: {
       fontSize: "12px",
       color: "#ef4444",
@@ -424,46 +427,28 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
   };
 
   const osTypes = [
-    {
-      name: "Mac - OS",
-      icon: <Monitor size={16} color="#4f6cf7" />,
-    },
-    {
-      name: "Linux - OS",
-      icon: <Laptop size={16} color="#4f6cf7" />,
-    },
-    {
-      name: "Windows",
-      icon: <MonitorSmartphone size={16} color="#4f6cf7" />,
-    },
+    { name: "Mac - OS", icon: <Monitor size={16} color={activeBlue} /> },
+    { name: "Linux - OS", icon: <Laptop size={16} color={activeBlue} /> },
+    { name: "Windows", icon: <MonitorSmartphone size={16} color={activeBlue} /> },
   ];
 
-  // --------------------------------------------------
-  // MAIN UI
-  // --------------------------------------------------
+  const filteredBranches = branches.filter(b => b.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div style={styles.page}>
-      {/* HEADER */}
       <div style={styles.headerCard}>
         <h2 style={styles.panelTitle}>OS Dashboard</h2>
-
         <div style={styles.panelSubtitle}>
           Configure policy, source, destination control details.
         </div>
       </div>
 
-      {/* OS GRID */}
       <div style={styles.grid}>
         {osTypes.map((os) => {
           const activeBranch = selectedBranches[os.name];
-
-          const requestKey = activeBranch
-            ? getRequestKey(os.name, activeBranch)
-            : "";
-
+          const requestKey = activeBranch ? getRequestKey(os.name, activeBranch) : "";
           const isLoading = loadingDevices[requestKey];
-          const currentIps = devicesData[requestKey] || [];
+          const currentDevices = devicesData[requestKey] || [];
           const errorMsg = errors[requestKey];
 
           return (
@@ -476,16 +461,9 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
               <div style={styles.branchList}>
                 {branches.map((branch) => {
                   const isActive = activeBranch === branch;
-
-                  const branchKey = getRequestKey(os.name, branch);
-                  const branchIps = devicesData[branchKey] || [];
-
+                  
                   return (
-                    <div
-                      key={branch}
-                      style={{ display: "flex", flexDirection: "column" }}
-                    >
-                      {/* BRANCH BUTTON */}
+                    <div key={branch} style={{ display: "flex", flexDirection: "column" }}>
                       <div
                         style={{
                           ...styles.branchBtn,
@@ -493,65 +471,49 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
                         }}
                         onClick={() => handleBranchClick(os.name, branch)}
                         onMouseEnter={(e) => {
-                          if (!isActive) {
-                            e.currentTarget.style.background = isDark
-                              ? "#0f1f3a"
-                              : "#f8fafc";
-                          }
+                          if (!isActive) e.currentTarget.style.background = isDark ? "#0f1f3a" : "#f1f5f9";
                         }}
                         onMouseLeave={(e) => {
-                          if (!isActive) {
-                            e.currentTarget.style.background = innerBackground;
-                          }
+                          if (!isActive) e.currentTarget.style.background = innerBackground;
                         }}
                       >
-                        <Building2
-                          size={18}
-                          color={isActive ? "#4f6cf7" : mutedColor}
-                        />
-
+                        <Building2 size={18} color={isActive ? activeBlue : mutedColor} />
                         <span>{branch}</span>
                       </div>
 
-                      {/* DEVICE TREE */}
                       {isActive && (
                         <div style={styles.treeContainer}>
-                          {!isLoading &&
-                            !errorMsg &&
-                            currentIps.length > 0 && (
-                              <div style={styles.treeVerticalLine} />
-                            )}
+                          {!isLoading && !errorMsg && currentDevices.length > 0 && (
+                            <div style={styles.treeVerticalLine} />
+                          )}
 
                           {isLoading ? (
-                            <div style={styles.emptyText}>
-                              Loading devices...
-                            </div>
+                            <div style={styles.emptyText}>Loading devices...</div>
                           ) : errorMsg ? (
                             <div style={styles.errorText}>
                               <AlertCircle size={14} />
                               {errorMsg}
                             </div>
-                          ) : currentIps.length === 0 ? (
-                            <div style={styles.emptyText}>
-                              No devices found.
-                            </div>
+                          ) : currentDevices.length === 0 ? (
+                            <div style={styles.emptyText}>No devices found.</div>
                           ) : (
-                            currentIps.map((ip, index) => {
-                              const menuId = `${os.name}-${branch}-${ip}`;
+                            currentDevices.map((device, index) => {
+                              const deviceId = typeof device === "object" ? (device.ip || device.id) : device;
+                              const deviceName = typeof device === "object" ? (device.hostname || device.name || device.ip) : device;
+                              const menuId = `${os.name}-${branch}-${deviceId}`;
 
                               return (
-                                <div
-                                  key={`${ip}-${index}`}
-                                  style={styles.treeRow}
+                                <div 
+                                  key={`${deviceId}-${index}`} 
+                                  style={{
+                                    ...styles.treeRow,
+                                    zIndex: openMenu === menuId ? 100 : 1 
+                                  }}
                                 >
                                   <div style={styles.treeHorizontalLine} />
 
                                   <div style={styles.deviceItem}>
-                                    <Monitor
-                                      size={14}
-                                      color={isDark ? "#5b8def" : "#4f6cf7"}
-                                    />
-
+                                    <Monitor size={14} color={isDark ? "#5b8def" : activeBlue} />
                                     <span
                                       style={{
                                         flex: 1,
@@ -559,26 +521,18 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
                                         textOverflow: "ellipsis",
                                         whiteSpace: "nowrap",
                                       }}
-                                      title={ip}
+                                      title={deviceName}
                                     >
-                                      {ip}
+                                      {deviceName}
                                     </span>
 
-                                    {/* THREE DOT MENU */}
-                                    <div
-                                      style={{
-                                        position: "relative",
-                                        flexShrink: 0,
-                                      }}
-                                    >
+                                    <div style={{ position: "relative", flexShrink: 0 }}>
                                       <button
                                         type="button"
                                         title="Device options"
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          setOpenMenu(
-                                            openMenu === menuId ? null : menuId
-                                          );
+                                          setOpenMenu(openMenu === menuId ? null : menuId);
                                         }}
                                         style={{
                                           display: "flex",
@@ -595,15 +549,15 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
                                         <MoreVertical size={17} />
                                       </button>
 
-                                      {/* DROPDOWN MENU */}
                                       {openMenu === menuId && (
                                         <div
                                           style={{
                                             position: "absolute",
                                             right: 0,
-                                            top: "28px",
+                                            top: "100%",
+                                            marginTop: "4px",
                                             width: "155px",
-                                            zIndex: 50,
+                                            zIndex: 9999,
                                             background: cardBackground,
                                             border: `1px solid ${borderColor}`,
                                             borderRadius: "7px",
@@ -613,13 +567,7 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
                                         >
                                           <button
                                             type="button"
-                                            onClick={() =>
-                                              handleOpenModify(
-                                                os.name,
-                                                branch,
-                                                ip
-                                              )
-                                            }
+                                            onClick={() => handleOpenModify(os.name, branch, device)}
                                             style={{
                                               display: "flex",
                                               alignItems: "center",
@@ -635,15 +583,13 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
                                               textAlign: "left",
                                             }}
                                             onMouseEnter={(e) => {
-                                              e.currentTarget.style.background =
-                                                isDark ? "#1e293b" : "#f1f5f9";
+                                              e.currentTarget.style.background = isDark ? "#1e293b" : "#f1f5f9";
                                             }}
                                             onMouseLeave={(e) => {
-                                              e.currentTarget.style.background =
-                                                "transparent";
+                                              e.currentTarget.style.background = "transparent";
                                             }}
                                           >
-                                            <Pencil size={13} color="#4f6cf7" />
+                                            <Pencil size={13} color={activeBlue} />
                                             Modify Branch
                                           </button>
                                         </div>
@@ -691,18 +637,17 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
             style={{
               width: "100%",
               maxWidth: "420px",
-              background: cardBackground,
+              background: modalBackground, 
               border: `1px solid ${borderColor}`,
               borderRadius: "12px",
               padding: "20px",
               boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
             }}
           >
-            {/* MODAL HEADER */}
             <div
               style={{
                 display: "flex",
-                alignItems: "center",
+                alignItems: "flex-start",
                 justifyContent: "space-between",
                 marginBottom: "20px",
               }}
@@ -711,19 +656,18 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
                 <h3
                   style={{
                     color: textColor,
-                    fontSize: "15px",
+                    fontSize: "18px",
                     fontWeight: 600,
                     margin: 0,
                   }}
                 >
                   Modify Device Branch
                 </h3>
-
                 <p
                   style={{
                     color: mutedColor,
-                    fontSize: "11px",
-                    margin: "5px 0 0",
+                    fontSize: "12px",
+                    margin: "6px 0 0",
                   }}
                 >
                   Change the branch assigned to this device.
@@ -738,32 +682,37 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
                   setSelectedDevice(null);
                 }}
                 style={{
-                  border: "none",
+                  border: `1px solid ${borderColor}`,
                   background: "transparent",
-                  color: mutedColor,
+                  color: textColor,
                   cursor: "pointer",
-                  padding: "4px",
+                  padding: "6px",
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
                 }}
               >
-                <X size={19} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* DEVICE DETAILS */}
             <div
               style={{
                 background: innerBackground,
                 border: `1px solid ${borderColor}`,
                 borderRadius: "8px",
-                padding: "12px",
-                marginBottom: "18px",
+                padding: "16px",
+                marginBottom: "20px",
               }}
             >
               <div
                 style={{
-                  fontSize: "10px",
+                  fontSize: "11px",
                   color: mutedColor,
-                  marginBottom: "5px",
+                  marginBottom: "8px",
+                  fontWeight: 600,
+                  letterSpacing: "0.5px"
                 }}
               >
                 DEVICE IP ADDRESS
@@ -772,20 +721,20 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
               <div
                 style={{
                   color: textColor,
-                  fontSize: "13px",
+                  fontSize: "15px",
                   fontWeight: 600,
                   wordBreak: "break-all",
                 }}
               >
-                {selectedDevice.ip}
+                {selectedDevice.name}
               </div>
 
               <div
                 style={{
                   display: "flex",
                   gap: "6px",
-                  marginTop: "9px",
-                  fontSize: "11px",
+                  marginTop: "8px",
+                  fontSize: "13px",
                   color: mutedColor,
                 }}
               >
@@ -795,77 +744,146 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
               </div>
             </div>
 
-            {/* BRANCH SELECT */}
             <label
               style={{
                 display: "block",
-                color: textColor,
-                fontSize: "12px",
+                color: mutedColor,
+                fontSize: "11px",
                 fontWeight: 600,
                 marginBottom: "8px",
+                letterSpacing: "0.5px"
               }}
             >
-              Select New Branch
+              SELECT NEW BRANCH
             </label>
 
-            <div style={{ position: "relative" }}>
-              <select
-                value={newBranch}
-                onChange={(e) => setNewBranch(e.target.value)}
-                disabled={saving}
+            <div style={{ position: "relative", marginBottom: "20px" }} ref={dropdownRef}>
+              <div
+                onClick={() => !saving && setIsDropdownOpen(!isDropdownOpen)}
                 style={{
                   width: "100%",
-                  padding: "11px 35px 11px 12px",
-                  borderRadius: "7px",
-                  border: `1px solid ${borderColor}`,
+                  padding: "12px 14px",
+                  borderRadius: "8px",
+                  border: `1px solid ${isDropdownOpen ? activeBlue : borderColor}`,
                   background: innerBackground,
                   color: textColor,
-                  fontSize: "12px",
-                  outline: "none",
-                  appearance: "none",
-                  cursor: "pointer",
+                  fontSize: "13px",
+                  cursor: saving ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  boxShadow: isDropdownOpen ? `0 0 0 2px ${activeBlue}33` : "none",
+                  transition: "all 0.2s ease",
                 }}
               >
-                {branches.map((branch) => (
-                  <option key={branch} value={branch}>
-                    {branch}
-                  </option>
-                ))}
-              </select>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
+                  <Search size={16} color={mutedColor} />
+                  <input
+                    type="text"
+                    value={isDropdownOpen ? searchQuery : newBranch}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isDropdownOpen) setIsDropdownOpen(true);
+                    }}
+                    placeholder={newBranch || "Select Branch"}
+                    disabled={saving}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: textColor,
+                      fontSize: "13px",
+                      outline: "none",
+                      width: "100%",
+                      cursor: isDropdownOpen ? "text" : "pointer",
+                    }}
+                  />
+                </div>
+                <ChevronDown
+                  size={16}
+                  color={mutedColor}
+                  style={{
+                    transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s ease",
+                  }}
+                />
+              </div>
 
-              <ChevronDown
-                size={15}
-                style={{
-                  position: "absolute",
-                  right: "12px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: mutedColor,
-                  pointerEvents: "none",
-                }}
-              />
+              {isDropdownOpen && !saving && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 4px)",
+                    left: 0,
+                    right: 0,
+                    background: innerBackground,
+                    border: `1px solid ${borderColor}`,
+                    borderRadius: "8px",
+                    zIndex: 50,
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div style={{ maxHeight: "160px", overflowY: "auto" }}>
+                    {filteredBranches.length === 0 ? (
+                      <div style={{ padding: "12px", fontSize: "13px", color: mutedColor, textAlign: "center" }}>
+                        No branches found.
+                      </div>
+                    ) : (
+                      filteredBranches.map((branch) => (
+                        <div
+                          key={branch}
+                          onClick={() => {
+                            setNewBranch(branch);
+                            setIsDropdownOpen(false);
+                            setSearchQuery("");
+                          }}
+                          style={{
+                            padding: "12px 16px",
+                            cursor: "pointer",
+                            fontSize: "13px",
+                            color: textColor,
+                            background: newBranch === branch ? (isDark ? "#1e293b" : "#f1f5f9") : "transparent",
+                            borderBottom: `1px solid ${borderColor}`,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (newBranch !== branch) {
+                              e.currentTarget.style.background = isDark ? "#1e293b" : "#f1f5f9";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (newBranch !== branch) {
+                              e.currentTarget.style.background = "transparent";
+                            }
+                          }}
+                        >
+                          {branch}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* MODAL ERROR */}
             {modalError && (
               <div
                 style={{
                   color: "#ef4444",
-                  fontSize: "11px",
-                  marginTop: "10px",
+                  fontSize: "12px",
+                  marginBottom: "16px",
                 }}
               >
                 {modalError}
               </div>
             )}
 
-            {/* MODAL ACTIONS */}
             <div
               style={{
                 display: "flex",
                 justifyContent: "flex-end",
-                gap: "9px",
-                marginTop: "22px",
+                gap: "12px",
+                marginTop: "10px",
               }}
             >
               <button
@@ -876,14 +894,14 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
                   setSelectedDevice(null);
                 }}
                 style={{
-                  padding: "9px 15px",
+                  padding: "10px 18px",
                   borderRadius: "7px",
                   border: `1px solid ${borderColor}`,
                   background: "transparent",
                   color: textColor,
-                  fontSize: "11px",
+                  fontSize: "12px",
                   fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: saving ? "not-allowed" : "pointer",
                 }}
               >
                 Cancel
@@ -896,24 +914,23 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "7px",
-                  padding: "9px 16px",
+                  gap: "8px",
+                  padding: "10px 20px",
                   borderRadius: "7px",
-                  border: "1px solid #4f6cf7",
-                  background: "#4f6cf7",
+                  border: `1px solid ${activeBlue}`,
+                  background: activeBlue,
                   color: "#ffffff",
-                  fontSize: "11px",
+                  fontSize: "12px",
                   fontWeight: 600,
                   cursor: saving ? "not-allowed" : "pointer",
                   opacity: saving ? 0.65 : 1,
                 }}
               >
                 {saving ? (
-                  <Loader2 size={13} className="animate-spin" />
+                  <Loader2 size={14} className="animate-spin" />
                 ) : (
-                  <Save size={13} />
+                  <Save size={14} />
                 )}
-
                 {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
