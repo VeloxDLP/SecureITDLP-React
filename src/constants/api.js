@@ -15,7 +15,7 @@ export const API_ENDPOINTS = {
 
   DASHBOARD: {
     ENDPOINT_STATUS: "/DeviceManager/agentStatusCounts",
-  EVENT_WISE_MODAL_DATA: '/NetworkDLP/EventWiseModalData',
+    EVENT_WISE_MODAL_DATA: '/NetworkDLP/EventWiseModalData',
     INCIDENT_SUMMARY: "/NetworkDLP/eventWiseCount",
     ORGANIZATION_INCIDENT: "/Dashboard/organizationIncident",
     FILE_TYPE_INCIDENT: "/NetworkDLP/extensionCounts",
@@ -50,9 +50,8 @@ VIEWDEVICE: {
     GET_DEVICEDETAIL:         "/UsbProtection/deviceDetails",
     GET_DEVICENAME:           "/UsbProtection/devices",
     GET_LIVE_POLICY_STATUS:   "/DeviceManager/livePolicyStatus",
-
-    // 🆕 IP filter by branch + OS
     IP_ADDRESSES_BY_BRANCH_AND_OS: "/DeviceManager/ipAddressesByBranchAndOs",
+    CHANGE_DEVICE_BRANCH:"/DeviceManager/ChangeDeviceBranch"
 },
 PRINTER_CONTROL:{
   ALL_PRINTER_POLICIES:"/PrinterDLP/getAllPrinterPolicy",

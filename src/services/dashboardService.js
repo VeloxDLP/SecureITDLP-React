@@ -549,6 +549,16 @@ export const dashboardService = {
     return data;
   },
 
+  //[Device Manger]
+  ModifyClientBranch: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.VIEWDEVICE.CHANGE_DEVICE_BRANCH,
+      requestData,
+    );
+    return data;
+  },
+
+
   //[Website Control]
   saveNewWebsite: async (requestData) => {
     const { data } = await axiosInstance.post(

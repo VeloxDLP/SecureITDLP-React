@@ -16,6 +16,7 @@ import {
 
 import { useTheme } from "../../context/ThemeContext";
 import { dashboardService } from "../../services/dashboardService";
+import PolicyStatusTracker from "../PolicyStatusTracker/PolicyStatusTracker";
 
 const OS_TO_BACKEND = {
   "Mac - OS": "macOS",
@@ -41,7 +42,8 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
   const [newBranch, setNewBranch] = useState("");
   const [saving, setSaving] = useState(false);
   const [modalError, setModalError] = useState("");
-  
+  const [trackedEventIds, setTrackedEventIds] = useState([]);
+  const isTracking = trackedEventIds.length > 0;
   // Custom Dropdown States
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -187,88 +189,103 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
     setShowModifyModal(true);
   };
 
-  // --------------------------------------------------
-  // SAVE MODIFIED BRANCH & SHOW ALERT
-  // --------------------------------------------------
 
-  const handleSaveBranch = async () => {
-    if (!selectedDevice || !newBranch) {
-      setModalError("Please select a branch.");
-      return;
-    }
 
-    const { osName, branch: oldBranch, ip, name } = selectedDevice;
+  
+const handleSaveBranch = async () => {
+  if (!selectedDevice || !newBranch) {
+    setModalError("Please select a branch.");
+    return;
+  }
 
-    if (oldBranch === newBranch) {
-      setShowModifyModal(false);
-      return;
-    }
+  const { osName, branch: oldBranch, ip, name } = selectedDevice;
 
-    const payload = {
-      deviceName: name,
-      deviceIp: ip,
-      osType: OS_TO_BACKEND[osName] || osName,
-      currentBranch: oldBranch,
-      newBranch: newBranch,
-    };
+  if (oldBranch === newBranch) {
+    setShowModifyModal(false);
+    return;
+  }
 
-    alert(`Payload being sent:\n\n${JSON.stringify(payload, null, 2)}`);
-
-    const oldKey = getRequestKey(osName, oldBranch);
-    const newKey = getRequestKey(osName, newBranch);
-
-    try {
-      setSaving(true);
-      setModalError("");
-
-      if (onUpdateDeviceBranch) {
-        await onUpdateDeviceBranch(payload);
-      }
-
-      setDevicesData((prev) => {
-        const oldDevices = prev[oldKey] || [];
-        const newDevices = prev[newKey] || [];
-
-        return {
-          ...prev,
-          [oldKey]: oldDevices.filter((d) => {
-            const dId = typeof d === "object" ? (d.ip || d.id) : d;
-            return dId !== ip;
-          }),
-          [newKey]: newDevices.some((d) => {
-            const dId = typeof d === "object" ? (d.ip || d.id) : d;
-            return dId === ip;
-          })
-            ? newDevices
-            : [...newDevices, typeof name !== 'undefined' ? { ip: ip, hostname: name } : ip],
-        };
-      });
-
-      setSelectedBranches((prev) => ({
-        ...prev,
-        [osName]: newBranch,
-      }));
-
-      if (!devicesData[newKey]) {
-        setDevicesData((prev) => ({
-          ...prev,
-          [newKey]: [ip],
-        }));
-      }
-
-      setShowModifyModal(false);
-      setSelectedDevice(null);
-    } catch (err) {
-      console.error("Modify branch failed:", err);
-      setModalError(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Unable to modify device branch."
-      );
-    } finally {
-      setSaving(false);
-    }
+  const payload = {
+    pcName: name,
+    oldBranch: oldBranch,
+    newBranch: newBranch,
   };
+
+  const oldKey = getRequestKey(osName, oldBranch);
+  const newKey = getRequestKey(osName, newBranch);
+
+  try {
+    setSaving(true);
+    setModalError("");
+
+    // 1. Call API and wait for response
+    const response = await dashboardService.ModifyClientBranch(payload);
+
+    // 2. Extract event IDs
+    const body = response?.data;
+
+    const eventIds = Array.isArray(body)
+      ? body
+      : Array.isArray(body?.data)
+      ? body.data
+      : [];
+
+    // 3. Notify parent if required
+    if (onUpdateDeviceBranch) {
+      await onUpdateDeviceBranch(payload);
+    }
+
+    // 4. Update local device lists
+    setDevicesData((prev) => {
+      const oldDevices = prev[oldKey] || [];
+      const newDevices = prev[newKey] || [];
+
+      return {
+        ...prev,
+
+        [oldKey]: oldDevices.filter((d) => {
+          const dId = typeof d === "object" ? (d.ip || d.id) : d;
+          return dId !== ip;
+        }),
+
+        [newKey]: newDevices.some((d) => {
+          const dId = typeof d === "object" ? (d.ip || d.id) : d;
+          return dId === ip;
+        })
+          ? newDevices
+          : [...newDevices, { ip: ip, hostname: name }],
+      };
+    });
+
+    setSelectedBranches((prev) => ({
+      ...prev,
+      [osName]: newBranch,
+    }));
+
+    // 5. Close modify modal
+    setShowModifyModal(false);
+    setSelectedDevice(null);
+
+    // 6. Start policy status tracking
+    if (eventIds.length > 0) {
+      setTrackedEventIds(eventIds);
+    } else {
+      console.warn("Branch updated, but no event IDs returned.");
+    }
+
+  } catch (err) {
+    console.error("Modify branch failed:", err);
+
+    setModalError(
+      err?.response?.data?.message ||
+      err?.message ||
+      "Unable to modify device branch."
+    );
+  } finally {
+    setSaving(false);
+  }
+};
+
 
   // --------------------------------------------------
   // THEME STYLES (DYNAMIC BASED ON isDark)
@@ -909,7 +926,8 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
 
               <button
                 type="button"
-                disabled={saving || !newBranch}
+                // disabled={saving || !newBranch}
+                disabled={saving || !newBranch || isTracking}
                 onClick={handleSaveBranch}
                 style={{
                   display: "flex",
@@ -937,6 +955,25 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
           </div>
         </div>
       )}
+
+      {isTracking && (
+  <div
+    style={{
+      marginBottom: "20px",
+      boxShadow: isDark
+        ? "0 4px 24px rgba(0,0,0,0.5)"
+        : "0 2px 16px rgba(0,0,0,0.08)",
+    }}
+  >
+    <PolicyStatusTracker
+      title="Modify Device Branch"
+      eventIds={trackedEventIds}
+      onClose={() => {
+        setTrackedEventIds([]);
+      }}
+    />
+  </div>
+)}
     </div>
   );
 }
