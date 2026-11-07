@@ -34,9 +34,9 @@ function StatusPill({ status }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   WEBSITES
+   WEBSITES — fallback (used if backend returns nothing / on error)
 ───────────────────────────────────────────────────────────── */
-const WEBSITES = [
+const FALLBACK_WEBSITES = [
   'www.facebook.com',
   'www.youtube.com',
   'www.twitter.com',
@@ -326,7 +326,6 @@ function MultiSelectDropdown({
   const allSelected =
     filtered.length > 0 && filtered.every(o => values.includes(o.value))
 
-  // 🆕 Calculate Up / Down counts
   const upCount = filtered.filter(o => String(o.status).toLowerCase() === 'up').length
   const downCount = filtered.filter(o => String(o.status).toLowerCase() === 'down').length
 
@@ -468,7 +467,6 @@ function MultiSelectDropdown({
               : 'bg-white/95 border-slate-200 backdrop-blur-2xl'}
           `}
         >
-          {/* SEARCH BAR */}
           {searchable && (
             <div className={`p-2 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-100'}`}>
               <div className="relative">
@@ -478,7 +476,7 @@ function MultiSelectDropdown({
                   autoFocus
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  placeholder="Search devices..."
+                  placeholder="Search..."
                   className={`w-full pl-7 pr-3 py-2 rounded-lg outline-none text-[12px] border
                     ${isDark
                       ? 'bg-[#111827] border-white/[0.07] text-[#d0d0d0] placeholder-[#555]'
@@ -488,7 +486,6 @@ function MultiSelectDropdown({
             </div>
           )}
 
-          {/* 🆕 SELECT ALL & COUNTER */}
           <div className={`px-3 py-2 border-b flex justify-between items-center ${isDark ? 'border-white/[0.06] bg-[#0a101d]' : 'border-slate-100 bg-slate-50/50'}`}>
             <button
               type="button"
@@ -507,7 +504,6 @@ function MultiSelectDropdown({
               {allSelected ? 'Deselect all' : 'Select all'}
             </button>
 
-            {/* 🆕 UP / DOWN COUNTER */}
             {filtered.some(o => o.status) && (
               <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                 {upCount} Up / {downCount} Down
@@ -581,7 +577,7 @@ function GlassButton({
         WebkitBackdropFilter: 'blur(16px)',
         boxShadow: isDark
           ? 'inset 0 1px 0 rgba(255,255,255,0.06)'
-          : '0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
+          : '0 2px 8px   rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
       },
     },
     primary: {
@@ -699,6 +695,9 @@ function GlassCard({ children, className = '' }) {
   )
 }
 
+/* ─────────────────────────────────────────────────────────────
+   ADD WEBSITE
+───────────────────────────────────────────────────────────── */
 function AddWebsite() {
   const { isDark } = useTheme()
   const [website, setWebsite] = useState('')
@@ -706,7 +705,6 @@ function AddWebsite() {
 
   const handleAddWebsite = () => {
     const value = website.trim()
-
     if (!value) return
 
     if (websites.some(site => site.toLowerCase() === value.toLowerCase())) {
@@ -731,162 +729,147 @@ function AddWebsite() {
     setWebsites([])
   }
 
- const handleSubmit = async () => {
-  if (websites.length === 0) {
-    showAlert({
-      icon: 'warning',
-      title: 'No Websites Added',
-      text: 'Please add at least one website before submitting.',
-    })
-    return
-  }
-
-  const payload = {
-    website: websites,
-  }
-
-  try {
-    const response = await dashboardService.saveNewWebsite(payload);
-
-    // Axios response contains the backend ApiResponse inside response.data
-    const result = response.data
-    // alert(response.data);
-    if (result == "success") {
+  const handleSubmit = async () => {
+    if (websites.length === 0) {
       showAlert({
-        icon: 'success',
-        title: 'Success',
-        text: result.message || 'Websites saved successfully.',
+        icon: 'warning',
+        title: 'No Websites Added',
+        text: 'Please add at least one website before submitting.',
       })
-
-      setWebsites([])
-      setWebsite('')
-    } else {
-      showAlert({
-        icon: 'error',
-        title: 'Save Failed',
-        text: result.message || 'Unable to save websites.',
-      })
+      return
     }
 
-  } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.response?.data?.data ||
-      error.message ||
-      'Something went wrong while saving websites.'
+    const payload = { website: websites }
 
-    showAlert({
-      icon: 'error',
-      title: 'Website Already Exists / Error',
-      text: errorMessage,
-    })
+    try {
+      const response = await dashboardService.saveNewWebsite(payload)
 
-    console.error('Save Website Error:', error)
+      // ✅ FIXED: Check the success boolean instead of response.data
+      if (response?.success) {
+        showAlert({
+          icon: 'success',
+          title: 'Success',
+          text: response.message || 'Websites saved successfully.',
+        })
+
+        setWebsites([])
+        setWebsite('')
+      } else {
+        showAlert({
+          icon: 'error',
+          title: 'Save Failed',
+          text: response?.message || 'Unable to save websites.',
+        })
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.data ||
+        error.message ||
+        'Something went wrong while saving websites.'
+
+      showAlert({
+        icon: 'error',
+        title: 'Website Already Exists / Error',
+        text: errorMessage,
+      })
+
+      console.error('Save Website Error:', error)
+    }
   }
-}
 
- return (
-  <GlassCard className="p-6 mb-5">
+  return (
+    <GlassCard className="p-6 mb-5">
+      <div className="max-w-2xl">
+        <label className={`block text-[12px] font-medium mb-2
+          ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+          Website
+        </label>
 
-    <div className="max-w-2xl">
-
-      <label className={`block text-[12px] font-medium mb-2
-        ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-        Website
-      </label>
-
-      <div className={`flex items-center gap-2 px-3 rounded-lg border
-        ${isDark
-          ? 'bg-[#111827] border-white/[0.10]'
-          : 'bg-white border-slate-200'}`}>
-
-        <input
-          type="text"
-          value={website}
-          onChange={e => setWebsite(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              handleAddWebsite()
-            }
-          }}
-          placeholder="www.test.com"
-          className={`flex-1 min-w-0 py-3 text-[13px] outline-none bg-transparent
-            ${isDark
-              ? 'text-slate-200 placeholder-slate-500'
-              : 'text-slate-700 placeholder-slate-400'}`}
-        />
-
-        <button
-          type="button"
-          onClick={handleAddWebsite}
-          disabled={!website.trim()}
-          className="w-7 h-7 rounded-md flex items-center justify-center
-            bg-[#597DFF] text-white hover:bg-[#4569e8]
-            disabled:opacity-40 transition-all"
-        >
-          <Plus size={17} />
-        </button>
-      </div>
-
-      <div className="flex justify-end mt-2">
-        <span className="text-[10px] text-[#597DFF]">
-          {websites.length} website(s) added
-        </span>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {websites.map((site, index) => (
-          <div
-            key={`${site}-${index}`}
-            className={`flex items-center gap-2 px-3 py-1.5
-              rounded-full border text-[12px]
+        <div className={`flex items-center gap-2 px-3 rounded-lg border
+          ${isDark
+            ? 'bg-[#111827] border-white/[0.10]'
+            : 'bg-white border-slate-200'}`}>
+          <input
+            type="text"
+            value={website}
+            onChange={e => setWebsite(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleAddWebsite()
+              }
+            }}
+            placeholder="www.test.com"
+            className={`flex-1 min-w-0 py-3 text-[13px] outline-none bg-transparent
               ${isDark
-                ? 'bg-[#1e293b] border-white/[0.08] text-slate-200'
-                : 'bg-[#f0f5ff] border-[#dce6f8] text-slate-700'}`}
-          >
-            {site}
+                ? 'text-slate-200 placeholder-slate-500'
+                : 'text-slate-700 placeholder-slate-400'}`}
+          />
 
-            <button
-              type="button"
-              onClick={() => handleRemoveWebsite(index)}
-              className="text-slate-400 hover:text-rose-500"
+          <button
+            type="button"
+            onClick={handleAddWebsite}
+            disabled={!website.trim()}
+            className="w-7 h-7 rounded-md flex items-center justify-center
+              bg-[#597DFF] text-white hover:bg-[#4569e8]
+              disabled:opacity-40 transition-all"
+          >
+            <Plus size={17} />
+          </button>
+        </div>
+
+        <div className="flex justify-end mt-2">
+          <span className="text-[10px] text-[#597DFF]">
+            {websites.length} website(s) added
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {websites.map((site, index) => (
+            <div
+              key={`${site}-${index}`}
+              className={`flex items-center gap-2 px-3 py-1.5
+                rounded-full border text-[12px]
+                ${isDark
+                  ? 'bg-[#1e293b] border-white/[0.08] text-slate-200'
+                  : 'bg-[#f0f5ff] border-[#dce6f8] text-slate-700'}`}
             >
-              <X size={13} />
-            </button>
-          </div>
-        ))}
+              {site}
+
+              <button
+                type="button"
+                onClick={() => handleRemoveWebsite(index)}
+                className="text-slate-400 hover:text-rose-500"
+              >
+                <X size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
-    </div>
+      <div className="flex items-center justify-end gap-3 mt-6">
+        <GlassButton
+          onClick={handleReset}
+          variant="default"
+          className="px-4 py-2"
+        >
+          <RotateCcw size={13} /> Reset
+        </GlassButton>
 
-    {/* ACTION BUTTONS — RIGHT CORNER OF FULL CARD */}
-    <div className="flex items-center justify-end gap-3 mt-6">
-
-      <GlassButton
-        onClick={handleReset}
-        variant="default"
-        className="px-4 py-2"
-      >
-        <RotateCcw size={13} /> Reset
-      </GlassButton>
-
-      <GlassButton
-        onClick={handleSubmit}
-        variant="primary"
-        disabled={websites.length === 0}
-        className="px-5 py-2 font-semibold"
-      >
-        <Check size={13} /> Submit
-      </GlassButton>
-
-    </div>
-
-  </GlassCard>
-)
+        <GlassButton
+          onClick={handleSubmit}
+          variant="primary"
+          disabled={websites.length === 0}
+          className="px-5 py-2 font-semibold"
+        >
+          <Check size={13} /> Submit
+        </GlassButton>
+      </div>
+    </GlassCard>
+  )
 }
-
-
 
 /* ─────────────────────────────────────────────────────────────
    ADD FORM — Device (multi-select) + Websites (multi-select)
@@ -898,6 +881,30 @@ function AddForm({ branches, onAdd }) {
   const [success, setSuccess] = useState(false)
   const [fetchedDevices, setFetchedDevices] = useState([])
   const [devicesLoading, setDevicesLoading] = useState(false)
+
+  const [websiteOptions, setWebsiteOptions] = useState([])
+  const [websitesLoading, setWebsitesLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    const loadWebsites = async () => {
+      try {
+        setWebsitesLoading(true)
+        const res = await dashboardService.getAllWebsites()
+        const list = Array.isArray(res?.data) ? res.data : []
+        if (!cancelled) {
+          setWebsiteOptions(list.length > 0 ? list : FALLBACK_WEBSITES)
+        }
+      } catch (err) {
+        console.error('Error loading websites:', err)
+        if (!cancelled) setWebsiteOptions(FALLBACK_WEBSITES)
+      } finally {
+        if (!cancelled) setWebsitesLoading(false)
+      }
+    }
+    loadWebsites()
+    return () => { cancelled = true }
+  }, [])
 
   const set = k => v => setForm(f => ({ ...f, [k]: v }))
 
@@ -911,7 +918,6 @@ function AddForm({ branches, onAdd }) {
     if (typeof device === 'string' || typeof device === 'number') {
       return { value: String(device), label: String(device), status: null }
     }
-
     const value =
       device?.deviceName ??
       device?.device ??
@@ -921,13 +927,15 @@ function AddForm({ branches, onAdd }) {
       device?.ipAddress ??
       device?.value ??
       `Device ${idx + 1}`
-
     const status = device?.agentStatus ?? device?.status ?? null
-
     return { value, label: value, status }
   })
 
-  const websiteNames = WEBSITES.map(site => ({ value: site, label: site }))
+  const websiteNames = (websiteOptions || []).map(site => ({
+    value: site,
+    label: site,
+  }))
+
   const modeOptions = [
     { value: 'Allow', label: 'Allow' },
     { value: 'Prevent', label: 'Prevent' },
@@ -942,7 +950,6 @@ function AddForm({ branches, onAdd }) {
   const handleBranchChange = async branch => {
     setForm(f => ({ ...f, branch, devices: [] }))
     setFetchedDevices([])
-
     if (!branch) return
 
     try {
@@ -962,7 +969,6 @@ function AddForm({ branches, onAdd }) {
     if (!isValid) return
 
     const branchName = branchOptions.find(b => b.value === form.branch)?.label
-
     setSuccess(false)
 
     try {
@@ -980,11 +986,13 @@ function AddForm({ branches, onAdd }) {
       })
 
       onAdd({ ...form, branchName })
+      setSuccess(true)
 
+      // ✅ UPDATED POPUP MESSAGE HERE
       await showAlert({
         icon: 'success',
-        title: 'Policy Saved',
-        text: `Website policy for ${form.devices.length} device${form.devices.length !== 1 ? 's' : ''} has been added successfully.`,
+        title: 'Success',
+        text: 'Policy saved successfully.',
         timer: 2500,
         timerProgressBar: true,
         showConfirmButton: false,
@@ -993,6 +1001,9 @@ function AddForm({ branches, onAdd }) {
       setSubmitted(false)
       setForm({ branch: '', devices: [], websites: [], mode: '' })
       setFetchedDevices([])
+      
+      setTimeout(() => setSuccess(false), 3000)
+      
     } catch (err) {
       const message =
         err?.response?.data?.message ||
@@ -1052,22 +1063,33 @@ function AddForm({ branches, onAdd }) {
             searchable
             error={submitted && form.devices.length === 0}
           />
-          {submitted && form.devices.length === 0  && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
+          {submitted && form.devices.length === 0 && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
         </div>
 
-        {/* Websites */}
+        {/* Websites — from backend */}
         <div>
-          <label className={labelCls}>Website Names <span className="text-rose-500 normal-case tracking-normal">*</span></label>
+          <label className={labelCls}>
+            Website Names <span className="text-rose-500 normal-case tracking-normal">*</span>
+          </label>
           <MultiSelectDropdown
             values={form.websites}
             onChange={set('websites')}
             options={websiteNames}
             itemName="website"
-            placeholder="Select Website Names"
+            placeholder={
+              websitesLoading
+                ? 'Loading websites...'
+                : websiteNames.length === 0
+                  ? 'No websites available'
+                  : 'Select Website Names'
+            }
+            disabled={websitesLoading}
             searchable
             error={submitted && form.websites.length === 0}
           />
-          {submitted && form.websites.length === 0 && <p className="text-[10px] text-rose-500 mt-1">Required</p>}
+          {submitted && form.websites.length === 0 && (
+            <p className="text-[10px] text-rose-500 mt-1">Required</p>
+          )}
         </div>
 
         {/* Mode */}
@@ -1092,6 +1114,7 @@ function AddForm({ branches, onAdd }) {
             setForm({ branch: '', devices: [], websites: [], mode: '' })
             setSubmitted(false)
             setFetchedDevices([])
+            setSuccess(false)
           }}
           variant="default"
           className="px-4 py-2"
@@ -1241,17 +1264,12 @@ function PolicyTable({ policies, onDelete }) {
 function TabBar({ active, onChange }) {
   const { isDark } = useTheme()
 
-  // const tabs = [
-  //   { id: 'add', label: 'Website Blacklist', icon: Plus },
-  //   { id: 'addgrp', label: 'Website Group Blacklist', icon: Plus },
-  //   { id: 'view', label: 'View Policies', icon: Eye },
-  // ]
   const tabs = [
-  { id: 'addwebsite', label: 'Add Website', icon: Plus },
-  { id: 'add', label: 'Website Blacklist', icon: Plus },
-  { id: 'addgrp', label: 'Website Group Blacklist', icon: Plus },
-  { id: 'view', label: 'View Policies', icon: Eye },
-]
+    { id: 'addwebsite', label: 'Add Website', icon: Plus },
+    { id: 'add', label: 'Website Blacklist', icon: Plus },
+    { id: 'addgrp', label: 'Website Group Blacklist', icon: Plus },
+    { id: 'view', label: 'View Policies', icon: Eye },
+  ]
 
   return (
     <div
@@ -1290,7 +1308,6 @@ function TabBar({ active, onChange }) {
 ───────────────────────────────────────────────────────────── */
 export default function WebsiteProtection() {
   const { isDark } = useTheme()
-  // const [tab, setTab] = useState('add')
   const [tab, setTab] = useState('addwebsite')
   const [policies, setPolicies] = useState(DUMMY_POLICIES)
   const [branches, setBranches] = useState([])
@@ -1350,7 +1367,10 @@ export default function WebsiteProtection() {
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap
+        
+        
+        -2">
           <GlassButton variant="chip_allow" className="px-3 py-1.5 text-[11px] font-semibold cursor-default">
             {policies.filter(p => p.mode === 'Allow').length} Allowed
           </GlassButton>
@@ -1367,4 +1387,4 @@ export default function WebsiteProtection() {
       {tab === 'view' && <PolicyTable policies={policies} onDelete={handleDelete} />}
     </div>
   )
-}
+}             
