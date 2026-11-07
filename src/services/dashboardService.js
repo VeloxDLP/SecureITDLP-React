@@ -689,6 +689,14 @@ export const dashboardService = {
     return data;
   },
 
+    getAllWebsites: async () => {
+    const { data } = await axiosInstance.get(
+      API_ENDPOINTS.WEBSITE_CONTROL.ALL_WEBSITES,
+    );
+    return data;
+  },
+  
+
   getFilesByExtension: async (extension) => {
     const { data } = await axiosInstance.get(
       `${API_ENDPOINTS.DATA_CLASSIFICATION.FILES_BY_EXTENSION}/${encodeURIComponent(extension)}`,
