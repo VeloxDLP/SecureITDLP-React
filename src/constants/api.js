@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
     REFRESH: "/user/refresh", // update if your backend has a refresh route
     ME: "/user/me", // update if your backend has a /me route
   APPLICATIONUSERS: "/auth/GetApplicationUser",
+  UPDATE_USER_SCOPE: "/auth/UpdateScope",
   },
 
   DASHBOARD: {

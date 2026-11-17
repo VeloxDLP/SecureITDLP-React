@@ -14,7 +14,6 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
-  LayoutDashboard,
   Monitor,
   Usb,
   Globe,
@@ -434,15 +433,83 @@ function Setting() {
     }
   };
 
-  // ─── EDIT: open empty modal ───
-  const handleEditUser = () => {
-    setSelectedScopes([]);
+  // ─── EDIT: open modal pre-checked with the user's current scope ───
+  const [editingUser, setEditingUser] = useState(null);
+
+  // "/app-control,/DriveControl" → ["/app-control", "/DriveControl"]
+  // Matched case-insensitively against the module tiles so "/reports" still ticks "/Reports".
+  const parseScope = (scope) => {
+    const raw = Array.isArray(scope) ? scope : String(scope ?? "").split(",");
+    const wanted = new Set(raw.map((s) => String(s).trim().toLowerCase()).filter(Boolean));
+    return ModuleScope.filter((m) => wanted.has(m.value.toLowerCase())).map((m) => m.value);
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setSelectedScopes(parseScope(user?.scope));
     setEditModalOpen(true);
   };
 
   const handleCloseEditModal = () => {
     setEditModalOpen(false);
+    setEditingUser(null);
     setSelectedScopes([]);
+  };
+
+  // ─── SAVE SCOPE (payload preview for now) ───
+  const [savingScope, setSavingScope] = useState(false);
+
+  const handleSaveScope = async () => {
+    if (!editingUser?.username || savingScope) return;
+
+    // Keep the tile order so the DB string is stable regardless of click order
+    const orderedScopes = ModuleScope
+      .map((m) => m.value)
+      .filter((v) => selectedScopes.includes(v));
+
+    const payload = {
+      username: editingUser.username,
+      scope: orderedScopes.join(","),
+    };
+
+    setSavingScope(true);
+    try {
+      const res = await dashboardService.updateUserscope(payload);
+
+      if (res?.success === false) {
+        throw new Error(res?.data || res?.message || "Could not update scope");
+      }
+
+      // Reflect the new scope in the table so reopening Edit shows it
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.username === payload.username ? { ...u, scope: payload.scope } : u
+        )
+      );
+      handleCloseEditModal();
+
+      await showAlert({
+        icon: "success",
+        title: "Scope Updated",
+        text: `Scope updated for ${payload.username}`,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+    } catch (err) {
+      console.error("Error updating scope:", err);
+      showAlert({
+        icon: "error",
+        title: "Update Failed",
+        text:
+          err?.response?.data?.data ||
+          err?.response?.data?.message ||
+          err?.message ||
+          "Could not update scope",
+        confirmButtonText: "Cancel",
+      });
+    } finally {
+      setSavingScope(false);
+    }
   };
 
   // ─── SCOPE toggles ───
@@ -513,7 +580,6 @@ function Setting() {
 
   // ─── Module tiles for the modal ───
   const ModuleScope = [
-    { value: "/dashboard", label: "Dashboard", desc: "View system overview and analytics", icon: LayoutDashboard },
     { value: "/app-control", label: "Application Control", desc: "Manage application permissions", icon: Monitor },
     { value: "/usb", label: "USB Protection", desc: "Control USB device access", icon: Usb },
     { value: "/web", label: "Website Control", desc: "Block or allow websites", icon: Globe },
@@ -528,6 +594,11 @@ function Setting() {
     { value: "/Reports", label: "Report", desc: "View and manage system reports", icon: FileText },
     { value: "/Setting", label: "Setting", desc: "Configure system settings", icon: Settings },
   ];
+
+  // Section 2 (Incident and User Control) shows only these; Section 1 shows the rest
+  const INCIDENT_USER_SCOPES = ["/Reports", "/Setting"];
+  const policyModules = ModuleScope.filter((m) => !INCIDENT_USER_SCOPES.includes(m.value));
+  const incidentModules = ModuleScope.filter((m) => INCIDENT_USER_SCOPES.includes(m.value));
 
   // ─── STYLES ───
   const inputClass = `
@@ -780,7 +851,7 @@ function Setting() {
                             <div className="flex items-center justify-end gap-1">
                               <button
                                 type="button"
-                                onClick={handleEditUser}
+                                onClick={() => handleEditUser(user)}
                                 className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[#7094ff] hover:bg-[#7094ff]/10 transition-all duration-150"
                                 title="Edit"
                               >
@@ -862,6 +933,19 @@ function Setting() {
                     <p className={`text-[11px] mt-0.5 ${isDark ? "text-slate-500" : "text-slate-500"}`}>
                       Configure and manage security policies and controls
                     </p>
+                    {editingUser && (
+                      <p className={`text-[11px] mt-1 ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                        Editing access for{" "}
+                        <span className="font-semibold text-[#7094ff]">
+                          {editingUser.username}
+                        </span>
+                        {(editingUser.name || editingUser.last_name) && (
+                          <> ({[editingUser.name, editingUser.last_name].filter(Boolean).join(" ")})</>
+                        )}
+                        {" · "}
+                        {selectedScopes.length} of {ModuleScope.length} modules
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -879,9 +963,9 @@ function Setting() {
                 </div>
               </div>
 
-              {/* Module tiles - first 9 */}
+              {/* Module tiles - everything except Report & Setting */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {ModuleScope.slice(0, 9).map((opt) => {
+                {policyModules.map((opt) => {
                   const Icon = opt.icon;
                   const isChecked = selectedScopes.includes(opt.value);
                   return (
@@ -985,9 +1069,9 @@ function Setting() {
                 </div>
               </div>
 
-              {/* Module tiles - last 2 */}
+              {/* Module tiles - Report & Setting */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {ModuleScope.slice(9).map((opt) => {
+                {incidentModules.map((opt) => {
                   const Icon = opt.icon;
                   const isChecked = selectedScopes.includes(opt.value);
                   return (
@@ -1056,14 +1140,12 @@ function Setting() {
                 </GlassButton>
 
                 <GlassButton
-                  onClick={() => {
-                    console.log("Selected scopes:", selectedScopes);
-                    handleCloseEditModal();
-                  }}
+                  onClick={handleSaveScope}
+                  disabled={savingScope}
                   variant="primary"
                   className="px-4 py-1.5 text-[12px] font-semibold"
                 >
-                  Next <ChevronRight size={13} />
+                  {savingScope ? "Saving…" : <>Next <ChevronRight size={13} /></>}
                 </GlassButton>
               </div>
             </div>
