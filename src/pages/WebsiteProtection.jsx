@@ -1267,7 +1267,7 @@ function TabBar({ active, onChange }) {
   const tabs = [
     { id: 'addwebsite', label: 'Add Website', icon: Plus },
     { id: 'add', label: 'Website Blacklist', icon: Plus },
-    { id: 'addgrp', label: 'Website Group Blacklist', icon: Plus },
+    // { id: 'addgrp', label: 'Website Group Blacklist', icon: Plus },
     { id: 'view', label: 'View Policies', icon: Eye },
   ]
 
@@ -1383,7 +1383,7 @@ export default function WebsiteProtection() {
       <TabBar active={tab} onChange={setTab} />
       {tab === 'addwebsite' && <AddWebsite />}
       {tab === 'add' && <AddForm branches={branches} onAdd={p => { handleAdd(p); setTab('view') }} />}
-      {tab === 'addgrp' && <AddForm branches={branches} onAdd={p => { handleAdd(p); setTab('view') }} />}
+      {/* {tab === 'addgrp' && <AddForm branches={branches} onAdd={p => { handleAdd(p); setTab('view') }} />} */}
       {tab === 'view' && <PolicyTable policies={policies} onDelete={handleDelete} />}
     </div>
   )
