@@ -1,4 +1,4 @@
-  import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
   import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
   import { dashboardService } from "../../services/dashboardService";
 
@@ -260,13 +260,13 @@
                         <div className="text-slate-400 dark:text-white/40">Loading incidents...</div>
                       </div>
                     ) : (
-                      <table className="w-full text-[13px]">
-                        <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
+                      <table className="w-full min-w-[900px] border-separate border-spacing-0 text-[13px]">
+                        <thead>
                           <tr className="text-left text-slate-500 dark:text-white/50">
                             {incidentColumns.map((col) => (
                               <th
                                 key={col.accessor}
-                                className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]"
+                                className="sticky top-0 z-30 border-b border-slate-200 bg-slate-100 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08] dark:bg-[#111827]"
                               >
                                 {col.header}
                               </th>

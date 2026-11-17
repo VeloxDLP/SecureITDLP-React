@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import {
   Globe, Plus, Eye, RotateCcw, Check, AlertTriangle,
-  ShieldCheck, Trash2, Search, Filter, ChevronDown, X,
+  ShieldCheck, Trash2, Search, ChevronDown, X, Loader2,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { alert as showAlert } from '../components/ui/AlertModal'
@@ -21,8 +21,8 @@ function StatusPill({ status }) {
   const styles = isUp
     ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/[0.08]'
     : isDown
-    ? 'text-rose-400 border-rose-500/40 bg-rose-500/[0.08]'
-    : 'text-slate-400 border-slate-500/40 bg-slate-500/[0.08]'
+      ? 'text-rose-400 border-rose-500/40 bg-rose-500/[0.08]'
+      : 'text-slate-400 border-slate-500/40 bg-slate-500/[0.08]'
 
   return (
     <span
@@ -37,26 +37,10 @@ function StatusPill({ status }) {
    WEBSITES — fallback (used if backend returns nothing / on error)
 ───────────────────────────────────────────────────────────── */
 const FALLBACK_WEBSITES = [
-  'www.facebook.com',
-  'www.youtube.com',
-  'www.twitter.com',
-  'www.instagram.com',
-  'www.behance.com',
-  'www.x.com',
-  'www.snapchat.com',
-  'www.pinterest.com',
-  'www.linkedin.com',
-  'www.netflix.com',
-  'www.amazon.com',
-  'www.reddit.com',
-]
-
-const DUMMY_POLICIES = [
-  { id: 1, branch: 'HQ – Mumbai',        device: 'DESKTOP-MUM01', deviceType: 'USB', mode: 'Prevent', addedOn: '2025-05-01' },
-  { id: 2, branch: 'Branch – Delhi',     device: 'DESKTOP-DEL01', deviceType: 'USB', mode: 'Allow',   addedOn: '2025-05-03' },
-  { id: 3, branch: 'Branch – Bengaluru', device: 'LAPTOP-BLR02',  deviceType: 'USB', mode: 'Prevent', addedOn: '2025-05-07' },
-  { id: 4, branch: 'HQ – Mumbai',        device: 'LAPTOP-MUM04',  deviceType: 'USB', mode: 'Allow',   addedOn: '2025-05-10' },
-  { id: 5, branch: 'Branch – Chennai',   device: 'DESKTOP-CHN01', deviceType: 'USB', mode: 'Prevent', addedOn: '2025-05-12' },
+  'www.facebook.com', 'www.youtube.com', 'www.twitter.com',
+  'www.instagram.com', 'www.behance.com', 'www.x.com',
+  'www.snapchat.com', 'www.pinterest.com', 'www.linkedin.com',
+  'www.netflix.com', 'www.amazon.com', 'www.reddit.com',
 ]
 
 /* ─────────────────────────────────────────────────────────────
@@ -441,9 +425,8 @@ function MultiSelectDropdown({
         `}
       >
         <span
-          className={`truncate flex-1 text-left text-[13px] ${
-            values.length > 0 ? '' : isDark ? 'text-[#666]' : 'text-slate-400'
-          }`}
+          className={`truncate flex-1 text-left text-[13px] ${values.length > 0 ? '' : isDark ? 'text-[#666]' : 'text-slate-400'
+            }`}
         >
           {displayText}
         </span>
@@ -663,7 +646,7 @@ function GlassButton({
 ───────────────────────────────────────────────────────────── */
 function Badge({ mode }) {
   const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border'
-  if (mode === 'Allow')
+  if (mode === 'Allow' || mode === 'allow')
     return <span className={`${base} bg-emerald-500/10 text-emerald-500 border-emerald-500/20`}>
       <Check size={10} /> Allow
     </span>
@@ -743,8 +726,6 @@ function AddWebsite() {
 
     try {
       const response = await dashboardService.saveNewWebsite(payload)
-
-      // ✅ FIXED: Check the success boolean instead of response.data
       if (response?.success) {
         showAlert({
           icon: 'success',
@@ -1166,7 +1147,7 @@ function AddForm({ branches, onAdd }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   POLICY TABLE
+   POLICY TABLE (UPDATED FOR DYNAMIC DATA)
 ───────────────────────────────────────────────────────────── */
 function PolicyTable({ policies, onDelete }) {
   const { isDark } = useTheme()
@@ -1176,8 +1157,11 @@ function PolicyTable({ policies, onDelete }) {
   const filtered = policies.filter(p => {
     const q = search.toLowerCase()
     return (
-      (!q || p.branch.toLowerCase().includes(q) || p.device.toLowerCase().includes(q)) &&
-      (!filterMode || p.mode === filterMode)
+      (!q || 
+        String(p.branch || p.branchName || '').toLowerCase().includes(q) || 
+        String(p.device || p.ipAddress || p.hostName || '').toLowerCase().includes(q)
+      ) &&
+      (!filterMode || p.mode === filterMode || p.modeOfAccess === filterMode)
     )
   })
 
@@ -1239,7 +1223,7 @@ function PolicyTable({ policies, onDelete }) {
 
       {filtered.length === 0 ? (
         <div className={`py-16 text-center text-[13px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-          No USB policies found.
+          No Website policies found.
         </div>
       ) : (
         <div className="overflow-y-auto" style={{ maxHeight: '290px' }}>
@@ -1250,28 +1234,26 @@ function PolicyTable({ policies, onDelete }) {
               <tr>
                 <th className={thCls}>#</th>
                 <th className={thCls}>Branch</th>
-                <th className={thCls}>Device</th>
-                <th className={thCls}>Website Names</th>
+                <th className={thCls}>IP Address</th>
+                <th className={thCls}>Website Name</th>
                 <th className={thCls}>Mode</th>
-                <th className={thCls}>Added On</th>
                 <th className={`${thCls} text-right`}>Action</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((p, i) => (
-                <tr key={p.id}
-                    className={`border-b last:border-b-0 transition-colors duration-150
+                <tr key={p.id || p.srNo || i}
+                  className={`border-b last:border-b-0 transition-colors duration-150
                                 ${isDark ? 'border-white/[0.04] hover:bg-[#2e2e2e]'
-                                         : 'border-slate-50 hover:bg-slate-50/60'}`}>
+                      : 'border-slate-50 hover:bg-slate-50/60'}`}>
                   <td className={`${tdCls} text-[11px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{i + 1}</td>
-                  <td className={tdCls}>{p.branch}</td>
-                  <td className={tdCls}>{p.device}</td>
-                  <td className={tdCls}>{Array.isArray(p.websites) ? p.websites.join(', ') : p.websites}</td>
-                  <td className={tdCls}><Badge mode={p.mode} /></td>
-                  <td className={tdCls}>{p.addedOn}</td>
+                  <td className={tdCls}>{p.branchName || p.branch || 'NA'}</td>
+                  <td className={tdCls}>{p.ipAddress || p.device || 'NA'}</td>
+                  <td className={tdCls}>{p.siteName || p.websites || 'NA'}</td>
+                  <td className={tdCls}><Badge mode={p.modeOfAccess || p.mode} /></td>
                   <td className={`${tdCls} text-right`}>
                     <button
-                      onClick={() => onDelete(p.id)}
+                      onClick={() => onDelete(p.id || p.srNo)}
                       className="w-7 h-7 rounded-lg flex items-center justify-center ml-auto
                                  text-slate-400 hover:text-rose-500 hover:bg-rose-500/10
                                  transition-all duration-150"
@@ -1298,7 +1280,6 @@ function TabBar({ active, onChange }) {
   const tabs = [
     { id: 'addwebsite', label: 'Add Website', icon: Plus },
     { id: 'add', label: 'Website Blacklist', icon: Plus },
-    // { id: 'addgrp', label: 'Website Group Blacklist', icon: Plus },
     { id: 'view', label: 'View Policies', icon: Eye },
   ]
 
@@ -1340,9 +1321,11 @@ function TabBar({ active, onChange }) {
 export default function WebsiteProtection() {
   const { isDark } = useTheme()
   const [tab, setTab] = useState('addwebsite')
-  const [policies, setPolicies] = useState(DUMMY_POLICIES)
+  const [policies, setPolicies] = useState([])
   const [branches, setBranches] = useState([])
+  const [loading, setLoading] = useState(false)
 
+  // Load branches
   useEffect(() => {
     const loadBranches = async () => {
       try {
@@ -1356,19 +1339,46 @@ export default function WebsiteProtection() {
     loadBranches()
   }, [])
 
-  const handleAdd = ({ branchName, devices, websites, mode }) => {
-    setPolicies(prev => [...prev, {
-      id: Date.now(),
-      branch: branchName,
-      device: Array.isArray(devices) ? devices.join(', ') : devices,
-      websites: Array.isArray(websites) ? websites.join(', ') : websites,
-      deviceType: 'USB',
-      mode,
-      addedOn: new Date().toISOString().slice(0, 10),
-    }])
+  // Load Policies (Dynamic)
+  const fetchPolicies = async () => {
+    try {
+      setLoading(true)
+      const response = await dashboardService.getWebsiteViewPolicies(); 
+      
+      // Because dashboardService uses `const { data } = await axios.get(...); return data;`
+      // `response` here is the entire API wrapper from Spring Boot (e.g. { success: true, data: [...] })
+      // So we need to access `response.data` to get the actual array.
+      
+      let actualArray = [];
+      if (Array.isArray(response)) {
+        actualArray = response; // If backend returned the array directly
+      } else if (response && Array.isArray(response.data)) {
+        actualArray = response.data; // If backend returned { success: true, data: [...] }
+      }
+
+      setPolicies(actualArray);
+    } catch (err) {
+      console.error('Error fetching policies:', err)
+      setPolicies([])
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleDelete = id => setPolicies(prev => prev.filter(p => p.id !== id))
+  // Re-fetch when switching to the "view" tab
+  useEffect(() => {
+    if (tab === 'view') {
+      fetchPolicies()
+    }
+  }, [tab])
+
+  const handleAdd = () => {
+    if (tab === 'view') fetchPolicies()
+  }
+
+  const handleDelete = async (id) => {
+    setPolicies(prev => prev.filter(p => (p.id || p.srNo) !== id))
+  }
 
   return (
     <div className="w-full">
@@ -1398,15 +1408,12 @@ export default function WebsiteProtection() {
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap
-        
-        
-        -2">
+        <div className="hidden sm:flex items-center gap-2">
           <GlassButton variant="chip_allow" className="px-3 py-1.5 text-[11px] font-semibold cursor-default">
-            {policies.filter(p => p.mode === 'Allow').length} Allowed
+            {policies.filter(p => p.mode === 'Allow' || p.modeOfAccess === 'Allow').length} Allowed
           </GlassButton>
           <GlassButton variant="chip_prevent" className="px-3 py-1.5 text-[11px] font-semibold cursor-default">
-            {policies.filter(p => p.mode === 'Prevent').length} Prevented
+            {policies.filter(p => p.mode === 'Prevent' || p.modeOfAccess === 'Prevent').length} Prevented
           </GlassButton>
         </div>
       </div>
@@ -1414,8 +1421,15 @@ export default function WebsiteProtection() {
       <TabBar active={tab} onChange={setTab} />
       {tab === 'addwebsite' && <AddWebsite />}
       {tab === 'add' && <AddForm branches={branches} onAdd={p => { handleAdd(p); setTab('view') }} />}
-      {/* {tab === 'addgrp' && <AddForm branches={branches} onAdd={p => { handleAdd(p); setTab('view') }} />} */}
-      {tab === 'view' && <PolicyTable policies={policies} onDelete={handleDelete} />}
+      {tab === 'view' && (
+        loading ? (
+          <GlassCard className="flex h-[300px] items-center justify-center">
+             <Loader2 className="animate-spin text-[#7094ff]" size={24} />
+          </GlassCard>
+        ) : (
+          <PolicyTable policies={policies} onDelete={handleDelete} />
+        )
+      )}
     </div>
   )
-}             
+}

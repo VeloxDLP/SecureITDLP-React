@@ -781,7 +781,7 @@ function AddForm({ branches, onAdd }) {
     try {
       const DevicesOfBranches = await dashboardService.getDevicesByBranch(branch)
       setFetchedDevices(DevicesOfBranches.data || [])
-    } catch (err) {
+    } catch (err) {~
       console.error('Error loading devices:', err)
       setFetchedDevices([])
     }

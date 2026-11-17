@@ -471,6 +471,14 @@ export const dashboardService = {
     return data;
   },
 
+
+  getWebsiteViewPolicies: async () => {
+    const { data } = await axiosInstance.get(
+      "/WebsiteControl/WebsiteViewPolicies", 
+    );
+    return data;
+  },
+
   setApplicationMode: async (requestData) => {
     const { data } = await axiosInstance.post(
       API_ENDPOINTS.APPLICATION_CONTROL.SET_MODE,
@@ -610,7 +618,7 @@ export const dashboardService = {
     return data;
   },
 
-  // ----- NEW: Drive Details -----
+  //  Drive Details 
   getDriveDetailsByHost: async (hostName) => {
     const { data } = await axiosInstance.get(
       `${API_ENDPOINTS.ASSET_INVENTORY.DRIVE_DETAILS}/${hostName}`,

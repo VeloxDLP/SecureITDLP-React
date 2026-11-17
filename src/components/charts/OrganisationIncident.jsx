@@ -227,7 +227,7 @@ export default function OrganisationIncident({
     const { active, payload } = props;
     if (active && payload && payload.length) {
       return (
-        <div 
+        <div
           className="bg-white dark:bg-[#020617] p-2 rounded shadow border border-slate-200 dark:border-white/10 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#0a0f1e] transition-colors"
           onClick={() => openModal(payload[0].payload.x)}
         >
@@ -259,11 +259,7 @@ export default function OrganisationIncident({
                   stopColor="#7094ff"
                   stopOpacity={isDark ? 0.35 : 0.25}
                 />
-                <stop
-                  offset="95%"
-                  stopColor="#7094ff"
-                  stopOpacity={0}
-                />
+                <stop offset="95%" stopColor="#7094ff" stopOpacity={0} />
               </linearGradient>
             </defs>
 
@@ -333,15 +329,19 @@ export default function OrganisationIncident({
         >
           <div
             className={`flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-[opacity,transform] duration-300 ease-out dark:border-white/[0.08] dark:bg-[#020617] ${
-              isOpen ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.98] opacity-0"
+              isOpen
+                ? "translate-y-0 scale-100 opacity-100"
+                : "translate-y-2 scale-[0.98] opacity-0"
             }`}
           >
-
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
               <div className="min-w-0">
                 <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
-                  Organisation Incidents - <span className="text-blue-600 dark:text-blue-400">{selectedSlot}</span>
+                  Organisation Incidents -{" "}
+                  <span className="text-blue-600 dark:text-blue-400">
+                    {selectedSlot}
+                  </span>
                 </h2>
               </div>
 
@@ -374,13 +374,13 @@ export default function OrganisationIncident({
             <div className="min-h-0 flex-1 overflow-hidden p-4">
               <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
                 <div className="min-h-0 flex-1 overflow-auto">
-                  <table className="w-full text-[13px]">
-                    <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
+                  <table className="w-full min-w-[900px] border-separate border-spacing-0 text-[13px]">
+                    <thead>
                       <tr className="text-left text-slate-500 dark:text-white/50">
                         {incidentColumns.map((col) => (
                           <th
                             key={col.accessor}
-                            className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]"
+                            className="sticky top-0 z-30 border-b border-slate-200 bg-slate-100 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08] dark:bg-[#111827]"
                           >
                             {col.header}
                           </th>
@@ -393,7 +393,7 @@ export default function OrganisationIncident({
                         paginatedRows.map((row, index) => (
                           <tr
                             key={index}
-                            className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
+                            className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-[#020617] dark:hover:bg-white/[0.03]"
                           >
                             <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
                               {row.ipAddress || "NA"}
@@ -401,7 +401,11 @@ export default function OrganisationIncident({
                             <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
                               {row.username || "NA"}
                             </td>
-                            <td className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(row.eventType)}`}>
+                            <td
+                              className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(
+                                row.eventType
+                              )}`}
+                            >
                               {row.eventType || "NA"}
                             </td>
                             <td
@@ -436,27 +440,30 @@ export default function OrganisationIncident({
                   </span>
 
                   <div className="flex items-center gap-2">
-                    {/* PREVIOUS */}
                     <button
                       type="button"
                       disabled={safePage === 1}
-                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                      }
                       className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
                     >
                       <ChevronLeft size={14} />
                       Prev
                     </button>
 
-                    {/* PAGE INDICATOR */}
                     <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10">
                       {safePage} / {totalPages}
                     </span>
 
-                    {/* NEXT — fixed: was bg-black, now bg-white */}
                     <button
                       type="button"
                       disabled={safePage === totalPages}
-                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      onClick={() =>
+                        setCurrentPage((prev) =>
+                          Math.min(totalPages, prev + 1)
+                        )
+                      }
                       className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
                     >
                       Next

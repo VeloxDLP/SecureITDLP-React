@@ -133,9 +133,9 @@ DATA_CLASSIFICATION: {
      FILES_BY_EXTENSION: "/DataClassification/files-by-extension",
 },
 
-
-
-
+  WEBSITE_CONTROL: {
+    VIEW_POLICIES: "/WebsiteControl/WebsiteViewPolicies",
+  },
   DEVICES: {
     LIST: "/devices",
     BY_ID: (id) => `/devices/${id}`,
