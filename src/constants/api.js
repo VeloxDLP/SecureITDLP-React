@@ -106,6 +106,7 @@ WEBSITE_CONTROL:{
   SAVE_WEBSITE:"/WebsiteControl/SaveWebsite",
   ALL_WEBSITES: '/WebsiteControl/AllWebsites',
   ADD_WEBSITE_POLICY:"/WebsiteControl/AddWebsitePolicy",
+  VIEW_POLICIES: "/WebsiteControl/WebsiteViewPolicies",
   // GET_SELF_PROTECTION_POLICY:"/SelfProtection/GetSelfProtectionPolicy"
 },
 
@@ -133,9 +134,6 @@ DATA_CLASSIFICATION: {
      FILES_BY_EXTENSION: "/DataClassification/files-by-extension",
 },
 
-  WEBSITE_CONTROL: {
-    VIEW_POLICIES: "/WebsiteControl/WebsiteViewPolicies",
-  },
   DEVICES: {
     LIST: "/devices",
     BY_ID: (id) => `/devices/${id}`,
