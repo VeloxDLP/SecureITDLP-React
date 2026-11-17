@@ -21,8 +21,8 @@ function StatusPill({ status }) {
   const styles = isUp
     ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/[0.08]'
     : isDown
-    ? 'text-rose-400 border-rose-500/40 bg-rose-500/[0.08]'
-    : 'text-slate-400 border-slate-500/40 bg-slate-500/[0.08]'
+      ? 'text-rose-400 border-rose-500/40 bg-rose-500/[0.08]'
+      : 'text-slate-400 border-slate-500/40 bg-slate-500/[0.08]'
 
   return (
     <span
@@ -52,11 +52,11 @@ const FALLBACK_WEBSITES = [
 ]
 
 const DUMMY_POLICIES = [
-  { id: 1, branch: 'HQ – Mumbai',        device: 'DESKTOP-MUM01', deviceType: 'USB', mode: 'Prevent', addedOn: '2025-05-01' },
-  { id: 2, branch: 'Branch – Delhi',     device: 'DESKTOP-DEL01', deviceType: 'USB', mode: 'Allow',   addedOn: '2025-05-03' },
-  { id: 3, branch: 'Branch – Bengaluru', device: 'LAPTOP-BLR02',  deviceType: 'USB', mode: 'Prevent', addedOn: '2025-05-07' },
-  { id: 4, branch: 'HQ – Mumbai',        device: 'LAPTOP-MUM04',  deviceType: 'USB', mode: 'Allow',   addedOn: '2025-05-10' },
-  { id: 5, branch: 'Branch – Chennai',   device: 'DESKTOP-CHN01', deviceType: 'USB', mode: 'Prevent', addedOn: '2025-05-12' },
+  { id: 1, branch: 'HQ – Mumbai', device: 'DESKTOP-MUM01', deviceType: 'USB', mode: 'Prevent', addedOn: '2025-05-01' },
+  { id: 2, branch: 'Branch – Delhi', device: 'DESKTOP-DEL01', deviceType: 'USB', mode: 'Allow', addedOn: '2025-05-03' },
+  { id: 3, branch: 'Branch – Bengaluru', device: 'LAPTOP-BLR02', deviceType: 'USB', mode: 'Prevent', addedOn: '2025-05-07' },
+  { id: 4, branch: 'HQ – Mumbai', device: 'LAPTOP-MUM04', deviceType: 'USB', mode: 'Allow', addedOn: '2025-05-10' },
+  { id: 5, branch: 'Branch – Chennai', device: 'DESKTOP-CHN01', deviceType: 'USB', mode: 'Prevent', addedOn: '2025-05-12' },
 ]
 
 /* ─────────────────────────────────────────────────────────────
@@ -441,9 +441,8 @@ function MultiSelectDropdown({
         `}
       >
         <span
-          className={`truncate flex-1 text-left text-[13px] ${
-            values.length > 0 ? '' : isDark ? 'text-[#666]' : 'text-slate-400'
-          }`}
+          className={`truncate flex-1 text-left text-[13px] ${values.length > 0 ? '' : isDark ? 'text-[#666]' : 'text-slate-400'
+            }`}
         >
           {displayText}
         </span>
@@ -743,8 +742,6 @@ function AddWebsite() {
 
     try {
       const response = await dashboardService.saveNewWebsite(payload)
-
-      // ✅ FIXED: Check the success boolean instead of response.data
       if (response?.success) {
         showAlert({
           icon: 'success',
@@ -1001,9 +998,9 @@ function AddForm({ branches, onAdd }) {
       setSubmitted(false)
       setForm({ branch: '', devices: [], websites: [], mode: '' })
       setFetchedDevices([])
-      
+
       setTimeout(() => setSuccess(false), 3000)
-      
+
     } catch (err) {
       const message =
         err?.response?.data?.message ||
@@ -1229,9 +1226,9 @@ function PolicyTable({ policies, onDelete }) {
             <tbody>
               {filtered.map((p, i) => (
                 <tr key={p.id}
-                    className={`border-b last:border-b-0 transition-colors duration-150
+                  className={`border-b last:border-b-0 transition-colors duration-150
                                 ${isDark ? 'border-white/[0.04] hover:bg-[#2e2e2e]'
-                                         : 'border-slate-50 hover:bg-slate-50/60'}`}>
+                      : 'border-slate-50 hover:bg-slate-50/60'}`}>
                   <td className={`${tdCls} text-[11px] ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{i + 1}</td>
                   <td className={tdCls}>{p.branch}</td>
                   <td className={tdCls}>{p.device}</td>

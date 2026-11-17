@@ -601,7 +601,7 @@ export const dashboardService = {
     return data;
   },
 
-  // ----- NEW: Drive Details -----
+  //  Drive Details 
   getDriveDetailsByHost: async (hostName) => {
     const { data } = await axiosInstance.get(
       `${API_ENDPOINTS.ASSET_INVENTORY.DRIVE_DETAILS}/${hostName}`,

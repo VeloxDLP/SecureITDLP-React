@@ -381,13 +381,14 @@ const IncidentByChannel = ({ data = {} }) => {
      TABLE HEADERS
   ======================================================= */
   const getTableHeaders = () => {
-    // 👇 EMAIL: BRANCH → HOSTNAME → IP → EVENT → TIMESTAMP
+    // 👇 EMAIL: SENDER → RECEIVER → HOSTNAME → ATTACHMENTS → SUBJECT → TIMESTAMP
     if (selectedChannel === "Email") {
       return [
-        "BRANCH",
+        "SENDER",
+        "RECEIVER",
         "HOSTNAME",
-        "IP",
-        "EVENT",
+        "ATTACHMENTS",
+        "SUBJECT",
         "TIMESTAMP",
       ];
     }
@@ -586,7 +587,7 @@ const IncidentByChannel = ({ data = {} }) => {
                 : "scale-95 opacity-0"
             }`}
           >
-            {/* HEADER (sub-label removed) */}
+            {/* HEADER */}
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
               <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
                 Incident By Channel –{" "}
@@ -660,7 +661,7 @@ const IncidentByChannel = ({ data = {} }) => {
                       </button>
                     </div>
                   ) : (
-                    <table className="w-full min-w-[900px] text-[13px]">
+                    <table className="w-full min-w-[1000px] text-[13px]">
                       <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
                         <tr className="text-left text-slate-500 dark:text-white/50">
                           {getTableHeaders().map(
@@ -681,72 +682,41 @@ const IncidentByChannel = ({ data = {} }) => {
                             (row, index) => {
                               /* =================================
                                  EMAIL
-                                 BRANCH → HOSTNAME → IP → EVENT → TIMESTAMP
+                                 SENDER → RECEIVER → HOSTNAME → ATTACHMENTS → SUBJECT → TIMESTAMP
                               ================================= */
                               if (
                                 selectedChannel ===
                                 "Email"
                               ) {
-                                const branch =
-                                  Array.isArray(row)
-                                    ? row[0]
-                                    : row?.branchName ??
-                                      row?.branch ??
-                                      "NA";
-                                const hostname =
-                                  Array.isArray(row)
-                                    ? row[1]
-                                    : row?.hostname ??
-                                      row?.hostName ??
-                                      "NA";
-                                const ip =
-                                  Array.isArray(row)
-                                    ? row[2]
-                                    : row?.ip ??
-                                      row?.ipaddress ??
-                                      row?.ipAddress ??
-                                      "NA";
-                                const event =
-                                  Array.isArray(row)
-                                    ? row[3]
-                                    : row?.event ??
-                                      row?.eventType ??
-                                      "NA";
-                                const timestamp =
-                                  Array.isArray(row)
-                                    ? row[4]
-                                    : row?.timestamp ??
-                                      row?.cdate ??
-                                      null;
+                                const sender = row?.sender ?? "NA";
+                                const receiver = row?.receiver ?? "NA";
+                                const hostname = row?.hostName ?? row?.hostname ?? "NA";
+                                const attachments = row?.attachments ?? "NA";
+                                const subject = row?.subject ?? "NA";
+                                const timestamp = row?.dateTime ?? row?.timestamp ?? null;
 
                                 return (
                                   <tr
                                     key={`email-${index}-${hostname}-${timestamp}`}
                                     className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-transparent dark:hover:bg-white/[0.03]"
                                   >
-                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/75">
-                                      {branch}
+                                    <td className="max-w-[200px] truncate border-b border-slate-100 px-4 py-3 font-medium text-slate-700 dark:border-white/[0.05] dark:text-white/75">
+                                      <div className="truncate" title={String(sender)}>{sender}</div>
                                     </td>
-                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
-                                      {hostname}
+                                    <td className="max-w-[200px] truncate border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
+                                      <div className="truncate" title={String(receiver)}>{receiver}</div>
                                     </td>
-                                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/60">
-                                      {ip}
+                                    <td className="max-w-[200px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/60">
+                                      <div className="truncate" title={String(hostname)}>{hostname}</div>
                                     </td>
-                                    <td className="max-w-[430px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/45">
-                                      <div
-                                        className="truncate"
-                                        title={String(
-                                          event
-                                        )}
-                                      >
-                                        {event}
-                                      </div>
+                                    <td className="max-w-[150px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/60">
+                                      <div className="truncate" title={String(attachments)}>{attachments}</div>
+                                    </td>
+                                    <td className="max-w-[250px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/45">
+                                      <div className="truncate" title={String(subject)}>{subject}</div>
                                     </td>
                                     <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-right text-slate-400 dark:border-white/[0.05] dark:text-white/40">
-                                      {formatTimestamp(
-                                        timestamp
-                                      )}
+                                      {formatTimestamp(timestamp)}
                                     </td>
                                   </tr>
                                 );
