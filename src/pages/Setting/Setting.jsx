@@ -12,8 +12,6 @@ import {
   Check,
   Edit,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
   Monitor,
   Usb,
   Globe,
@@ -1136,7 +1134,7 @@ function Setting() {
                   variant="default"
                   className="px-4 py-1.5 text-[12px]"
                 >
-                  <ChevronLeft size={13} /> Previous
+                  <X size={13} /> Close
                 </GlassButton>
 
                 <GlassButton
@@ -1145,7 +1143,7 @@ function Setting() {
                   variant="primary"
                   className="px-4 py-1.5 text-[12px] font-semibold"
                 >
-                  {savingScope ? "Saving…" : <>Next <ChevronRight size={13} /></>}
+                  {savingScope ? "Updating…" : <><Check size={13} /> Update</>}
                 </GlassButton>
               </div>
             </div>
