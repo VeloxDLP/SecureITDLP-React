@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { dashboardService } from "../../services/dashboardService";
 import { useTheme } from "../../context/ThemeContext";
-
 /* =========================================================
    CHANNEL COLORS
 ========================================================= */
@@ -27,7 +26,6 @@ const CHANNEL_COLORS = {
   Drive: "#6EA2B3",
   Peripherals: "#7BBDE8",
 };
-
 /* =========================================================
    CHANNEL API VALUES
 ========================================================= */
@@ -39,7 +37,6 @@ const CHANNEL_API_VALUES = {
   Drive: "Drive",
   Peripherals: "Peripherals",
 };
-
 /* =========================================================
    FORMAT DATE
 ========================================================= */
@@ -55,7 +52,6 @@ const formatTimestamp = (value) => {
     return String(value).trim();
   }
 };
-
 /* =========================================================
    GET CHANNEL VALUE
 ========================================================= */
@@ -77,7 +73,6 @@ const getChannelValue = (data, channel) => {
   if (!matchedKey) return 0;
   return Number(data[matchedKey] || 0);
 };
-
 /* =========================================================
    CUSTOM TOOLTIP
 ========================================================= */
@@ -128,13 +123,11 @@ const CustomTooltip = ({
     </div>
   );
 };
-
 /* =========================================================
    COMPONENT
 ========================================================= */
 const IncidentByChannel = ({ data = {} }) => {
   const { isDark } = useTheme();
-
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -145,7 +138,6 @@ const IncidentByChannel = ({ data = {} }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState("");
   const rowsPerPage = 10;
-
   /* =======================================================
      CHANNEL DATA
   ======================================================= */
@@ -183,20 +175,17 @@ const IncidentByChannel = ({ data = {} }) => {
       },
     ];
   }, [data]);
-
   const totalIncidents = channelData.reduce(
     (sum, item) =>
       sum + Number(item.value || 0),
     0
   );
-
   /* =======================================================
      OPEN MODAL
   ======================================================= */
   const openChannelModal = async (channel) => {
     const apiChannel =
       CHANNEL_API_VALUES[channel] || channel;
-
     setSelectedChannel(channel);
     setSearch("");
     setCurrentPage(1);
@@ -205,13 +194,11 @@ const IncidentByChannel = ({ data = {} }) => {
     setLoading(true);
     setIsMounted(true);
     setIsClosing(false);
-
     try {
       const response =
         await dashboardService.getIncidentByChannelModal(
           apiChannel
         );
-
       setModalData(
         Array.isArray(response?.data)
           ? response.data
@@ -234,7 +221,6 @@ const IncidentByChannel = ({ data = {} }) => {
       });
     }
   };
-
   /* =======================================================
      CLOSE MODAL
   ======================================================= */
@@ -243,7 +229,6 @@ const IncidentByChannel = ({ data = {} }) => {
     setIsClosing(true);
     setIsOpen(false);
   };
-
   /* =======================================================
      HANDLE TRANSITION END
   ======================================================= */
@@ -258,7 +243,6 @@ const IncidentByChannel = ({ data = {} }) => {
       setError("");
     }
   };
-
   /* =======================================================
      ESCAPE KEY
   ======================================================= */
@@ -268,14 +252,12 @@ const IncidentByChannel = ({ data = {} }) => {
         closeModal();
       }
     };
-
     if (isOpen) {
       document.addEventListener(
         "keydown",
         handleEscape
       );
     }
-
     return () => {
       document.removeEventListener(
         "keydown",
@@ -283,7 +265,6 @@ const IncidentByChannel = ({ data = {} }) => {
       );
     };
   }, [isOpen]);
-
   /* =======================================================
      BODY SCROLL
   ======================================================= */
@@ -297,14 +278,12 @@ const IncidentByChannel = ({ data = {} }) => {
       document.body.style.position = "";
       document.body.style.width = "";
     }
-
     return () => {
       document.body.style.overflow = "";
       document.body.style.position = "";
       document.body.style.width = "";
     };
   }, [isOpen]);
-
   /* =======================================================
      SEARCH FILTER
   ======================================================= */
@@ -312,13 +291,10 @@ const IncidentByChannel = ({ data = {} }) => {
     if (!search.trim()) {
       return modalData;
     }
-
     const searchValue =
       search.toLowerCase().trim();
-
     return modalData.filter((row) => {
       if (!row) return false;
-
       if (Array.isArray(row)) {
         return row.some((value) =>
           String(value ?? "")
@@ -326,7 +302,6 @@ const IncidentByChannel = ({ data = {} }) => {
             .includes(searchValue)
         );
       }
-
       if (typeof row === "object") {
         return Object.values(row).some(
           (value) =>
@@ -335,15 +310,12 @@ const IncidentByChannel = ({ data = {} }) => {
               .includes(searchValue)
         );
       }
-
       return false;
     });
   }, [modalData, search]);
-
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
-
   /* =======================================================
      PAGINATION
   ======================================================= */
@@ -353,30 +325,24 @@ const IncidentByChannel = ({ data = {} }) => {
       filteredData.length / rowsPerPage
     )
   );
-
   const safePage = Math.min(
     currentPage,
     totalPages
   );
-
   const startIndex =
     (safePage - 1) * rowsPerPage;
-
   const currentRows = filteredData.slice(
     startIndex,
     startIndex + rowsPerPage
   );
-
   const firstRecord =
     filteredData.length === 0
       ? 0
       : startIndex + 1;
-
   const lastRecord = Math.min(
     startIndex + rowsPerPage,
     filteredData.length
   );
-
   /* =======================================================
      TABLE HEADERS
   ======================================================= */
@@ -392,7 +358,6 @@ const IncidentByChannel = ({ data = {} }) => {
         "TIMESTAMP",
       ];
     }
-
     // 👇 PRINTER
     if (selectedChannel === "Printer") {
       return [
@@ -403,7 +368,6 @@ const IncidentByChannel = ({ data = {} }) => {
         "DATE",
       ];
     }
-
     // 👇 DRIVE
     if (selectedChannel === "Drive") {
       return [
@@ -414,7 +378,6 @@ const IncidentByChannel = ({ data = {} }) => {
         "TIMESTAMP",
       ];
     }
-
     // 👇 CLIPBOARD
     if (selectedChannel === "Clipboard") {
       return [
@@ -424,7 +387,6 @@ const IncidentByChannel = ({ data = {} }) => {
         "KEYWORD",
       ];
     }
-
     // 👇 NETWORK
     if (selectedChannel === "Network") {
       return [
@@ -435,7 +397,6 @@ const IncidentByChannel = ({ data = {} }) => {
         "DATE",
       ];
     }
-
     return [
       "BRANCH",
       "File Name",
@@ -444,7 +405,6 @@ const IncidentByChannel = ({ data = {} }) => {
       "TIMESTAMP",
     ];
   };
-
   /* =======================================================
      RENDER
   ======================================================= */
@@ -510,7 +470,6 @@ const IncidentByChannel = ({ data = {} }) => {
               />
             </PieChart>
           </ResponsiveContainer>
-
           <div
             className="pointer-events-none absolute left-1/2 top-1/2 flex h-[96px] w-[96px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full"
             style={{
@@ -527,7 +486,6 @@ const IncidentByChannel = ({ data = {} }) => {
             </span>
           </div>
         </div>
-
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           {channelData.map((item) => (
             <button
@@ -559,7 +517,6 @@ const IncidentByChannel = ({ data = {} }) => {
           ))}
         </div>
       </div>
-
       {/* MODAL */}
       {isMounted && (
         <div
@@ -598,7 +555,6 @@ const IncidentByChannel = ({ data = {} }) => {
                   </span>
                 )}
               </h2>
-
               <div className="flex shrink-0 items-center gap-2">
                 <div className="relative w-[220px] sm:w-[260px]">
                   <Search
@@ -626,7 +582,6 @@ const IncidentByChannel = ({ data = {} }) => {
                 </button>
               </div>
             </div>
-
             {/* TABLE SECTION */}
             <div className="min-h-0 flex-1 overflow-hidden p-4">
               <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
@@ -661,14 +616,14 @@ const IncidentByChannel = ({ data = {} }) => {
                       </button>
                     </div>
                   ) : (
-                    <table className="w-full min-w-[1000px] text-[13px]">
-                      <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
+                    <table className="w-full min-w-[1000px] table-fixed border-separate border-spacing-0 text-[13px]">
+                      <thead className="sticky top-0 z-30">
                         <tr className="text-left text-slate-500 dark:text-white/50">
                           {getTableHeaders().map(
                             (header) => (
                               <th
                                 key={header}
-                                className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]"
+                                className="sticky top-0 z-30 whitespace-nowrap border-b border-slate-200 bg-slate-100 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08] dark:bg-[#111827]"
                               >
                                 {header}
                               </th>
@@ -694,7 +649,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                 const attachments = row?.attachments ?? "NA";
                                 const subject = row?.subject ?? "NA";
                                 const timestamp = row?.dateTime ?? row?.timestamp ?? null;
-
                                 return (
                                   <tr
                                     key={`email-${index}-${hostname}-${timestamp}`}
@@ -721,7 +675,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                   </tr>
                                 );
                               }
-
                               /* =================================
                                  PRINTER
                                  BRANCH → HOSTNAME → DOCUMENT → JOB STATUS → DATE
@@ -750,7 +703,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                   row?.date ??
                                   row?.cdate ??
                                   "NA";
-
                                 const isBlocked =
                                   String(
                                     jobStatus
@@ -773,7 +725,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                     .includes(
                                       "block"
                                     );
-
                                 return (
                                   <tr
                                     key={`printer-${index}-${date}-${hostName}`}
@@ -823,7 +774,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                   </tr>
                                 );
                               }
-
                               /* =================================
                                  DRIVE
                                  BRANCH → HOST NAME → FILE PATH → FILE TYPE → TIMESTAMP
@@ -856,7 +806,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                   row?.cdate ??
                                   row?.timestamp ??
                                   null;
-
                                 return (
                                   <tr
                                     key={`drive-${index}-${cdate}`}
@@ -889,7 +838,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                   </tr>
                                 );
                               }
-
                               /* =================================
                                  CLIPBOARD
                                  BRANCH → HOSTNAME → IP ADDRESS → KEYWORD
@@ -940,7 +888,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                   </tr>
                                 );
                               }
-
                               /* =================================
                                  NETWORK
                                  BRANCH → EVENTS → HOSTNAME → FILE PATH → DATE
@@ -979,7 +926,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                     : row?.cdate ??
                                       row?.date ??
                                       null;
-
                                 return (
                                   <tr
                                     key={`network-${index}-${date}-${hostName}`}
@@ -1017,7 +963,6 @@ const IncidentByChannel = ({ data = {} }) => {
                                   </tr>
                                 );
                               }
-
                               /* =================================
                                  OTHER CHANNELS (Peripherals, fallback)
                               ================================= */
@@ -1100,7 +1045,6 @@ const IncidentByChannel = ({ data = {} }) => {
                     </table>
                   )}
                 </div>
-
                 {/* PAGINATION */}
                 {!loading && !error && (
                   <div className="flex shrink-0 flex-col gap-1 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
@@ -1168,5 +1112,4 @@ const IncidentByChannel = ({ data = {} }) => {
     </>
   );
 };
-
 export default IncidentByChannel;

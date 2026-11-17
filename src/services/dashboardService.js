@@ -471,6 +471,14 @@ export const dashboardService = {
     return data;
   },
 
+
+  getWebsiteViewPolicies: async () => {
+    const { data } = await axiosInstance.get(
+      "/WebsiteControl/WebsiteViewPolicies", 
+    );
+    return data;
+  },
+
   setApplicationMode: async (requestData) => {
     const { data } = await axiosInstance.post(
       API_ENDPOINTS.APPLICATION_CONTROL.SET_MODE,

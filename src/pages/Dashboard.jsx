@@ -32,7 +32,6 @@ import LatestIncidents from '../components/charts/LatestIncidents'
 import PreventedApplicationChart from '../components/charts/PreventedApplicationChart'
 import { dashboardService } from '../services/dashboardService'
 
-
 /* ─────────────────────────────────────────────────────────────
    Shared Tooltip
 ───────────────────────────────────────────────────────────── */
@@ -75,7 +74,6 @@ function ChartTip({ active, payload, label, isDark }) {
   )
 }
 
-
 /* ─────────────────────────────────────────────────────────────
    Dashboard Card
 ───────────────────────────────────────────────────────────── */
@@ -104,7 +102,6 @@ function DCard({
   )
 }
 
-
 /* ─────────────────────────────────────────────────────────────
    Section Divider
 ───────────────────────────────────────────────────────────── */
@@ -125,7 +122,6 @@ function SectionLabel({ children }) {
     </div>
   )
 }
-
 
 /* ─────────────────────────────────────────────────────────────
    Circular Progress
@@ -191,7 +187,6 @@ function CircleProgress({
   )
 }
 
-
 /* ─────────────────────────────────────────────────────────────
    Section Title
 ───────────────────────────────────────────────────────────── */
@@ -203,7 +198,6 @@ function STitle({ children }) {
     </p>
   )
 }
-
 
 /* ─────────────────────────────────────────────────────────────
    Generic Incident Modal
@@ -412,13 +406,13 @@ function IncidentModal({
             "
           >
             <div className="min-h-0 flex-1 overflow-auto">
-              <table className="w-full text-[13px]">
-                <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-white/[0.06]">
+              <table className="w-full min-w-[1000px] table-fixed border-separate border-spacing-0 text-[13px]">
+                <thead className="bg-slate-100 dark:bg-[#111827]">
                   <tr className="text-left text-slate-500 dark:text-white/50">
                     {incidentColumns.map((col) => (
                       <th
                         key={col.accessor}
-                        className="
+                        className="sticky top-0 z-20 bg-slate-100 dark:bg-[#111827]
                           border-b border-slate-200
                           px-4 py-3 text-[11px]
                           font-semibold uppercase
@@ -594,7 +588,6 @@ function IncidentModal({
     </div>
   )
 }
-
 
 /* ─────────────────────────────────────────────────────────────
    ENDPOINT STATUS MODAL
@@ -953,31 +946,25 @@ function EndpointStatusModal({
             "
           >
             <div className="min-h-0 flex-1 overflow-auto">
-              <table className="w-full text-[13px]">
-                <thead
-                  className="
-                    sticky top-0 z-10
-                    bg-slate-100
-                    dark:bg-white/[0.06]
-                  "
-                >
+              <table className="w-full min-w-[1000px] table-fixed border-separate border-spacing-0 text-[13px]">
+                <thead className="bg-slate-100 dark:bg-[#111827]">
                   <tr className="text-left text-slate-500 dark:text-white/50">
-                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
+                    <th className="sticky top-0 z-20 bg-slate-100 dark:bg-[#111827] border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       BRANCH
                     </th>
-                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
+                    <th className="sticky top-0 z-20 bg-slate-100 dark:bg-[#111827] border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       HOSTNAME
                     </th>
-                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
+                    <th className="sticky top-0 z-20 bg-slate-100 dark:bg-[#111827] border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       IP ADDRESS
                     </th>
-                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
+                    <th className="sticky top-0 z-20 bg-slate-100 dark:bg-[#111827] border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       USERNAME
                     </th>
-                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
+                    <th className="sticky top-0 z-20 bg-slate-100 dark:bg-[#111827] border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       STATUS
                     </th>
-                    <th className="border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
+                    <th className="sticky top-0 z-20 bg-slate-100 dark:bg-[#111827] border-b border-slate-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08]">
                       LAST COMMUNICATION
                     </th>
                   </tr>
@@ -1175,7 +1162,6 @@ function EndpointStatusModal({
   )
 }
 
-
 /* ─────────────────────────────────────────────────────────────
    MAIN DASHBOARD
 ───────────────────────────────────────────────────────────── */
@@ -1201,13 +1187,11 @@ export default function Dashboard() {
     ? 'rgba(255,255,255,0.07)'
     : '#e2e8f0'
 
-
   const [endpointStatus, setEndpointStatus] =
     useState(null)
 
   const endpointData =
     endpointStatus?.data || {}
-
 
   const [fileUploadSummary, setFileUploadSummary] =
     useState([])
@@ -1239,7 +1223,6 @@ export default function Dashboard() {
   const [UpDownDetailsData, setUpDownDetailsData] =
     useState([])
 
-
   const [modalState, setModalState] = useState({
     show: false,
     title: '',
@@ -1249,7 +1232,6 @@ export default function Dashboard() {
     error: '',
   })
 
-
   const [
     endpointModalState,
     setEndpointModalState,
@@ -1257,7 +1239,6 @@ export default function Dashboard() {
     show: false,
     category: '',
   })
-
 
   const openModal = (
     title,
@@ -1273,7 +1254,6 @@ export default function Dashboard() {
       error: '',
     })
   }
-
 
   const closeModal = () => {
     setModalState({
@@ -1387,14 +1367,12 @@ export default function Dashboard() {
     }
   }
 
-
   const openEndpointModal = (category) => {
     setEndpointModalState({
       show: true,
       category,
     })
   }
-
 
   const closeEndpointModal = () => {
     setEndpointModalState({
@@ -1403,13 +1381,11 @@ export default function Dashboard() {
     })
   }
 
-
   /* ─────────────────────────────────────────────────────────
      Mail Incident Data (placeholder)
   ───────────────────────────────────────────────────────── */
 
   const mailIncidentData = []
-
 
   /* ─────────────────────────────────────────────────────────
      File Type
@@ -1452,7 +1428,6 @@ export default function Dashboard() {
 
   }, [fileTypeData])
 
-
   /* ─────────────────────────────────────────────────────────
      Incident Summary
   ───────────────────────────────────────────────────────── */
@@ -1468,7 +1443,6 @@ export default function Dashboard() {
     {}
   )
 
-
   const webIncident =
     incidents['WEB UPLOAD'] || 0
 
@@ -1481,7 +1455,6 @@ export default function Dashboard() {
 
   const mailIncident =
     incidents['MAIL'] || 0
-
 
   /* ─────────────────────────────────────────────────────────
      File Upload Chart
@@ -1538,7 +1511,6 @@ export default function Dashboard() {
 
   }, [fileUploadSummary])
 
-
   /* ─────────────────────────────────────────────────────────
      Clipboard
   ───────────────────────────────────────────────────────── */
@@ -1561,14 +1533,12 @@ export default function Dashboard() {
 
     }, [clipboardData])
 
-
   const Tip = (props) => (
     <ChartTip
       {...props}
       isDark={isDark}
     />
   )
-
 
   /* ─────────────────────────────────────────────────────────
      LOAD DASHBOARD
@@ -1619,12 +1589,10 @@ export default function Dashboard() {
 
       ])
 
-
       console.log(
         'UpDownDetails API DATA:',
         UpDownDetails?.data
       )
-
 
       setEndpointStatus(endpoint)
 
@@ -1668,7 +1636,6 @@ export default function Dashboard() {
         PreventedApplication?.data || []
       )
 
-
       setUpDownDetailsData(
         Array.isArray(UpDownDetails?.data)
           ? UpDownDetails.data
@@ -1686,15 +1653,12 @@ export default function Dashboard() {
 
   }
 
-
   useEffect(() => {
     loadDashboard()
   }, [])
 
-
   return (
     <div className="flex flex-col gap-2">
-
 
       {/* ═══════════════════════════════════════════════════════
           ROW 1
@@ -1702,13 +1666,11 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-5 gap-4">
 
-
         <DCard className="col-span-1">
 
           <STitle>
             Endpoint Status
           </STitle>
-
 
           <div className="flex flex-col gap-3">
 
@@ -1769,7 +1731,6 @@ export default function Dashboard() {
 
                 </div>
 
-
                 <div
                   className="
                     h-1.5 rounded-full
@@ -1799,7 +1760,6 @@ export default function Dashboard() {
           </div>
 
         </DCard>
-
 
         <DCard
           className="
@@ -1855,7 +1815,6 @@ export default function Dashboard() {
 
           </div>
 
-
           <CircleProgress
             pct={20}
             color="#7094ff"
@@ -1865,7 +1824,6 @@ export default function Dashboard() {
           />
 
         </DCard>
-
 
         <DCard
           className="
@@ -1920,7 +1878,6 @@ export default function Dashboard() {
 
           </div>
 
-
           <CircleProgress
             pct={40}
             color="#22c55e"
@@ -1930,7 +1887,6 @@ export default function Dashboard() {
           />
 
         </DCard>
-
 
         <DCard
           className="
@@ -1991,7 +1947,6 @@ export default function Dashboard() {
 
           </div>
 
-
           <CircleProgress
             pct={60}
             color="#f59e0b"
@@ -2001,7 +1956,6 @@ export default function Dashboard() {
           />
 
         </DCard>
-
 
         <DCard
           className="
@@ -2056,7 +2010,6 @@ export default function Dashboard() {
 
           </div>
 
-
           <CircleProgress
             pct={80}
             color="#ef4444"
@@ -2069,7 +2022,6 @@ export default function Dashboard() {
 
       </div>
 
-
       {/* ═══════════════════════════════════════════════════════
           ROW 2
       ═══════════════════════════════════════════════════════ */}
@@ -2077,7 +2029,6 @@ export default function Dashboard() {
       <div>
 
         <div className="grid grid-cols-12 gap-2">
-
 
           <DCard className="col-span-4">
 
@@ -2095,7 +2046,6 @@ export default function Dashboard() {
 
           </DCard>
 
-
           <DCard className="col-span-4">
 
             <STitle>
@@ -2108,7 +2058,6 @@ export default function Dashboard() {
             />
 
           </DCard>
-
 
           <DCard className="col-span-4">
 
@@ -2126,13 +2075,11 @@ export default function Dashboard() {
 
       </div>
 
-
       {/* ═══════════════════════════════════════════════════════
           ROW 3
       ═══════════════════════════════════════════════════════ */}
 
       <div className="grid grid-cols-12 gap-2">
-
 
         <DCard className="col-span-3">
 
@@ -2145,7 +2092,6 @@ export default function Dashboard() {
           />
 
         </DCard>
-
 
         <DCard className="col-span-5">
 
@@ -2163,9 +2109,7 @@ export default function Dashboard() {
 
         </DCard>
 
-
         <div className="col-span-4 flex flex-col gap-2">
-
 
           <DCard
             className="
@@ -2186,7 +2130,6 @@ export default function Dashboard() {
             />
 
           </DCard>
-
 
           <DCard className="rounded-t-none">
 
@@ -2210,13 +2153,11 @@ export default function Dashboard() {
 
       </div>
 
-
       {/* ═══════════════════════════════════════════════════════
           ROW 4
       ═══════════════════════════════════════════════════════ */}
 
       <div className="grid grid-cols-12 gap-3">
-
 
         <DCard
           className="col-span-7"
@@ -2232,7 +2173,6 @@ export default function Dashboard() {
 
         </DCard>
 
-
         <DCard className="col-span-5">
 
           <PreventedApplicationChart
@@ -2246,7 +2186,6 @@ export default function Dashboard() {
         </DCard>
 
       </div>
-
 
       {/* ═══════════════════════════════════════════════════════
           GENERIC INCIDENT MODAL
@@ -2262,7 +2201,6 @@ export default function Dashboard() {
         loading={modalState.loading}
         error={modalState.error}
       />
-
 
       {/* ═══════════════════════════════════════════════════════
           ENDPOINT STATUS MODAL
