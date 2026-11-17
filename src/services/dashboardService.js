@@ -568,6 +568,15 @@ export const dashboardService = {
     return data;
   },
 
+  addWebsitePolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.WEBSITE_CONTROL.ADD_WEBSITE_POLICY,
+      requestData,
+    );
+    return data;
+  },
+
+
   //[Device Policy Details API]
   getDeviceActivePolicy: async (computerName) => {
     const { data } = await axiosInstance.get(

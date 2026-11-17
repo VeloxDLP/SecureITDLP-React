@@ -4,9 +4,9 @@ import {
   ShieldCheck, Trash2, Search, Filter, ChevronDown, X,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
-import usbApi from '../api/usbApi'
 import { alert as showAlert } from '../components/ui/AlertModal'
 import { dashboardService } from '../services/dashboardService'
+import PolicyStatusTracker from './PolicyStatusTracker/PolicyStatusTracker'
 
 /* ─────────────────────────────────────────────────────────────
    STATUS PILL — UP / DOWN indicator
@@ -885,6 +885,16 @@ function AddForm({ branches, onAdd }) {
   const [websiteOptions, setWebsiteOptions] = useState([])
   const [websitesLoading, setWebsitesLoading] = useState(false)
 
+  const [trackedEventIds, setTrackedEventIds] = useState([])
+  const [busy, setBusy] = useState(false)
+  const isTracking = trackedEventIds.length > 0
+  const trackerRef = useRef(null)
+  const lastPolicyRef = useRef(null)
+
+  useEffect(() => {
+    if (isTracking) trackerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [isTracking])
+
   useEffect(() => {
     let cancelled = false
     const loadWebsites = async () => {
@@ -966,63 +976,74 @@ function AddForm({ branches, onAdd }) {
 
   const handleSubmit = async () => {
     setSubmitted(true)
-    if (!isValid) return
+    if (!isValid || busy || isTracking) return
 
     const branchName = branchOptions.find(b => b.value === form.branch)?.label
-    setSuccess(false)
 
-    try {
-      const targets = form.devices.map(dev => ({
-        hostName: dev,
-        branch: branchName,
-        ipAddress: '192.168.0.44',
-      }))
-
-      await usbApi.post('/api/usb', {
-        client: 'NA',
-        websites: form.websites,
-        modeOfAccess: form.mode.toLowerCase(),
-        targets,
-      })
-
-      onAdd({ ...form, branchName })
-      setSuccess(true)
-
-      // ✅ UPDATED POPUP MESSAGE HERE
-      await showAlert({
-        icon: 'success',
-        title: 'Success',
-        text: 'Policy saved successfully.',
-        timer: 2500,
-        timerProgressBar: true,
-        showConfirmButton: false,
-      })
-
-      setSubmitted(false)
-      setForm({ branch: '', devices: [], websites: [], mode: '' })
-      setFetchedDevices([])
-      
-      setTimeout(() => setSuccess(false), 3000)
-      
-    } catch (err) {
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Something went wrong. Please try again.'
-
-      showAlert({
-        icon: 'error',
-        title: 'Submission Failed',
-        text: message,
-        confirmButtonText: 'Retry',
-      })
+    const payload = {
+      branch: branchName || form.branch,
+      devices: form.devices,
+      websites: form.websites,
+      mode: form.mode,
     }
+
+    setBusy(true)
+    try {
+      const response = await dashboardService.addWebsitePolicy(payload)
+
+      const body = response?.data
+      const eventIds = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.data)
+          ? body.data
+          : Array.isArray(response)
+            ? response
+            : []
+
+      if (eventIds.length > 0) {
+        lastPolicyRef.current = { ...form, branchName: payload.branch }
+        setTrackedEventIds(eventIds)
+      } else {
+        await showAlert({
+          icon: 'error',
+          title: 'Policy Failed',
+          text: response?.message || 'Error sending policy',
+          confirmButtonText: 'Cancel',
+        })
+      }
+    } catch (err) {
+      console.error('Error adding website policy:', err)
+      await showAlert({
+        icon: 'error',
+        title: 'Policy Failed',
+        text: err?.response?.data?.message || err?.message || 'Error sending policy',
+        confirmButtonText: 'Cancel',
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleReset = () => {
+    setForm({ branch: '', devices: [], websites: [], mode: '' })
+    setSubmitted(false)
+    setFetchedDevices([])
+    setSuccess(false)
+  }
+
+  const handleTrackerClose = () => {
+    setTrackedEventIds([])
+    const policy = lastPolicyRef.current
+    lastPolicyRef.current = null
+    handleReset()
+    if (policy && onAdd) onAdd(policy)
   }
 
   const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5
                     ${isDark ? 'text-slate-500' : 'text-slate-400'}`
 
   return (
+    <>
     <GlassCard className="p-6 mb-5">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
 
@@ -1110,12 +1131,8 @@ function AddForm({ branches, onAdd }) {
 
       <div className="flex items-center justify-end gap-3">
         <GlassButton
-          onClick={() => {
-            setForm({ branch: '', devices: [], websites: [], mode: '' })
-            setSubmitted(false)
-            setFetchedDevices([])
-            setSuccess(false)
-          }}
+          onClick={handleReset}
+          disabled={busy || isTracking}
           variant="default"
           className="px-4 py-2"
         >
@@ -1124,13 +1141,27 @@ function AddForm({ branches, onAdd }) {
 
         <GlassButton
           onClick={handleSubmit}
+          disabled={busy || isTracking}
           variant={success ? 'success' : 'primary'}
           className="px-5 py-2 font-semibold"
         >
-          {success ? <><Check size={13} /> Saved!</> : <><Plus size={13} /> Submit</>}
+          {success
+            ? <><Check size={13} /> Saved!</>
+            : <><Plus size={13} /> {busy || isTracking ? 'Processing…' : 'Submit'}</>}
         </GlassButton>
       </div>
     </GlassCard>
+
+    {isTracking && (
+      <div ref={trackerRef} className="mb-5 scroll-mt-5">
+        <PolicyStatusTracker
+          title="Website Policy"
+          eventIds={trackedEventIds}
+          onClose={handleTrackerClose}
+        />
+      </div>
+    )}
+    </>
   )
 }
 

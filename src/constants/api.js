@@ -105,6 +105,7 @@ SELF_PROTECTION:{
 WEBSITE_CONTROL:{
   SAVE_WEBSITE:"/WebsiteControl/SaveWebsite",
   ALL_WEBSITES: '/WebsiteControl/AllWebsites',
+  ADD_WEBSITE_POLICY:"/WebsiteControl/AddWebsitePolicy",
   // GET_SELF_PROTECTION_POLICY:"/SelfProtection/GetSelfProtectionPolicy"
 },
 
