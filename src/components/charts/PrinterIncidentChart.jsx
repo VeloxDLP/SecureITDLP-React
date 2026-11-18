@@ -53,6 +53,7 @@ export default function PrinterIncidentChart({
 
   const pageSize = 10;
 
+  // FETCH PRINTER INCIDENTS
   const fetchPrinterIncidents = async () => {
     try {
       setLoading(true);
@@ -87,6 +88,7 @@ export default function PrinterIncidentChart({
     }
   };
 
+  // BODY SCROLL LOCK
   useEffect(() => {
     if (showModal) {
       document.body.style.overflow = "hidden";
@@ -105,6 +107,7 @@ export default function PrinterIncidentChart({
     };
   }, [showModal]);
 
+  // OPEN MODAL
   const openModal = async (category) => {
     setSelectedCategory(category);
     setSearch("");
@@ -116,6 +119,7 @@ export default function PrinterIncidentChart({
     await fetchPrinterIncidents();
   };
 
+  // CLOSE MODAL
   const closeModal = () => {
     setShowModal(false);
     setSearch("");
@@ -124,6 +128,7 @@ export default function PrinterIncidentChart({
     setError("");
   };
 
+  // SEARCH
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase();
 
@@ -137,10 +142,12 @@ export default function PrinterIncidentChart({
     );
   }, [modalData, search]);
 
+  // RESET PAGE
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
 
+  // PAGINATION
   const totalPages = Math.max(
     1,
     Math.ceil(filteredRows.length / pageSize)
@@ -163,6 +170,7 @@ export default function PrinterIncidentChart({
     filteredRows.length
   );
 
+  // FIELD HELPERS
   const formatTimestamp = (value) => {
     if (!value) return "NA";
     return String(value);
@@ -232,6 +240,7 @@ export default function PrinterIncidentChart({
                 stroke={isDark ? "#2f2f2f" : "#23232c"}
                 strokeWidth="8"
               />
+
               <circle
                 cx="60"
                 cy="60"
@@ -261,6 +270,7 @@ export default function PrinterIncidentChart({
       {showModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
           <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-[#020617]">
+
             {/* HEADER */}
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
               <div className="min-w-0">
@@ -279,6 +289,7 @@ export default function PrinterIncidentChart({
                     size={14}
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30"
                   />
+
                   <input
                     type="text"
                     value={search}
@@ -309,15 +320,28 @@ export default function PrinterIncidentChart({
             {/* TABLE CONTAINER */}
             <div className="min-h-0 flex-1 overflow-hidden p-4">
               <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
+
                 {/* SCROLL AREA */}
                 <div className="min-h-0 flex-1 overflow-auto">
-                  <table className="w-full min-w-[900px] border-separate border-spacing-0 text-[13px]">
+                  <table className="w-full min-w-[900px] table-fixed border-separate border-spacing-0 text-[13px]">
+                    <colgroup>
+                      <col style={{ width: "27%" }} />
+                      <col style={{ width: "17%" }} />
+                      <col style={{ width: "36%" }} />
+                      <col style={{ width: "20%" }} />
+                    </colgroup>
+
+                    {/* TABLE HEADER */}
                     <thead>
-                      <tr className="text-left text-slate-500 dark:text-white/50">
-                        {incidentColumns.map((column) => (
+                      <tr className="text-slate-500 dark:text-white/50">
+                        {incidentColumns.map((column, index) => (
                           <th
                             key={column.accessor}
-                            className="sticky top-0 z-30 border-b border-slate-200 bg-slate-100 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08] dark:bg-[#111827]"
+                            className={`sticky top-0 z-30 whitespace-nowrap border-b border-slate-200 bg-slate-100 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08] dark:bg-[#111827] ${
+                              index === incidentColumns.length - 1
+                                ? "text-right"
+                                : "text-left"
+                            }`}
                           >
                             {column.header}
                           </th>
@@ -325,8 +349,8 @@ export default function PrinterIncidentChart({
                       </tr>
                     </thead>
 
+                    {/* TABLE BODY */}
                     <tbody>
-                      {/* LOADING */}
                       {loading && (
                         <tr>
                           <td
@@ -346,7 +370,6 @@ export default function PrinterIncidentChart({
                         </tr>
                       )}
 
-                      {/* DATA */}
                       {!loading &&
                         paginatedRows.length > 0 &&
                         paginatedRows.map((row, index) => {
@@ -360,10 +383,12 @@ export default function PrinterIncidentChart({
                               key={rowKey}
                               className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-[#020617] dark:hover:bg-white/[0.03]"
                             >
+                              {/* IP ADDRESS */}
                               <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
                                 {getIpAddress(row)}
                               </td>
 
+                              {/* EVENT TYPE */}
                               <td
                                 className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(
                                   getEventType(row)
@@ -372,13 +397,15 @@ export default function PrinterIncidentChart({
                                 {getEventType(row)}
                               </td>
 
+                              {/* FILE DETAILS */}
                               <td
-                                className="max-w-[360px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/30"
+                                className="truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/30"
                                 title={getFileDetails(row)}
                               >
                                 {getFileDetails(row)}
                               </td>
 
+                              {/* TIMESTAMP */}
                               <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-right text-slate-400 dark:border-white/[0.05] dark:text-white/40">
                                 {formatTimestamp(getTimestamp(row))}
                               </td>
@@ -386,7 +413,6 @@ export default function PrinterIncidentChart({
                           );
                         })}
 
-                      {/* EMPTY */}
                       {!loading && paginatedRows.length === 0 && (
                         <tr>
                           <td

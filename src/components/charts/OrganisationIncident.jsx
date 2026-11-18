@@ -1,3 +1,4 @@
+
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer,
@@ -10,7 +11,6 @@ import {
 } from "recharts";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 
-// Column configuration for modal table
 const incidentColumns = [
   { accessor: "ipAddress", header: "IP ADDRESS" },
   { accessor: "username", header: "USERNAME" },
@@ -19,12 +19,13 @@ const incidentColumns = [
   { accessor: "timestamp", header: "TIMESTAMP" },
 ];
 
-// Event type color mapping
 const eventTypeColor = (eventType) => {
   const type = eventType?.toLowerCase() || "";
+
   if (type.includes("upload")) return "text-blue-600 dark:text-blue-400";
   if (type.includes("transfer")) return "text-green-600 dark:text-green-400";
   if (type.includes("usb")) return "text-yellow-600 dark:text-yellow-400";
+
   return "text-slate-600 dark:text-white/50";
 };
 
@@ -39,18 +40,23 @@ export default function OrganisationIncident({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState("");
   const [search, setSearch] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Animate modal entrance after it has mounted.
+  /* =====================================================
+     MODAL ANIMATION
+  ===================================================== */
   useEffect(() => {
     if (!isMounted) return undefined;
 
     const frame = requestAnimationFrame(() => setIsOpen(true));
+
     return () => cancelAnimationFrame(frame);
   }, [isMounted]);
 
-  // Lock body scroll for the full time the modal is mounted, including closing.
+  /* =====================================================
+     BODY SCROLL LOCK
+  ===================================================== */
   useEffect(() => {
     if (isMounted) {
       document.body.style.overflow = "hidden";
@@ -69,7 +75,9 @@ export default function OrganisationIncident({
     };
   }, [isMounted]);
 
-  // Hardcoded modal data for organisation incidents
+  /* =====================================================
+     INCIDENT DATA
+  ===================================================== */
   const modalData = [
     {
       ipAddress: "192.168.0.41",
@@ -164,7 +172,9 @@ export default function OrganisationIncident({
     },
   ];
 
-  // Default 6 time slots
+  /* =====================================================
+     CHART DATA
+  ===================================================== */
   const defaultSlots = [
     { x: "00:00-03:59", count: 0 },
     { x: "04:00-07:59", count: 0 },
@@ -174,41 +184,69 @@ export default function OrganisationIncident({
     { x: "20:00-23:59", count: 0 },
   ];
 
-  // Merge API data with default slots
   const chartData = defaultSlots.map((slot) => {
     const item = data.find((d) => d.timeSlot === slot.x);
+
     return {
       ...slot,
       Endpoints: item ? item.uniqueHostCount : 0,
     };
   });
 
+  /* =====================================================
+     SEARCH FILTER
+  ===================================================== */
   const safeData = Array.isArray(modalData) ? modalData : [];
 
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase();
+
     if (!term) return safeData;
 
     return safeData.filter((row) =>
       incidentColumns.some((col) =>
-        String(row[col.accessor] ?? "").toLowerCase().includes(term)
+        String(row[col.accessor] ?? "")
+          .toLowerCase()
+          .includes(term)
       )
     );
   }, [safeData, search]);
 
+  /* =====================================================
+     RESET PAGINATION
+  ===================================================== */
   useEffect(() => {
     setCurrentPage(1);
   }, [search, pageSize]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  /* =====================================================
+     PAGINATION
+  ===================================================== */
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredRows.length / pageSize)
+  );
+
   const safePage = Math.min(currentPage, totalPages);
+
   const paginatedRows = filteredRows.slice(
     (safePage - 1) * pageSize,
     safePage * pageSize
   );
-  const startRecord = filteredRows.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
-  const endRecord = Math.min(safePage * pageSize, filteredRows.length);
 
+  const startRecord =
+    filteredRows.length === 0
+      ? 0
+      : (safePage - 1) * pageSize + 1;
+
+  const endRecord = Math.min(
+    safePage * pageSize,
+    filteredRows.length
+  );
+
+  /* =====================================================
+     OPEN MODAL
+  ===================================================== */
   const openModal = (slot) => {
     setSelectedSlot(slot);
     setSearch("");
@@ -216,31 +254,45 @@ export default function OrganisationIncident({
     setIsMounted(true);
   };
 
+  /* =====================================================
+     CLOSE MODAL
+  ===================================================== */
   const closeModal = () => {
     setIsOpen(false);
     setSearch("");
     setCurrentPage(1);
   };
 
-  // Custom Tooltip with click handler
-  const CustomTooltip = (props) => {
-    const { active, payload } = props;
+  /* =====================================================
+     CUSTOM TOOLTIP
+  ===================================================== */
+  const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
         <div
-          className="bg-white dark:bg-[#020617] p-2 rounded shadow border border-slate-200 dark:border-white/10 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#0a0f1e] transition-colors"
+          className="cursor-pointer rounded border border-slate-200 bg-white p-2 shadow transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-[#020617] dark:hover:bg-[#0a0f1e]"
           onClick={() => openModal(payload[0].payload.x)}
         >
-          <p className="text-sm font-medium">{`${payload[0].payload.x}`}</p>
-          <p className="text-sm text-slate-600 dark:text-white/70">{`${payload[0].value} incidents`}</p>
+          <p className="text-sm font-medium">
+            {payload[0].payload.x}
+          </p>
+
+          <p className="text-sm text-slate-600 dark:text-white/70">
+            {payload[0].value} incidents
+          </p>
         </div>
       );
     }
+
     return null;
   };
 
+  /* =====================================================
+     MAIN JSX
+  ===================================================== */
   return (
     <>
+      {/* AREA CHART */}
       <div className="relative">
         <ResponsiveContainer width="100%" height={210}>
           <AreaChart
@@ -253,13 +305,24 @@ export default function OrganisationIncident({
             }}
           >
             <defs>
-              <linearGradient id="orgGrad" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient
+                id="orgGrad"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
                 <stop
                   offset="5%"
                   stopColor="#7094ff"
                   stopOpacity={isDark ? 0.35 : 0.25}
                 />
-                <stop offset="95%" stopColor="#7094ff" stopOpacity={0} />
+
+                <stop
+                  offset="95%"
+                  stopColor="#7094ff"
+                  stopOpacity={0}
+                />
               </linearGradient>
             </defs>
 
@@ -315,14 +378,19 @@ export default function OrganisationIncident({
         </ResponsiveContainer>
       </div>
 
-      {/* Modal */}
+      {/* INCIDENT MODAL */}
       {isMounted && (
         <div
           className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 ease-out ${
-            isOpen ? "bg-slate-950/55 opacity-100" : "bg-slate-950/0 opacity-0"
+            isOpen
+              ? "bg-slate-950/55 opacity-100"
+              : "bg-slate-950/0 opacity-0"
           }`}
           onTransitionEnd={(event) => {
-            if (event.target === event.currentTarget && !isOpen) {
+            if (
+              event.target === event.currentTarget &&
+              !isOpen
+            ) {
               setIsMounted(false);
             }
           }}
@@ -334,7 +402,7 @@ export default function OrganisationIncident({
                 : "translate-y-2 scale-[0.98] opacity-0"
             }`}
           >
-            {/* Header */}
+            {/* MODAL HEADER */}
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
               <div className="min-w-0">
                 <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
@@ -346,11 +414,13 @@ export default function OrganisationIncident({
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
+                {/* SEARCH */}
                 <div className="relative w-[220px] sm:w-[260px]">
                   <Search
                     size={14}
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30"
                   />
+
                   <input
                     type="text"
                     value={search}
@@ -360,6 +430,7 @@ export default function OrganisationIncident({
                   />
                 </div>
 
+                {/* CLOSE */}
                 <button
                   type="button"
                   onClick={closeModal}
@@ -370,17 +441,27 @@ export default function OrganisationIncident({
               </div>
             </div>
 
-            {/* Table */}
+            {/* TABLE SECTION */}
             <div className="min-h-0 flex-1 overflow-hidden p-4">
               <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
                 <div className="min-h-0 flex-1 overflow-auto">
-                  <table className="w-full min-w-[900px] border-separate border-spacing-0 text-[13px]">
+                  <table className="w-full min-w-[900px] table-fixed border-separate border-spacing-0 text-[13px]">
+                    {/* FIXED COLUMN WIDTHS */}
+                    <colgroup>
+                      <col style={{ width: "18%" }} />
+                      <col style={{ width: "17%" }} />
+                      <col style={{ width: "20%" }} />
+                      <col style={{ width: "27%" }} />
+                      <col style={{ width: "18%" }} />
+                    </colgroup>
+
+                    {/* TABLE HEADER */}
                     <thead>
-                      <tr className="text-left text-slate-500 dark:text-white/50">
+                      <tr className="text-slate-500 dark:text-white/50">
                         {incidentColumns.map((col) => (
                           <th
                             key={col.accessor}
-                            className="sticky top-0 z-30 border-b border-slate-200 bg-slate-100 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08] dark:bg-[#111827]"
+                            className="sticky top-0 z-30 whitespace-nowrap border-b border-slate-200 bg-slate-100 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08] dark:bg-[#111827]"
                           >
                             {col.header}
                           </th>
@@ -388,6 +469,7 @@ export default function OrganisationIncident({
                       </tr>
                     </thead>
 
+                    {/* TABLE BODY */}
                     <tbody>
                       {paginatedRows.length > 0 ? (
                         paginatedRows.map((row, index) => (
@@ -395,26 +477,35 @@ export default function OrganisationIncident({
                             key={index}
                             className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-[#020617] dark:hover:bg-white/[0.03]"
                           >
-                            <td className="border-b border-slate-100 px-4 py-3 font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
+                            {/* IP ADDRESS */}
+                            <td className="overflow-hidden text-ellipsis whitespace-nowrap border-b border-slate-100 px-4 py-3 text-left align-middle font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
                               {row.ipAddress || "NA"}
                             </td>
-                            <td className="border-b border-slate-100 px-4 py-3 text-slate-700 dark:border-white/[0.05] dark:text-white/80">
+
+                            {/* USERNAME */}
+                            <td className="overflow-hidden text-ellipsis whitespace-nowrap border-b border-slate-100 px-4 py-3 text-left align-middle text-slate-700 dark:border-white/[0.05] dark:text-white/80">
                               {row.username || "NA"}
                             </td>
+
+                            {/* EVENT TYPE */}
                             <td
-                              className={`border-b border-slate-100 px-4 py-3 font-medium dark:border-white/[0.05] ${eventTypeColor(
+                              className={`overflow-hidden text-ellipsis whitespace-nowrap border-b border-slate-100 px-4 py-3 text-left align-middle font-medium dark:border-white/[0.05] ${eventTypeColor(
                                 row.eventType
                               )}`}
                             >
                               {row.eventType || "NA"}
                             </td>
+
+                            {/* FILE DETAILS */}
                             <td
-                              className="max-w-[360px] truncate border-b border-slate-100 px-4 py-3 text-slate-400 dark:border-white/[0.05] dark:text-white/30"
+                              className="overflow-hidden text-ellipsis whitespace-nowrap border-b border-slate-100 px-4 py-3 text-left align-middle text-slate-400 dark:border-white/[0.05] dark:text-white/30"
                               title={row.fileDetails}
                             >
                               {row.fileDetails || "NA"}
                             </td>
-                            <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-right text-slate-400 dark:border-white/[0.05] dark:text-white/40">
+
+                            {/* TIMESTAMP - LEFT ALIGNED */}
+                            <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-left align-middle font-medium text-slate-400 dark:border-white/[0.05] dark:text-white/40">
                               {row.timestamp || "NA"}
                             </td>
                           </tr>
@@ -433,18 +524,22 @@ export default function OrganisationIncident({
                   </table>
                 </div>
 
-                {/* Footer / pagination */}
+                {/* PAGINATION FOOTER */}
                 <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-[12px] text-slate-500 dark:text-white/40">
-                    Showing {startRecord}-{endRecord} of {filteredRows.length}
+                    Showing {startRecord}-{endRecord} of{" "}
+                    {filteredRows.length}
                   </span>
 
                   <div className="flex items-center gap-2">
+                    {/* PREVIOUS */}
                     <button
                       type="button"
                       disabled={safePage === 1}
                       onClick={() =>
-                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                        setCurrentPage((prev) =>
+                          Math.max(1, prev - 1)
+                        )
                       }
                       className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
                     >
@@ -452,10 +547,12 @@ export default function OrganisationIncident({
                       Prev
                     </button>
 
+                    {/* PAGE NUMBER */}
                     <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10">
                       {safePage} / {totalPages}
                     </span>
 
+                    {/* NEXT */}
                     <button
                       type="button"
                       disabled={safePage === totalPages}
@@ -464,7 +561,7 @@ export default function OrganisationIncident({
                           Math.min(totalPages, prev + 1)
                         )
                       }
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
+                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
                     >
                       Next
                       <ChevronRight size={14} />

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   Monitor,
@@ -37,13 +38,17 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
 
   // Three-dot menu and modal states
   const [openMenu, setOpenMenu] = useState(null);
+  const openMenuRef = useRef(null);
+
   const [showModifyModal, setShowModifyModal] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [newBranch, setNewBranch] = useState("");
   const [saving, setSaving] = useState(false);
   const [modalError, setModalError] = useState("");
   const [trackedEventIds, setTrackedEventIds] = useState([]);
+
   const isTracking = trackedEventIds.length > 0;
+
   // Custom Dropdown States
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,15 +56,47 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
 
   const getRequestKey = (osName, branch) => `${osName}::${branch}`;
 
+  // CLOSE THREE-DOT MENU WHEN CLICKING OUTSIDE
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        openMenuRef.current &&
+        !openMenuRef.current.contains(event.target)
+      ) {
+        setOpenMenu(null);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setOpenMenu(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
   // Close custom dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
         setIsDropdownOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // --------------------------------------------------
@@ -73,7 +110,11 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       try {
         const res = await dashboardService.getBranch();
 
-        const list = res?.data?.branches || res?.data || res?.branches || [];
+        const list =
+          res?.data?.branches ||
+          res?.data ||
+          res?.branches ||
+          [];
 
         if (Array.isArray(list) && list.length > 0) {
           const names = list
@@ -136,12 +177,14 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
     }));
 
     try {
-      const res = await dashboardService.getIpAddressesByBranchAndOs({
-        BRANCH_NAME: branch,
-        OS_TYPE: OS_TO_BACKEND[osName] || osName,
-      });
+      const res =
+        await dashboardService.getIpAddressesByBranchAndOs({
+          BRANCH_NAME: branch,
+          OS_TYPE: OS_TO_BACKEND[osName] || osName,
+        });
 
       const responseData = res?.data;
+
       const ips = Array.isArray(responseData)
         ? responseData
         : Array.isArray(responseData?.data)
@@ -154,6 +197,7 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       }));
     } catch (err) {
       console.error("Fetch IPs failed:", err);
+
       setErrors((prev) => ({
         ...prev,
         [requestKey]: err?.message || "Failed to fetch devices",
@@ -171,8 +215,15 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
   // --------------------------------------------------
 
   const handleOpenModify = (osName, branch, device) => {
-    const deviceId = typeof device === "object" ? (device.ip || device.id) : device;
-    const deviceName = typeof device === "object" ? (device.hostname || device.name || device.ip) : device;
+    const deviceId =
+      typeof device === "object"
+        ? device.ip || device.id
+        : device;
+
+    const deviceName =
+      typeof device === "object"
+        ? device.hostname || device.name || device.ip
+        : device;
 
     setSelectedDevice({
       osName,
@@ -189,106 +240,111 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
     setShowModifyModal(true);
   };
 
+  // --------------------------------------------------
+  // SAVE BRANCH
+  // --------------------------------------------------
 
+  const handleSaveBranch = async () => {
+    if (!selectedDevice || !newBranch) {
+      setModalError("Please select a branch.");
+      return;
+    }
 
-  
-const handleSaveBranch = async () => {
-  if (!selectedDevice || !newBranch) {
-    setModalError("Please select a branch.");
-    return;
-  }
+    const {
+      osName,
+      branch: oldBranch,
+      ip,
+      name,
+    } = selectedDevice;
 
-  const { osName, branch: oldBranch, ip, name } = selectedDevice;
+    if (oldBranch === newBranch) {
+      setShowModifyModal(false);
+      return;
+    }
 
-  if (oldBranch === newBranch) {
-    setShowModifyModal(false);
-    return;
-  }
+    const payload = {
+      pcName: name,
+      oldBranch: oldBranch,
+      newBranch: newBranch,
+    };
 
-  const payload = {
-    pcName: name,
-    oldBranch: oldBranch,
-    newBranch: newBranch,
+    const oldKey = getRequestKey(osName, oldBranch);
+    const newKey = getRequestKey(osName, newBranch);
+
+    try {
+      setSaving(true);
+      setModalError("");
+
+      const response =
+        await dashboardService.ModifyClientBranch(payload);
+
+      const body = response?.data;
+
+      const eventIds = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.data)
+        ? body.data
+        : [];
+
+      if (onUpdateDeviceBranch) {
+        await onUpdateDeviceBranch(payload);
+      }
+
+      setDevicesData((prev) => {
+        const oldDevices = prev[oldKey] || [];
+        const newDevices = prev[newKey] || [];
+
+        return {
+          ...prev,
+
+          [oldKey]: oldDevices.filter((d) => {
+            const dId =
+              typeof d === "object" ? d.ip || d.id : d;
+
+            return dId !== ip;
+          }),
+
+          [newKey]: newDevices.some((d) => {
+            const dId =
+              typeof d === "object" ? d.ip || d.id : d;
+
+            return dId === ip;
+          })
+            ? newDevices
+            : [...newDevices, { ip: ip, hostname: name }],
+        };
+      });
+
+      setSelectedBranches((prev) => ({
+        ...prev,
+        [osName]: newBranch,
+      }));
+
+      setShowModifyModal(false);
+      setSelectedDevice(null);
+
+      if (eventIds.length > 0) {
+        setTrackedEventIds(eventIds);
+      } else {
+        console.warn(
+          "Branch updated, but no event IDs returned."
+        );
+      }
+    } catch (err) {
+      console.error("Modify branch failed:", err);
+
+      setModalError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Unable to modify device branch."
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const oldKey = getRequestKey(osName, oldBranch);
-  const newKey = getRequestKey(osName, newBranch);
-
-  try {
-    setSaving(true);
-    setModalError("");
-
-    // 1. Call API and wait for response
-    const response = await dashboardService.ModifyClientBranch(payload);
-
-    // 2. Extract event IDs
-    const body = response?.data;
-
-    const eventIds = Array.isArray(body)
-      ? body
-      : Array.isArray(body?.data)
-      ? body.data
-      : [];
-
-    // 3. Notify parent if required
-    if (onUpdateDeviceBranch) {
-      await onUpdateDeviceBranch(payload);
-    }
-
-    // 4. Update local device lists
-    setDevicesData((prev) => {
-      const oldDevices = prev[oldKey] || [];
-      const newDevices = prev[newKey] || [];
-
-      return {
-        ...prev,
-
-        [oldKey]: oldDevices.filter((d) => {
-          const dId = typeof d === "object" ? (d.ip || d.id) : d;
-          return dId !== ip;
-        }),
-
-        [newKey]: newDevices.some((d) => {
-          const dId = typeof d === "object" ? (d.ip || d.id) : d;
-          return dId === ip;
-        })
-          ? newDevices
-          : [...newDevices, { ip: ip, hostname: name }],
-      };
-    });
-
-    setSelectedBranches((prev) => ({
-      ...prev,
-      [osName]: newBranch,
-    }));
-
-    // 5. Close modify modal
-    setShowModifyModal(false);
-    setSelectedDevice(null);
-
-    // 6. Start policy status tracking
-    if (eventIds.length > 0) {
-      setTrackedEventIds(eventIds);
-    } else {
-      console.warn("Branch updated, but no event IDs returned.");
-    }
-
-  } catch (err) {
-    console.error("Modify branch failed:", err);
-
-    setModalError(
-      err?.response?.data?.message ||
-      err?.message ||
-      "Unable to modify device branch."
-    );
-  } finally {
-    setSaving(false);
-  }
-};
-
-
   // --------------------------------------------------
-  // THEME STYLES (DYNAMIC BASED ON isDark)
+  // THEME STYLES
   // --------------------------------------------------
 
   const cardBackground = isDark ? "#020617" : "#ffffff";
@@ -297,11 +353,12 @@ const handleSaveBranch = async () => {
   const textColor = isDark ? "#e2e8f0" : "#1e293b";
   const mutedColor = isDark ? "#94a3b8" : "#64748b";
   const activeBlue = "#4f6cf7";
-  const modalBackground = isDark ? "rgb(2, 6, 23)" : "#ffffff"; // Fixed for Light Mode
+  const modalBackground = isDark ? "rgb(2, 6, 23)" : "#ffffff";
 
   const styles = {
     page: {
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      fontFamily:
+        "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       color: isDark ? "#cbd5e1" : "#1e293b",
       padding: "20px",
       margin: 0,
@@ -444,12 +501,23 @@ const handleSaveBranch = async () => {
   };
 
   const osTypes = [
-    { name: "Mac - OS", icon: <Monitor size={16} color={activeBlue} /> },
-    { name: "Linux - OS", icon: <Laptop size={16} color={activeBlue} /> },
-    { name: "Windows", icon: <MonitorSmartphone size={16} color={activeBlue} /> },
+    {
+      name: "Mac - OS",
+      icon: <Monitor size={16} color={activeBlue} />,
+    },
+    {
+      name: "Linux - OS",
+      icon: <Laptop size={16} color={activeBlue} />,
+    },
+    {
+      name: "Windows",
+      icon: <MonitorSmartphone size={16} color={activeBlue} />,
+    },
   ];
 
-  const filteredBranches = branches.filter(b => b.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredBranches = branches.filter((b) =>
+    b.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div style={styles.page}>
@@ -463,7 +531,11 @@ const handleSaveBranch = async () => {
       <div style={styles.grid}>
         {osTypes.map((os) => {
           const activeBranch = selectedBranches[os.name];
-          const requestKey = activeBranch ? getRequestKey(os.name, activeBranch) : "";
+
+          const requestKey = activeBranch
+            ? getRequestKey(os.name, activeBranch)
+            : "";
+
           const isLoading = loadingDevices[requestKey];
           const currentDevices = devicesData[requestKey] || [];
           const errorMsg = errors[requestKey];
@@ -478,59 +550,103 @@ const handleSaveBranch = async () => {
               <div style={styles.branchList}>
                 {branches.map((branch) => {
                   const isActive = activeBranch === branch;
-                  
+
                   return (
-                    <div key={branch} style={{ display: "flex", flexDirection: "column" }}>
+                    <div
+                      key={branch}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                      }}
+                    >
                       <div
                         style={{
                           ...styles.branchBtn,
-                          ...(isActive ? styles.branchBtnActive : {}),
+                          ...(isActive
+                            ? styles.branchBtnActive
+                            : {}),
                         }}
-                        onClick={() => handleBranchClick(os.name, branch)}
+                        onClick={() =>
+                          handleBranchClick(os.name, branch)
+                        }
                         onMouseEnter={(e) => {
-                          if (!isActive) e.currentTarget.style.background = isDark ? "#0f1f3a" : "#f1f5f9";
+                          if (!isActive) {
+                            e.currentTarget.style.background =
+                              isDark ? "#0f1f3a" : "#f1f5f9";
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          if (!isActive) e.currentTarget.style.background = innerBackground;
+                          if (!isActive) {
+                            e.currentTarget.style.background =
+                              innerBackground;
+                          }
                         }}
                       >
-                        <Building2 size={18} color={isActive ? activeBlue : mutedColor} />
+                        <Building2
+                          size={18}
+                          color={isActive ? activeBlue : mutedColor}
+                        />
                         <span>{branch}</span>
                       </div>
 
                       {isActive && (
                         <div style={styles.treeContainer}>
-                          {!isLoading && !errorMsg && currentDevices.length > 0 && (
-                            <div style={styles.treeVerticalLine} />
-                          )}
+                          {!isLoading &&
+                            !errorMsg &&
+                            currentDevices.length > 0 && (
+                              <div style={styles.treeVerticalLine} />
+                            )}
 
                           {isLoading ? (
-                            <div style={styles.emptyText}>Loading devices...</div>
+                            <div style={styles.emptyText}>
+                              Loading devices...
+                            </div>
                           ) : errorMsg ? (
                             <div style={styles.errorText}>
                               <AlertCircle size={14} />
                               {errorMsg}
                             </div>
                           ) : currentDevices.length === 0 ? (
-                            <div style={styles.emptyText}>No devices found.</div>
+                            <div style={styles.emptyText}>
+                              No devices found.
+                            </div>
                           ) : (
                             currentDevices.map((device, index) => {
-                              const deviceId = typeof device === "object" ? (device.ip || device.id) : device;
-                              const deviceName = typeof device === "object" ? (device.hostname || device.name || device.ip) : device;
+                              const deviceId =
+                                typeof device === "object"
+                                  ? device.ip || device.id
+                                  : device;
+
+                              const deviceName =
+                                typeof device === "object"
+                                  ? device.hostname ||
+                                    device.name ||
+                                    device.ip
+                                  : device;
+
                               const menuId = `${os.name}-${branch}-${deviceId}`;
 
                               return (
-                                <div 
-                                  key={`${deviceId}-${index}`} 
+                                <div
+                                  key={`${deviceId}-${index}`}
                                   style={{
                                     ...styles.treeRow,
-                                    zIndex: openMenu === menuId ? 100 : 1 
+                                    zIndex:
+                                      openMenu === menuId ? 100 : 1,
                                   }}
                                 >
-                                  <div style={styles.treeHorizontalLine} />
+                                  <div
+                                    style={styles.treeHorizontalLine}
+                                  />
 
                                   <div style={styles.deviceItem}>
-                                    <Monitor size={14} color={isDark ? "#5b8def" : activeBlue} />
+                                    <Monitor
+                                      size={14}
+                                      color={
+                                        isDark ? "#5b8def" : activeBlue
+                                      }
+                                    />
+
                                     <span
                                       style={{
                                         flex: 1,
@@ -543,13 +659,29 @@ const handleSaveBranch = async () => {
                                       {deviceName}
                                     </span>
 
-                                    <div style={{ position: "relative", flexShrink: 0 }}>
+                                    {/* THREE-DOT MENU */}
+                                    <div
+                                      ref={
+                                        openMenu === menuId
+                                          ? openMenuRef
+                                          : null
+                                      }
+                                      style={{
+                                        position: "relative",
+                                        flexShrink: 0,
+                                      }}
+                                    >
                                       <button
                                         type="button"
                                         title="Device options"
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          setOpenMenu(openMenu === menuId ? null : menuId);
+
+                                          setOpenMenu(
+                                            openMenu === menuId
+                                              ? null
+                                              : menuId
+                                          );
                                         }}
                                         style={{
                                           display: "flex",
@@ -579,12 +711,19 @@ const handleSaveBranch = async () => {
                                             border: `1px solid ${borderColor}`,
                                             borderRadius: "7px",
                                             padding: "5px",
-                                            boxShadow: "0 8px 25px rgba(0,0,0,0.25)",
+                                            boxShadow:
+                                              "0 8px 25px rgba(0,0,0,0.25)",
                                           }}
                                         >
                                           <button
                                             type="button"
-                                            onClick={() => handleOpenModify(os.name, branch, device)}
+                                            onClick={() =>
+                                              handleOpenModify(
+                                                os.name,
+                                                branch,
+                                                device
+                                              )
+                                            }
                                             style={{
                                               display: "flex",
                                               alignItems: "center",
@@ -600,13 +739,20 @@ const handleSaveBranch = async () => {
                                               textAlign: "left",
                                             }}
                                             onMouseEnter={(e) => {
-                                              e.currentTarget.style.background = isDark ? "#1e293b" : "#f1f5f9";
+                                              e.currentTarget.style.background =
+                                                isDark
+                                                  ? "#1e293b"
+                                                  : "#f1f5f9";
                                             }}
                                             onMouseLeave={(e) => {
-                                              e.currentTarget.style.background = "transparent";
+                                              e.currentTarget.style.background =
+                                                "transparent";
                                             }}
                                           >
-                                            <Pencil size={13} color={activeBlue} />
+                                            <Pencil
+                                              size={13}
+                                              color={activeBlue}
+                                            />
                                             Modify Branch
                                           </button>
                                         </div>
@@ -654,7 +800,7 @@ const handleSaveBranch = async () => {
             style={{
               width: "100%",
               maxWidth: "420px",
-              background: modalBackground, 
+              background: modalBackground,
               border: `1px solid ${borderColor}`,
               borderRadius: "12px",
               padding: "20px",
@@ -680,6 +826,7 @@ const handleSaveBranch = async () => {
                 >
                   Modify Device Branch
                 </h3>
+
                 <p
                   style={{
                     color: mutedColor,
@@ -707,7 +854,7 @@ const handleSaveBranch = async () => {
                   borderRadius: "6px",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center"
+                  justifyContent: "center",
                 }}
               >
                 <X size={18} />
@@ -729,7 +876,7 @@ const handleSaveBranch = async () => {
                   color: mutedColor,
                   marginBottom: "8px",
                   fontWeight: 600,
-                  letterSpacing: "0.5px"
+                  letterSpacing: "0.5px",
                 }}
               >
                 DEVICE IP ADDRESS
@@ -768,20 +915,31 @@ const handleSaveBranch = async () => {
                 fontSize: "11px",
                 fontWeight: 600,
                 marginBottom: "8px",
-                letterSpacing: "0.5px"
+                letterSpacing: "0.5px",
               }}
             >
               SELECT NEW BRANCH
             </label>
 
-            <div style={{ position: "relative", marginBottom: "20px" }} ref={dropdownRef}>
+            {/* BRANCH DROPDOWN */}
+            <div
+              style={{
+                position: "relative",
+                marginBottom: "20px",
+              }}
+              ref={dropdownRef}
+            >
               <div
-                onClick={() => !saving && setIsDropdownOpen(!isDropdownOpen)}
+                onClick={() =>
+                  !saving && setIsDropdownOpen(!isDropdownOpen)
+                }
                 style={{
                   width: "100%",
                   padding: "12px 14px",
                   borderRadius: "8px",
-                  border: `1px solid ${isDropdownOpen ? activeBlue : borderColor}`,
+                  border: `1px solid ${
+                    isDropdownOpen ? activeBlue : borderColor
+                  }`,
                   background: innerBackground,
                   color: textColor,
                   fontSize: "13px",
@@ -789,19 +947,34 @@ const handleSaveBranch = async () => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  boxShadow: isDropdownOpen ? `0 0 0 2px ${activeBlue}33` : "none",
+                  boxShadow: isDropdownOpen
+                    ? `0 0 0 2px ${activeBlue}33`
+                    : "none",
                   transition: "all 0.2s ease",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    flex: 1,
+                  }}
+                >
                   <Search size={16} color={mutedColor} />
+
                   <input
                     type="text"
                     value={isDropdownOpen ? searchQuery : newBranch}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) =>
+                      setSearchQuery(e.target.value)
+                    }
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (!isDropdownOpen) setIsDropdownOpen(true);
+
+                      if (!isDropdownOpen) {
+                        setIsDropdownOpen(true);
+                      }
                     }}
                     placeholder={newBranch || "Select Branch"}
                     disabled={saving}
@@ -816,11 +989,14 @@ const handleSaveBranch = async () => {
                     }}
                   />
                 </div>
+
                 <ChevronDown
                   size={16}
                   color={mutedColor}
                   style={{
-                    transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transform: isDropdownOpen
+                      ? "rotate(180deg)"
+                      : "rotate(0deg)",
                     transition: "transform 0.2s ease",
                   }}
                 />
@@ -841,9 +1017,21 @@ const handleSaveBranch = async () => {
                     overflow: "hidden",
                   }}
                 >
-                  <div style={{ maxHeight: "160px", overflowY: "auto" }}>
+                  <div
+                    style={{
+                      maxHeight: "160px",
+                      overflowY: "auto",
+                    }}
+                  >
                     {filteredBranches.length === 0 ? (
-                      <div style={{ padding: "12px", fontSize: "13px", color: mutedColor, textAlign: "center" }}>
+                      <div
+                        style={{
+                          padding: "12px",
+                          fontSize: "13px",
+                          color: mutedColor,
+                          textAlign: "center",
+                        }}
+                      >
                         No branches found.
                       </div>
                     ) : (
@@ -860,17 +1048,24 @@ const handleSaveBranch = async () => {
                             cursor: "pointer",
                             fontSize: "13px",
                             color: textColor,
-                            background: newBranch === branch ? (isDark ? "#1e293b" : "#f1f5f9") : "transparent",
+                            background:
+                              newBranch === branch
+                                ? isDark
+                                  ? "#1e293b"
+                                  : "#f1f5f9"
+                                : "transparent",
                             borderBottom: `1px solid ${borderColor}`,
                           }}
                           onMouseEnter={(e) => {
                             if (newBranch !== branch) {
-                              e.currentTarget.style.background = isDark ? "#1e293b" : "#f1f5f9";
+                              e.currentTarget.style.background =
+                                isDark ? "#1e293b" : "#f1f5f9";
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (newBranch !== branch) {
-                              e.currentTarget.style.background = "transparent";
+                              e.currentTarget.style.background =
+                                "transparent";
                             }
                           }}
                         >
@@ -895,6 +1090,7 @@ const handleSaveBranch = async () => {
               </div>
             )}
 
+            {/* MODAL BUTTONS */}
             <div
               style={{
                 display: "flex",
@@ -926,7 +1122,6 @@ const handleSaveBranch = async () => {
 
               <button
                 type="button"
-                // disabled={saving || !newBranch}
                 disabled={saving || !newBranch || isTracking}
                 onClick={handleSaveBranch}
                 style={{
@@ -949,6 +1144,7 @@ const handleSaveBranch = async () => {
                 ) : (
                   <Save size={14} />
                 )}
+
                 {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
@@ -956,24 +1152,25 @@ const handleSaveBranch = async () => {
         </div>
       )}
 
+      {/* POLICY STATUS TRACKER */}
       {isTracking && (
-  <div
-    style={{
-      marginBottom: "20px",
-      boxShadow: isDark
-        ? "0 4px 24px rgba(0,0,0,0.5)"
-        : "0 2px 16px rgba(0,0,0,0.08)",
-    }}
-  >
-    <PolicyStatusTracker
-      title="Modify Device Branch"
-      eventIds={trackedEventIds}
-      onClose={() => {
-        setTrackedEventIds([]);
-      }}
-    />
-  </div>
-)}
+        <div
+          style={{
+            marginBottom: "20px",
+            boxShadow: isDark
+              ? "0 4px 24px rgba(0,0,0,0.5)"
+              : "0 2px 16px rgba(0,0,0,0.08)",
+          }}
+        >
+          <PolicyStatusTracker
+            title="Modify Device Branch"
+            eventIds={trackedEventIds}
+            onClose={() => {
+              setTrackedEventIds([]);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
