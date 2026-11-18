@@ -386,6 +386,13 @@ export const dashboardService = {
     );
     return data;
   },
+  updateUserscope: async (requestData) => {
+    const { data } = await axiosInstance.put(
+      API_ENDPOINTS.AUTH.UPDATE_USER_SCOPE,
+      requestData,
+    );
+    return data;
+  },
   GetReports: async (UserData) => {
     const { data } = await axiosInstance.post(
       API_ENDPOINTS.REPORTS.GET_REPORTS,
