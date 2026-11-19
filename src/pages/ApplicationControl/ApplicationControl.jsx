@@ -568,8 +568,8 @@ function AddForm({ branches, onAdd }) {
   });
 
   const modeOptions = [
-    { value: 'learning', label: 'Learning' },
-    { value: 'protection', label: 'Protection' },
+    { value: 'learning', label: 'learning' },
+    { value: 'protection', label: 'protection' },
   ];
 
   const isValid = form.branch && form.device.length > 0 && form.mode;

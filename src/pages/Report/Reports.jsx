@@ -20,6 +20,7 @@ import {
 
 import { dashboardService } from "../../services/dashboardService";
 import { useTheme } from "../../context/ThemeContext";
+import { alert as showAlert } from "../../components/ui/AlertModal";
 
 // ----------------------------------------------------
 // MODULE DATA
@@ -111,6 +112,133 @@ const dateRangeOptions = [
 ];
 
 // ----------------------------------------------------
+// REPORT TABLE COLUMNS (per report response shape)
+//   key   → field in the API row
+//   wide  → long text, truncated with full value on hover
+//   badge → coloured pill (Allow / Prevent / Delete …)
+// ----------------------------------------------------
+
+const APPLICATION_COLUMNS = [
+  { key: "branch", label: "Branch" },
+  { key: "hostName", label: "Host Name" },
+  { key: "userName", label: "User" },
+  { key: "applicationName", label: "Application", wide: true },
+  { key: "applicationPath", label: "Path", wide: true },
+  { key: "applicationHash", label: "Hash", wide: true },
+  { key: "time", label: "Time" },
+];
+
+const TRANSFER_COLUMNS = [
+  { key: "branchName", label: "Branch" },
+  { key: "hostname", label: "Host Name" },
+  { key: "username", label: "User" },
+  { key: "eventType", label: "Event" },
+  { key: "applicationName", label: "Application", wide: true },
+  { key: "fileName", label: "File Name", wide: true },
+  { key: "fileSourcePath", label: "Source Path", wide: true },
+  { key: "destinationPath", label: "Destination", wide: true },
+  { key: "keyword", label: "Keyword" },
+  { key: "action", label: "Action", badge: true },
+  { key: "timestamp", label: "Time" },
+];
+
+const REPORT_COLUMNS = {
+  "View Whitelisted": APPLICATION_COLUMNS,
+  "View Blacklisted": APPLICATION_COLUMNS,
+  "View Blocked": APPLICATION_COLUMNS,
+
+  "USB Connection Status": [
+    { key: "branchName", label: "Branch" },
+    { key: "pcName", label: "PC Name" },
+    { key: "userName", label: "User" },
+    { key: "devType", label: "Device Type" },
+    { key: "usbId", label: "USB ID", wide: true },
+    { key: "deviceInstanceId", label: "Instance ID", wide: true },
+    { key: "status", label: "Status", badge: true },
+    { key: "cdate", label: "Date" },
+    { key: "ctime", label: "Time" },
+  ],
+  "USB Data Transfer": TRANSFER_COLUMNS,
+
+  "Prevented Websites": [
+    { key: "branch", label: "Branch" },
+    { key: "hostName", label: "Host Name" },
+    { key: "website", label: "Website", wide: true },
+    { key: "modeOfAccess", label: "Mode", badge: true },
+  ],
+
+  "Printer Incidents": [
+    { key: "branch", label: "Branch" },
+    { key: "hostName", label: "Host Name" },
+    { key: "name", label: "Printer" },
+    { key: "document", label: "Document", wide: true },
+    { key: "jobStatus", label: "Job Status", badge: true },
+    { key: "date", label: "Date" },
+  ],
+
+  "Drive Report": [
+    { key: "branch", label: "Branch" },
+    { key: "hostName", label: "Host Name" },
+    { key: "userName", label: "User" },
+    { key: "monitoredPath", label: "Monitored Path", wide: true },
+    { key: "fileName", label: "File Name", wide: true },
+    { key: "action", label: "Action", badge: true },
+    { key: "time", label: "Time" },
+  ],
+
+  "Peripheral Transfer": TRANSFER_COLUMNS,
+  "Web Upload": TRANSFER_COLUMNS,
+  "Network Transfer": TRANSFER_COLUMNS,
+  "FTP Transfer": TRANSFER_COLUMNS,
+
+  "Clipboard Event": [
+    { key: "branch", label: "Branch" },
+    { key: "hostName", label: "Host Name" },
+    { key: "keyword", label: "Keyword" },
+    { key: "application", label: "Application" },
+    { key: "window", label: "Window", wide: true },
+    { key: "createdAt", label: "Time" },
+  ],
+};
+
+// "camelCase_key" → "Camel Case Key" (used for reports without a column config)
+const humanizeKey = (key) =>
+  String(key)
+    .replace(/_/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/^./, (c) => c.toUpperCase());
+
+const getReportColumns = (reportName, rows) => {
+  if (REPORT_COLUMNS[reportName]) return REPORT_COLUMNS[reportName];
+  const first = rows.find((r) => r && typeof r === "object");
+  if (!first) return [];
+  return Object.keys(first)
+    .filter((k) => k !== "id")
+    .map((k) => ({ key: k, label: humanizeKey(k), wide: true }));
+};
+
+// "2026-11-19T15:20:11.345" → "2026-11-19 15:20:11"
+const formatCell = (value) => {
+  if (value === null || value === undefined || value === "") return "-";
+  if (typeof value === "object") return JSON.stringify(value);
+  const str = String(value);
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(str)) {
+    return str.replace("T", " ").replace(/\.\d+$/, "");
+  }
+  return str;
+};
+
+const DANGER_WORDS = ["prevent", "block", "deny", "delete", "fail", "disconnect", "error", "remove"];
+const SUCCESS_WORDS = ["allow", "success", "connect", "complete", "printed", "insert"];
+
+const getBadgeTone = (value) => {
+  const v = String(value ?? "").toLowerCase();
+  if (DANGER_WORDS.some((w) => v.includes(w))) return "danger";
+  if (SUCCESS_WORDS.some((w) => v.includes(w))) return "success";
+  return "neutral";
+};
+
+// ----------------------------------------------------
 // MAIN COMPONENT
 // ----------------------------------------------------
 
@@ -128,6 +256,12 @@ export default function ReportCenter() {
   const [dateRange, setDateRange] = useState("");
 
   const [showReport, setShowReport] = useState(false);
+
+  // Real report data + what it was fetched for (so the table doesn't change
+  // when the user edits the filters after viewing)
+  const [reportRows, setReportRows] = useState([]);
+  const [reportMeta, setReportMeta] = useState(null);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const [fetchedDevices, setFetchedDevices] = useState([]);
   const [fromDate, setFromDate] = useState();
@@ -273,126 +407,21 @@ export default function ReportCenter() {
   };
 
   // ----------------------------------------------------
-  // DUMMY REPORT DATA
-  // ----------------------------------------------------
-
-  const dummyRows = [
-    {
-      id: 1,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: device.join(", "),
-      user: user,
-      dateRange: dateRange,
-      status: "Success",
-    },
-    {
-      id: 2,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-9A1B2C3",
-      user: "Admin",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 3,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-5X8Y2Z1",
-      user: "Guest",
-      dateRange: dateRange,
-      status: "Success",
-    },
-    {
-      id: 4,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 5,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 6,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 7,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 8,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 9,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-    {
-      id: 10,
-      module: selectedModule,
-      report: selectedReport,
-      branch: branch,
-      device: "DESKTOP-4W7Q9T2",
-      user: "Operator",
-      dateRange: dateRange,
-      status: "Blocked",
-    },
-  ];
-
-  // ----------------------------------------------------
   // PAGINATION
   // ----------------------------------------------------
 
+  const reportColumns = getReportColumns(reportMeta?.report, reportRows);
+
   const totalPages = Math.max(
     1,
-    Math.ceil(dummyRows.length / itemsPerPage)
+    Math.ceil(reportRows.length / itemsPerPage)
   );
 
   const startIndex = (currentPage - 1) * itemsPerPage;
 
   const endIndex = startIndex + itemsPerPage;
 
-  const paginatedRows = dummyRows.slice(
+  const paginatedRows = reportRows.slice(
     startIndex,
     endIndex
   );
@@ -402,6 +431,8 @@ export default function ReportCenter() {
   // ----------------------------------------------------
 
   const handleViewReport = async () => {
+    if (reportLoading) return;
+
     const requestData = {
       module: selectedModule,
       report: selectedReport,
@@ -414,15 +445,28 @@ export default function ReportCenter() {
 
     console.log("Report Request:", requestData);
 
+    setReportLoading(true);
     try {
-      const ReportFetchedData =
-        await dashboardService.GetReports(requestData);
+      const response = await dashboardService.GetReports(requestData);
 
-      console.log(
-        "ReportData:",
-        ReportFetchedData?.data
-      );
+      if (response?.success === false) {
+        throw new Error(response?.message || "Could not fetch report");
+      }
 
+      const rows = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response)
+        ? response
+        : [];
+
+      setReportRows(rows);
+      setReportMeta({
+        module: selectedModule,
+        report: selectedReport,
+        branch,
+        devices: device,
+        dateRange,
+      });
       setCurrentPage(1);
       setShowReport(true);
 
@@ -436,6 +480,17 @@ export default function ReportCenter() {
       }, 100);
     } catch (error) {
       console.error("Error fetching report:", error);
+      showAlert({
+        icon: "error",
+        title: "Report Failed",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Could not fetch report",
+        confirmButtonText: "Cancel",
+      });
+    } finally {
+      setReportLoading(false);
     }
   };
 
@@ -460,6 +515,8 @@ export default function ReportCenter() {
     setToDate();
 
     setShowReport(false);
+    setReportRows([]);
+    setReportMeta(null);
     setCurrentPage(1);
 
     window.scrollTo({
@@ -1797,7 +1854,9 @@ export default function ReportCenter() {
 
             <button
               onClick={handleViewReport}
+              disabled={reportLoading}
               className="
+                disabled:opacity-60 disabled:cursor-not-allowed
                 w-1/2 flex items-center
                 justify-center gap-2
                 px-4 py-2.5 rounded-lg
@@ -1810,7 +1869,7 @@ export default function ReportCenter() {
               "
             >
               <SquarePen className="h-4 w-4" />
-              View Report
+              {reportLoading ? "Loading…" : "View Report"}
             </button>
           </div>
         </div>
@@ -1871,93 +1930,99 @@ export default function ReportCenter() {
                 `}
               >
                 <tr>
-                  <th className="px-4 py-3">#</th>
-                  <th className="px-4 py-3">Module</th>
-                  <th className="px-4 py-3">Report</th>
-                  <th className="px-4 py-3">Branch</th>
-                  <th className="px-4 py-3">Device</th>
-                  <th className="px-4 py-3">User</th>
-                  <th className="px-4 py-3">Date Range</th>
-                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 whitespace-nowrap">#</th>
+                  {reportColumns.map((col) => (
+                    <th key={col.key} className="px-4 py-3 whitespace-nowrap">
+                      {col.label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
 
               <tbody>
-                {paginatedRows.map(
-                  (row) => (
+                {paginatedRows.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={reportColumns.length + 1}
+                      className={`
+                        px-4 py-10 text-center
+                        ${isDark ? "text-gray-500" : "text-gray-400"}
+                      `}
+                    >
+                      No records found for the selected filters
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedRows.map((row, index) => (
                     <tr
-                      key={row.id}
+                      key={row?.id ?? startIndex + index}
                       className={`
                         border-b
                         ${
                           isDark
-                            ? "border-gray-800/50 hover:bg-white/5"
-                            : "border-slate-100 hover:bg-slate-50"
+                            ? "border-gray-800/50 hover:bg-white/5 text-gray-200"
+                            : "border-slate-100 hover:bg-slate-50 text-gray-800"
                         }
                       `}
                     >
                       <td
                         className={`
                           px-4 py-3
-                          ${
-                            isDark
-                              ? "text-gray-400"
-                              : "text-gray-500"
-                          }
+                          ${isDark ? "text-gray-400" : "text-gray-500"}
                         `}
                       >
-                        {row.id}
+                        {startIndex + index + 1}
                       </td>
 
-                      <td className="px-4 py-3">
-                        {row.module}
-                      </td>
+                      {reportColumns.map((col) => {
+                        const text = formatCell(row?.[col.key]);
 
-                      <td className="px-4 py-3">
-                        {row.report}
-                      </td>
+                        if (col.badge && text !== "-") {
+                          const tone = getBadgeTone(text);
+                          return (
+                            <td key={col.key} className="px-4 py-3 whitespace-nowrap">
+                              <span
+                                className={`
+                                  inline-flex items-center
+                                  px-2.5 py-0.5 rounded-full
+                                  text-xs font-medium border
+                                  ${
+                                    tone === "danger"
+                                      ? isDark
+                                        ? "bg-red-900/30 text-red-400 border-red-800/50"
+                                        : "bg-red-100 text-red-700 border-red-200"
+                                      : tone === "success"
+                                      ? isDark
+                                        ? "bg-emerald-900/30 text-emerald-400 border-emerald-800/50"
+                                        : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                      : isDark
+                                      ? "bg-slate-800/60 text-slate-300 border-slate-700"
+                                      : "bg-slate-100 text-slate-700 border-slate-200"
+                                  }
+                                `}
+                              >
+                                {text}
+                              </span>
+                            </td>
+                          );
+                        }
 
-                      <td className="px-4 py-3">
-                        {row.branch}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {row.device}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {row.user}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {row.dateRange}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        <span
-                          className={`
-                            inline-flex
-                            items-center
-                            px-2.5 py-0.5
-                            rounded-full
-                            text-xs font-medium
-                            ${
-                              row.status ===
-                              "Success"
-                                ? isDark
-                                  ? "bg-emerald-900/30 text-emerald-400 border border-emerald-800/50"
-                                  : "bg-emerald-100 text-emerald-700 border border-emerald-200"
-                                : isDark
-                                ? "bg-red-900/30 text-red-400 border border-red-800/50"
-                                : "bg-red-100 text-red-700 border border-red-200"
-                            }
-                          `}
-                        >
-                          {row.status}
-                        </span>
-                      </td>
+                        return (
+                          <td
+                            key={col.key}
+                            title={col.wide ? text : undefined}
+                            className={`px-4 py-3 ${
+                              col.wide
+                                ? "max-w-[240px] truncate"
+                                : "whitespace-nowrap"
+                            }`}
+                          >
+                            {text}
+                          </td>
+                        );
+                      })}
                     </tr>
-                  )
+                  ))
                 )}
               </tbody>
             </table>
@@ -1977,12 +2042,20 @@ export default function ReportCenter() {
                 }
               `}
             >
-              Showing{" "}
-              {paginatedRows.length} records for{" "}
-              {selectedModule} –{" "}
-              {selectedReport} • {branch} •{" "}
-              {device.join(", ")} •{" "}
-              {dateRange}
+              {reportRows.length === 0
+                ? "0 records"
+                : `Showing ${startIndex + 1}–${Math.min(endIndex, reportRows.length)} of ${reportRows.length} records`}
+              {" for "}
+              {[
+                reportMeta?.module && reportMeta?.report
+                  ? `${reportMeta.module} – ${reportMeta.report}`
+                  : reportMeta?.report,
+                reportMeta?.branch,
+                (reportMeta?.devices || []).join(", "),
+                reportMeta?.dateRange,
+              ]
+                .filter(Boolean)
+                .join(" • ")}
             </div>
 
             <div className="flex items-center gap-2">
