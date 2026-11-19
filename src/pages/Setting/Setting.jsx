@@ -434,8 +434,6 @@ function Setting() {
   // ─── EDIT: open modal pre-checked with the user's current scope ───
   const [editingUser, setEditingUser] = useState(null);
 
-  // "/app-control,/DriveControl" → ["/app-control", "/DriveControl"]
-  // Matched case-insensitively against the module tiles so "/reports" still ticks "/Reports".
   const parseScope = (scope) => {
     const raw = Array.isArray(scope) ? scope : String(scope ?? "").split(",");
     const wanted = new Set(raw.map((s) => String(s).trim().toLowerCase()).filter(Boolean));
@@ -454,13 +452,12 @@ function Setting() {
     setSelectedScopes([]);
   };
 
-  // ─── SAVE SCOPE (payload preview for now) ───
+  // ─── SAVE SCOPE ───
   const [savingScope, setSavingScope] = useState(false);
 
   const handleSaveScope = async () => {
     if (!editingUser?.username || savingScope) return;
 
-    // Keep the tile order so the DB string is stable regardless of click order
     const orderedScopes = ModuleScope
       .map((m) => m.value)
       .filter((v) => selectedScopes.includes(v));
@@ -478,7 +475,6 @@ function Setting() {
         throw new Error(res?.data || res?.message || "Could not update scope");
       }
 
-      // Reflect the new scope in the table so reopening Edit shows it
       setUsers((prev) =>
         prev.map((u) =>
           u.username === payload.username ? { ...u, scope: payload.scope } : u
@@ -593,7 +589,6 @@ function Setting() {
     { value: "/Setting", label: "Setting", desc: "Configure system settings", icon: Settings },
   ];
 
-  // Section 2 (Incident and User Control) shows only these; Section 1 shows the rest
   const INCIDENT_USER_SCOPES = ["/Reports", "/Setting"];
   const policyModules = ModuleScope.filter((m) => !INCIDENT_USER_SCOPES.includes(m.value));
   const incidentModules = ModuleScope.filter((m) => INCIDENT_USER_SCOPES.includes(m.value));
@@ -632,13 +627,14 @@ function Setting() {
      RENDER
   ───────────────────────────────────────────── */
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-6" style={{ background: "rgb(7, 6, 20)" }}>
 
       {/* TOP TABS */}
       <div
         className={`mb-6 rounded-2xl border p-4 ${
-          isDark ? "border-slate-700 bg-[#020617]" : "border-slate-200 bg-white"
+          isDark ? "border-slate-700" : "border-slate-200"
         }`}
+        style={{ background: "rgb(2, 6, 23)" }}
       >
         <div className="flex flex-wrap gap-3">
           {tabs.map((t) => (
@@ -658,8 +654,9 @@ function Setting() {
       {view === "create" ? (
         <div
           className={`rounded-2xl border p-6 ${
-            isDark ? "border-slate-700 bg-[#020617]" : "border-slate-200 bg-white"
+            isDark ? "border-slate-700" : "border-slate-200"
           }`}
+          style={{ background: "rgb(2, 6, 23)" }}
         >
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div>
@@ -771,8 +768,9 @@ function Setting() {
         /* VIEW USER */
         <div
           className={`rounded-2xl border p-6 ${
-            isDark ? "border-slate-700 bg-[#020617]" : "border-slate-200 bg-white"
+            isDark ? "border-slate-700" : "border-slate-200"
           }`}
+          style={{ background: "rgb(2, 6, 23)" }}
         >
           <div className="flex flex-wrap items-center justify-between gap-4">
             <h2 className={`text-xl font-semibold ${isDark ? "text-white" : "text-gray-800"}`}>
@@ -795,7 +793,10 @@ function Setting() {
               <div className="overflow-y-auto" style={{ maxHeight: "320px" }}>
                 <table className="w-full border-collapse">
                   <thead className="sticky top-0 z-10">
-                    <tr className={isDark ? "bg-[#020617] border-b border-white/[0.06]" : "bg-white border-b border-slate-100"}>
+                    <tr
+                      className={isDark ? "border-b border-white/[0.06]" : "bg-white border-b border-slate-100"}
+                      style={{ background: isDark ? "rgb(2, 6, 23)" : undefined }}
+                    >
                       <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">SR NO</th>
                       <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">ACCOUNT STATUS</th>
                       <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">USERNAME</th>
@@ -876,24 +877,24 @@ function Setting() {
         </div>
       )}
 
-      {/* ───────────── POLICY CONTROLLER MODAL (light opacity backdrop + locked screen) ───────────── */}
+      {/* ───────────── POLICY CONTROLLER MODAL ───────────── */}
       {editModalOpen && (
- <div
-  className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
-  style={{
-    background: isDark
-      ? "rgba(2, 6, 23, 0.75)"
-      : "rgba(15, 23, 42, 0.60)",
-    backdropFilter: "blur(1.5px)",
-    WebkitBackdropFilter: "blur(6px)",
-  }}
-  onClick={handleCloseEditModal}
->
+        <div
+          className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+          style={{
+            background: isDark
+              ? "rgba(2, 6, 23, 0.75)"
+              : "rgba(15, 23, 42, 0.60)",
+            backdropFilter: "blur(1.5px)",
+            WebkitBackdropFilter: "blur(6px)",
+          }}
+          onClick={handleCloseEditModal}
+        >
           <div
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-5xl rounded-2xl p-5 my-6"
             style={{
-              background: isDark ? "#0A1020" : "#ffffff",
+              background: "rgb(2, 6, 23)",
               border: isDark
                 ? "1px solid rgba(148,163,184,0.15)"
                 : "1px solid #e2e8f0",
@@ -902,12 +903,11 @@ function Setting() {
                 : "0 24px 80px rgba(0,0,0,0.20)",
             }}
           >
-
             {/* ── Section 1: Policy Controller ── */}
             <div
               className="rounded-2xl p-5 mb-4"
               style={{
-                background: isDark ? "#0F172A" : "#ffffff",
+                background: "rgb(2, 6, 23)",
                 border: isDark
                   ? "1px solid rgba(148,163,184,0.18)"
                   : "1px solid #e2e8f0",
@@ -961,7 +961,6 @@ function Setting() {
                 </div>
               </div>
 
-              {/* Module tiles - everything except Report & Setting */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {policyModules.map((opt) => {
                   const Icon = opt.icon;
@@ -1026,7 +1025,7 @@ function Setting() {
             <div
               className="rounded-2xl p-5"
               style={{
-                background: isDark ? "#0F172A" : "#ffffff",
+                background: "rgb(2, 6, 23)",
                 border: isDark
                   ? "1px solid rgba(148,163,184,0.18)"
                   : "1px solid #e2e8f0",
@@ -1057,17 +1056,9 @@ function Setting() {
                   <span className={`text-[11px] ${isDark ? "text-slate-500" : "text-slate-500"}`}>
                     Step 2 of 2
                   </span>
-                  {/* <GlassButton
-                    onClick={toggleSelectAllScopes}
-                    variant="tab_active"
-                    className="px-3 py-1 text-[11px] font-semibold"
-                  >
-                    Select All
-                  </GlassButton> */}
                 </div>
               </div>
 
-              {/* Module tiles - Report & Setting */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {incidentModules.map((opt) => {
                   const Icon = opt.icon;
@@ -1127,7 +1118,6 @@ function Setting() {
                 })}
               </div>
 
-              {/* Footer buttons */}
               <div className="mt-5 flex items-center justify-end gap-3">
                 <GlassButton
                   onClick={handleCloseEditModal}
@@ -1155,13 +1145,3 @@ function Setting() {
 }
 
 export default Setting;
-
-
-
-
-
-
-
-
-
-
