@@ -1364,10 +1364,16 @@ function PolicyTable({ policies, onDelete }) {
           No drive policies found.
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-auto max-h-[60vh] scrollbar-thin">
           <table className="w-full border-collapse">
-            <thead>
-              <tr className={isDark ? 'bg-white/[0.015]' : 'bg-slate-50/70'}>
+            <thead className="sticky top-0 z-10">
+              <tr
+                className={
+                  isDark
+                    ? 'bg-[#020617] border-b border-white/[0.06]'
+                    : 'bg-slate-50 border-b border-slate-200'
+                }
+              >
                 {['Sr. No', 'Branch', 'Device', 'Function', 'File Path', 'Drive Path'].map(
                   (h, i) => (
                     <th
