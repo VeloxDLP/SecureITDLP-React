@@ -887,10 +887,10 @@ function AddForm({ branches, onAdd }) {
   })
 
   const functionOptions = [
-    { value: 'CREATE', label: 'CREATE' },
-    { value: 'MODIFY', label: 'MODIFY' },
-    { value: 'DELETE', label: 'DELETE' },
-    { value: 'RENAME', label: 'RENAME' },
+    { value: 'Create', label: 'CREATE' },
+    { value: 'Modify', label: 'MODIFY' },
+    { value: 'Delete', label: 'DELETE' },
+    { value: 'Rename', label: 'RENAME' },
   ]
 
   const set = (key) => (value) => {
