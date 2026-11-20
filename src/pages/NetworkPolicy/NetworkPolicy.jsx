@@ -80,7 +80,7 @@ const CreateNetworkPolicy = () => {
     { name: "Safari", description: "Apple Safari web browser", icon: <Globe size={20} /> },
     { name: "Iexplore", description: "Microsoft Internet Explorer web browser", icon: <Globe size={20} /> },
     { name: "Brave", description: "Brave privacy-focused web browser", icon: <Shield size={20} /> },
-    { name: "Vivaldi", description: "Vivaldi customizable web browser", icon: <Globe size={20} /> },
+    { name: "Ms-teams", description: "ms-teams.exe customizable web browser", icon: <Globe size={20} /> },
     { name: "Edge", description: "Microsoft Edge web browser", icon: <Globe size={20} /> },
     { name: "Opera", description: "Opera web browser", icon: <Globe size={20} /> },
     { name: "WinSCP", description: "Secure file transfer application", icon: <Share2 size={20} /> },

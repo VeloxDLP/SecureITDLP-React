@@ -408,6 +408,14 @@ export const dashboardService = {
     return data;
   },
 
+getDevicesByBranch:async(branch)=>{
+  const {data}=await axiosInstance.get(
+    `${API_ENDPOINTS.VIEWDEVICE.GET_DEVICES_ON_BRANCH}/${branch}`,
+  );
+  return data;
+},
+
+
   getEventWiseModalData: async (eventType) => {
     const { data } = await axiosInstance.get(
       `${API_ENDPOINTS.DASHBOARD.EVENT_WISE_MODAL_DATA}/${encodeURIComponent(eventType)}`,

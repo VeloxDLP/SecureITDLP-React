@@ -620,17 +620,17 @@ export default function ReportCenter() {
       setQuery("");
     };
 
-    const glassSurface = dropdownDark
-      ? {
-          background: "#2a2a2a",
-          backdropFilter: "none",
-          WebkitBackdropFilter: "none",
-        }
-      : {
-          background: "rgba(255,255,255,0.80)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-        };
+  const glassSurface = dropdownDark
+  ? {
+      background: "#020617",
+      backdropFilter: "none",
+      WebkitBackdropFilter: "none",
+    }
+  : {
+      background: "#ffffff",
+      backdropFilter: "none",
+      WebkitBackdropFilter: "none",
+    };
 
     const triggerBorder = error
       ? "border-rose-500/60"
@@ -704,15 +704,11 @@ export default function ReportCenter() {
                 ? "border-white/[0.10]"
                 : "border-slate-200/80"}
             `}
-            style={{
-              background: dropdownDark
-                ? "#2a2a2a"
-                : "rgba(255,255,255,0.98)",
-              backdropFilter:
-                "blur(32px) saturate(180%)",
-              WebkitBackdropFilter:
-                "blur(32px) saturate(180%)",
-            }}
+         style={{
+  background: dropdownDark ? "#020617" : "#ffffff",
+  backdropFilter: "none",
+  WebkitBackdropFilter: "none",
+}}
           >
             {searchable && (
               <div
@@ -972,25 +968,25 @@ export default function ReportCenter() {
             !disabled &&
             setOpen((prev) => !prev)
           }
-          className={`
-            w-full min-h-[42px]
-            flex items-center justify-between
-            px-3 py-2.5 rounded-xl
-            text-[13px] text-left
-            border transition-all
-            disabled:opacity-40
-            disabled:cursor-not-allowed
-            ${
-              isDark
-                ? "bg-[#172439] border-white/[0.10] text-slate-200"
-                : "bg-white border-slate-300 text-slate-800"
-            }
-            ${
-              open
-                ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60"
-                : ""
-            }
-          `}
+      className={`
+  w-full min-h-[42px]
+  flex items-center justify-between
+  px-3 py-2.5 rounded-xl
+  text-[13px] text-left
+  border transition-all
+  disabled:opacity-40
+  disabled:cursor-not-allowed
+  ${
+    isDark
+      ? "bg-[#020617] border-white/[0.10] text-slate-200"
+      : "bg-white border-slate-300 text-slate-800"
+  }
+  ${
+    open
+      ? "ring-2 ring-[#7094ff]/20 border-[#7094ff]/60"
+      : ""
+  }
+`}
         >
           <span
             className={
@@ -1028,17 +1024,17 @@ export default function ReportCenter() {
 
         {open && (
           <div
-            className={`
-              absolute top-full left-0 right-0
-              mt-1.5 z-[200]
-              rounded-xl border overflow-hidden
-              shadow-[0_16px_48px_rgba(0,0,0,0.35)]
-              ${
-                isDark
-                  ? "bg-[#172439] border-white/[0.10]"
-                  : "bg-white border-slate-200"
-              }
-            `}
+     className={`
+  absolute top-full left-0 right-0
+  mt-1.5 z-[200]
+  rounded-xl border overflow-hidden
+  shadow-[0_16px_48px_rgba(0,0,0,0.35)]
+  ${
+    isDark
+      ? "bg-[#020617] border-white/[0.10]"
+      : "bg-white border-slate-200"
+  }
+`}
           >
             {/* SELECT ALL */}
 
