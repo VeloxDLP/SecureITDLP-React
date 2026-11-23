@@ -265,6 +265,15 @@ export const dashboardService = {
     return data;
   },
 
+
+getOrganisationIncident: async (timeSlot) => {
+  const { data } = await axiosInstance.post(
+    `${API_ENDPOINTS.DASHBOARD.ORGANISATION_INCIDENT}/${encodeURIComponent(timeSlot)}`
+  );
+
+  return data;
+},
+
   getLivePolicyStatus: async (eventIds) => {
     const { data } = await axiosInstance.get(
       API_ENDPOINTS.VIEWDEVICE.GET_LIVE_POLICY_STATUS,

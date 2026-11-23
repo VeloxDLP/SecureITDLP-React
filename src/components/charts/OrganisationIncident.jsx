@@ -1,5 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -9,63 +10,122 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { dashboardService } from "../../services/dashboardService";
 
+// Incident table columns
 const incidentColumns = [
-  { accessor: "ipAddress", header: "IP ADDRESS" },
-  { accessor: "username", header: "USERNAME" },
-  { accessor: "eventType", header: "EVENT TYPE" },
-  { accessor: "fileDetails", header: "FILE DETAILS" },
+  { accessor: "application_name", header: "APPLICATION NAME" },
+  { accessor: "action", header: "ACTION" },
+  { accessor: "destination_path", header: "DESTINATION PATH" },
+  { accessor: "file_name", header: "FILE NAME" },
+  { accessor: "file_source_path", header: "FILE SOURCE PATH" },
+  { accessor: "hostname", header: "HOSTNAME" },
   { accessor: "timestamp", header: "TIMESTAMP" },
 ];
 
-const eventTypeColor = (eventType) => {
-  const type = eventType?.toLowerCase() || "";
+// Time slots
+const SLOTS = [
+  "00:00-03:59",
+  "04:00-07:59",
+  "08:00-11:59",
+  "12:00-15:59",
+  "16:00-19:59",
+  "20:00-23:59",
+];
 
-  if (type.includes("upload")) return "text-blue-600 dark:text-blue-400";
-  if (type.includes("transfer")) return "text-green-600 dark:text-green-400";
-  if (type.includes("usb")) return "text-yellow-600 dark:text-yellow-400";
+const norm = (value) =>
+  String(value ?? "")
+    .replace(/[\u2010-\u2015\u2212]/g, "-")
+    .replace(/\u00A0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-  return "text-slate-600 dark:text-white/50";
+const findRowForSlot = (rows, slot, index) => {
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+
+  const exact = rows.find((row) => row.timeSlot === slot);
+  if (exact) return exact;
+
+  const normalized = rows.find(
+    (row) => norm(row.timeSlot) === norm(slot)
+  );
+
+  if (normalized) return normalized;
+
+  return typeof index === "number" && index < rows.length
+    ? rows[index]
+    : null;
 };
 
 export default function OrganisationIncident({
-  data = [],
-  isDark,
+  data,
+  isDark = true,
   axisStyle,
   gridColor,
-  Tip,
 }) {
+  // Modal states
   const [isMounted, setIsMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState("");
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState(null);
+
+  // Search and pagination
   const [search, setSearch] = useState("");
   const [pageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  /* =====================================================
-     MODAL ANIMATION
-  ===================================================== */
+  // API states
+  const [incidentDetails, setIncidentDetails] = useState([]);
+  const [incidentLoading, setIncidentLoading] = useState(false);
+  const [incidentError, setIncidentError] = useState("");
+
+  // Existing aggregate chart data
+  const rows = useMemo(() => {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.result)) return data.result;
+    return [];
+  }, [data]);
+
+  // Prepare chart data
+  const chartData = useMemo(
+    () =>
+      SLOTS.map((slot, index) => {
+        const row = findRowForSlot(rows, slot, index);
+
+        return {
+          x: slot,
+          index,
+          Endpoints: Number(row?.uniqueHostCount ?? 0),
+          hostnames: row?.hostnames ?? null,
+          rawTimeSlot: row?.timeSlot ?? slot,
+        };
+      }),
+    [rows]
+  );
+
+  // Modal opening animation
   useEffect(() => {
     if (!isMounted) return undefined;
 
-    const frame = requestAnimationFrame(() => setIsOpen(true));
+    const frame = requestAnimationFrame(() => {
+      setIsOpen(true);
+    });
 
     return () => cancelAnimationFrame(frame);
   }, [isMounted]);
 
-  /* =====================================================
-     BODY SCROLL LOCK
-  ===================================================== */
+  // Prevent background scrolling
   useEffect(() => {
     if (isMounted) {
       document.body.style.overflow = "hidden";
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
-    } else {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
     }
 
     return () => {
@@ -75,153 +135,97 @@ export default function OrganisationIncident({
     };
   }, [isMounted]);
 
-  /* =====================================================
-     INCIDENT DATA
-  ===================================================== */
-  const modalData = [
-    // {
-    //   ipAddress: "192.168.0.41",
-    //   username: "VELOX",
-    //   eventType: "NETWORK UPLOAD",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 10:30:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.42",
-    //   username: "Admin",
-    //   eventType: "WEB UPLOAD",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 11:15:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.43",
-    //   username: "User1",
-    //   eventType: "FTP TRANSFER",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 12:00:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.44",
-    //   username: "VELOX",
-    //   eventType: "NETWORK UPLOAD",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 13:30:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.45",
-    //   username: "Kiran_Tester",
-    //   eventType: "WEB UPLOAD",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 14:45:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.46",
-    //   username: "VELOX",
-    //   eventType: "USB TRANSFER",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 15:20:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.47",
-    //   username: "User2",
-    //   eventType: "NETWORK UPLOAD",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 16:10:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.48",
-    //   username: "VELOX",
-    //   eventType: "WEB UPLOAD",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 17:00:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.49",
-    //   username: "Kira_Tester",
-    //   eventType: "FTP TRANSFER",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 18:30:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.50",
-    //   username: "VELOX",
-    //   eventType: "NETWORK UPLOAD",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 19:45:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.51",
-    //   username: "Admin",
-    //   eventType: "WEB UPLOAD",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 20:30:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.52",
-    //   username: "User3",
-    //   eventType: "NETWORK UPLOAD",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 21:15:00",
-    // },
-    // {
-    //   ipAddress: "192.168.0.53",
-    //   username: "VELOX",
-    //   eventType: "USB TRANSFER",
-    //   fileDetails: "NA",
-    //   timestamp: "2024-01-15 22:00:00",
-    // },
-  ];
+  // Fetch incidents for selected time slot
+  const openModal = async (index) => {
+    if (
+      typeof index !== "number" ||
+      index < 0 ||
+      index >= SLOTS.length
+    ) {
+      return;
+    }
 
-  /* =====================================================
-     CHART DATA
-  ===================================================== */
-  const defaultSlots = [
-    { x: "00:00-03:59", count: 0 },
-    { x: "04:00-07:59", count: 0 },
-    { x: "08:00-11:59", count: 0 },
-    { x: "12:00-15:59", count: 0 },
-    { x: "16:00-19:59", count: 0 },
-    { x: "20:00-23:59", count: 0 },
-  ];
+    const slot = SLOTS[index];
 
-  const chartData = defaultSlots.map((slot) => {
-    const item = data.find((d) => d.timeSlot === slot.x);
+    setSelectedSlotIndex(index);
+    setSearch("");
+    setCurrentPage(1);
+    setIncidentDetails([]);
+    setIncidentError("");
+    setIncidentLoading(true);
+    setIsMounted(true);
 
-    return {
-      ...slot,
-      Endpoints: item ? item.uniqueHostCount : 0,
-    };
-  });
+    try {
+      const response =
+        await dashboardService.getOrganisationIncident(slot);
 
-  /* =====================================================
-     SEARCH FILTER
-  ===================================================== */
-  const safeData = Array.isArray(modalData) ? modalData : [];
+      const result = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response?.result)
+          ? response.result
+          : Array.isArray(response)
+            ? response
+            : [];
 
+      setIncidentDetails(result);
+    } catch (error) {
+      console.error(
+        "Failed to load organisation incident details:",
+        error
+      );
+
+      setIncidentError(
+        error?.response?.data?.message ||
+          error?.response?.data ||
+          "Unable to load incident details."
+      );
+
+      setIncidentDetails([]);
+    } finally {
+      setIncidentLoading(false);
+    }
+  };
+
+  // Close modal
+  const closeModal = () => {
+    setIsOpen(false);
+    setSearch("");
+    setCurrentPage(1);
+
+    setTimeout(() => {
+      setIsMounted(false);
+      setSelectedSlotIndex(null);
+      setIncidentDetails([]);
+      setIncidentError("");
+    }, 350);
+  };
+
+  // Modal records
+  const modalData = useMemo(() => {
+    return Array.isArray(incidentDetails) ? incidentDetails : [];
+  }, [incidentDetails]);
+
+  // Search across all columns
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase();
 
-    if (!term) return safeData;
+    if (!term) return modalData;
 
-    return safeData.filter((row) =>
-      incidentColumns.some((col) =>
-        String(row[col.accessor] ?? "")
+    return modalData.filter((row) =>
+      incidentColumns.some((column) =>
+        String(row[column.accessor] ?? "")
           .toLowerCase()
           .includes(term)
       )
     );
-  }, [safeData, search]);
+  }, [modalData, search]);
 
-  /* =====================================================
-     RESET PAGINATION
-  ===================================================== */
+  // Reset page when searching or changing slots
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, pageSize]);
+  }, [search, selectedSlotIndex]);
 
-  /* =====================================================
-     PAGINATION
-  ===================================================== */
+  // Pagination
   const totalPages = Math.max(
     1,
     Math.ceil(filteredRows.length / pageSize)
@@ -244,55 +248,31 @@ export default function OrganisationIncident({
     filteredRows.length
   );
 
-  /* =====================================================
-     OPEN MODAL
-  ===================================================== */
-  const openModal = (slot) => {
-    setSelectedSlot(slot);
-    setSearch("");
-    setCurrentPage(1);
-    setIsMounted(true);
-  };
+  const selectedTitle =
+    selectedSlotIndex !== null
+      ? SLOTS[selectedSlotIndex]
+      : "";
 
-  /* =====================================================
-     CLOSE MODAL
-  ===================================================== */
-  const closeModal = () => {
-    setIsOpen(false);
-    setSearch("");
-    setCurrentPage(1);
-  };
-
-  /* =====================================================
-     CUSTOM TOOLTIP
-  ===================================================== */
+  // Chart tooltip
   const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div
-          className="cursor-pointer rounded border border-slate-200 bg-white p-2 shadow transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-[#020617] dark:hover:bg-[#0a0f1e]"
-          onClick={() => openModal(payload[0].payload.x)}
-        >
-          <p className="text-sm font-medium">
-            {payload[0].payload.x}
-          </p>
+    if (!active || !payload?.length) return null;
 
-          <p className="text-sm text-slate-600 dark:text-white/70">
-            {payload[0].value} incidents
-          </p>
-        </div>
-      );
-    }
+    return (
+      <div className="pointer-events-none rounded-md border border-[#263247] bg-[#0b1120] p-2 shadow-xl">
+        <p className="text-[12px] font-semibold text-white">
+          {payload[0].payload.x}
+        </p>
 
-    return null;
+        <p className="text-[11px] text-slate-400">
+          {payload[0].value} hosts
+        </p>
+      </div>
+    );
   };
 
-  /* =====================================================
-     MAIN JSX
-  ===================================================== */
   return (
     <>
-      {/* AREA CHART */}
+      {/* ================= CHART ================= */}
       <div className="relative">
         <ResponsiveContainer width="100%" height={210}>
           <AreaChart
@@ -302,6 +282,15 @@ export default function OrganisationIncident({
               right: 30,
               left: -30,
               bottom: 5,
+            }}
+            onClick={(state) => {
+              if (
+                state &&
+                typeof state.activeTooltipIndex === "number" &&
+                state.activeTooltipIndex >= 0
+              ) {
+                openModal(state.activeTooltipIndex);
+              }
             }}
           >
             <defs>
@@ -328,7 +317,7 @@ export default function OrganisationIncident({
 
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke={gridColor}
+              stroke={gridColor || "#1e293b"}
               vertical={false}
             />
 
@@ -336,14 +325,24 @@ export default function OrganisationIncident({
               dataKey="x"
               interval={0}
               tickMargin={10}
-              tick={axisStyle}
+              tick={
+                axisStyle || {
+                  fill: isDark ? "#94a3b8" : "#64748b",
+                  fontSize: 11,
+                }
+              }
               axisLine={false}
               tickLine={false}
             />
 
             <YAxis
               allowDecimals={false}
-              tick={axisStyle}
+              tick={
+                axisStyle || {
+                  fill: isDark ? "#94a3b8" : "#64748b",
+                  fontSize: 11,
+                }
+              }
               axisLine={false}
               tickLine={false}
             />
@@ -356,223 +355,240 @@ export default function OrganisationIncident({
               stroke="#7094ff"
               fill="url(#orgGrad)"
               strokeWidth={2.5}
-              dot={{
-                r: 4,
-                fill: "#7094ff",
-                stroke: "#ffffff",
-                strokeWidth: 2,
-                className: "cursor-pointer hover:r-6 transition-all",
+              style={{ cursor: "pointer" }}
+              dot={(props) => {
+                const { cx, cy, payload } = props;
+
+                return (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={4}
+                    fill="#7094ff"
+                    stroke="#fff"
+                    strokeWidth={2}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => openModal(payload.index)}
+                  />
+                );
               }}
-              activeDot={{
-                r: 6,
-                fill: "#7094ff",
-                className: "cursor-pointer",
-                onClick: (e, payload) => {
-                  if (payload && payload.payload) {
-                    openModal(payload.payload.x);
-                  }
-                },
+              activeDot={(props) => {
+                const { cx, cy, payload } = props;
+
+                return (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={6}
+                    fill="#7094ff"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => openModal(payload.index)}
+                  />
+                );
               }}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      {/* INCIDENT MODAL */}
-      {isMounted && (
-        <div
-          className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 ease-out ${
-            isOpen
-              ? "bg-slate-950/55 opacity-100"
-              : "bg-slate-950/0 opacity-0"
-          }`}
-          onTransitionEnd={(event) => {
-            if (
-              event.target === event.currentTarget &&
-              !isOpen
-            ) {
-              setIsMounted(false);
-            }
-          }}
-        >
+      {/* ================= INCIDENT MODAL ================= */}
+      {isMounted &&
+        createPortal(
           <div
-            className={`flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-[opacity,transform] duration-300 ease-out dark:border-white/[0.08] dark:bg-[#020617] ${
+            className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 ${
               isOpen
-                ? "translate-y-0 scale-100 opacity-100"
-                : "translate-y-2 scale-[0.98] opacity-0"
+                ? "bg-[#020617]/80 opacity-100"
+                : "bg-transparent opacity-0"
             }`}
+            onTransitionEnd={(event) => {
+              if (
+                event.target === event.currentTarget &&
+                !isOpen
+              ) {
+                setIsMounted(false);
+              }
+            }}
           >
-            {/* MODAL HEADER */}
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
-              <div className="min-w-0">
-                <h2 className="truncate text-[15px] font-semibold text-slate-800 dark:text-white">
-                  Organisation Incidents -{" "}
-                  <span className="text-blue-600 dark:text-blue-400">
-                    {selectedSlot}
+            <div
+              className={`flex h-[80vh] w-full max-w-7xl flex-col overflow-hidden rounded-xl border border-[#1e293b] bg-[#020617] shadow-2xl transition-all duration-300 ${
+                isOpen
+                  ? "translate-y-0 scale-100 opacity-100"
+                  : "translate-y-2 scale-[0.98] opacity-0"
+              }`}
+            >
+              {/* MODAL HEADER */}
+              <div className="flex h-[46px] shrink-0 items-center justify-between gap-3 border-b border-[#1e293b] bg-[#020617] px-3">
+                <h2 className="truncate text-[14px] font-semibold text-slate-100">
+                  Organisation Incidents –{" "}
+                  <span className="text-cyan-400">
+                    {selectedTitle}
                   </span>
                 </h2>
-              </div>
 
-              <div className="flex shrink-0 items-center gap-2">
-                {/* SEARCH */}
-                <div className="relative w-[220px] sm:w-[260px]">
-                  <Search
-                    size={14}
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30"
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="relative w-[220px] sm:w-[260px]">
+                    <Search
+                      size={13}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+                    />
 
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search..."
-                    className="h-9 w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 text-[12px] text-slate-700 outline-none transition focus:border-[#7094ff] focus:ring-2 focus:ring-[#7094ff]/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/80"
-                  />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(event) =>
+                        setSearch(event.target.value)
+                      }
+                      placeholder="Search incidents..."
+                      className="h-[31px] w-full rounded-md border border-[#273449] bg-[#0b1120] pl-8 pr-3 text-[11px] text-slate-300 outline-none placeholder:text-slate-500 focus:border-cyan-500/50"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="flex h-[31px] w-[31px] items-center justify-center rounded-md bg-[#111827] text-slate-400 transition hover:bg-[#1e293b] hover:text-white"
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
-
-                {/* CLOSE */}
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/[0.06] dark:text-white/60 dark:hover:bg-white/[0.1]"
-                >
-                  <X size={17} />
-                </button>
               </div>
-            </div>
 
-            {/* TABLE SECTION */}
-            <div className="min-h-0 flex-1 overflow-hidden p-4">
-              <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
-                <div className="min-h-0 flex-1 overflow-auto">
-                  <table className="w-full min-w-[900px] table-fixed border-separate border-spacing-0 text-[13px]">
-                    {/* FIXED COLUMN WIDTHS */}
-                    <colgroup>
-                      <col style={{ width: "18%" }} />
-                      <col style={{ width: "17%" }} />
-                      <col style={{ width: "20%" }} />
-                      <col style={{ width: "27%" }} />
-                      <col style={{ width: "18%" }} />
-                    </colgroup>
+              {/* TABLE CONTAINER */}
+              <div className="min-h-0 flex-1 p-2">
+                <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1e293b] bg-[#020617]">
+                  <div className="min-h-0 flex-1 overflow-auto">
+                    <table className="w-full min-w-[1200px] table-fixed border-separate border-spacing-0 text-[12px]">
+                      <colgroup>
+                        <col style={{ width: "15%" }} />
+                        <col style={{ width: "12%" }} />
+                        <col style={{ width: "18%" }} />
+                        <col style={{ width: "15%" }} />
+                        <col style={{ width: "18%" }} />
+                        <col style={{ width: "12%" }} />
+                        <col style={{ width: "190px" }} />
+                      </colgroup>
 
-                    {/* TABLE HEADER */}
-                    <thead>
-                      <tr className="text-slate-500 dark:text-white/50">
-                        {incidentColumns.map((col) => (
-                          <th
-                            key={col.accessor}
-                            className="sticky top-0 z-30 whitespace-nowrap border-b border-slate-200 bg-slate-100 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide dark:border-white/[0.08] dark:bg-[#111827]"
-                          >
-                            {col.header}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-
-                    {/* TABLE BODY */}
-                    <tbody>
-                      {paginatedRows.length > 0 ? (
-                        paginatedRows.map((row, index) => (
-                          <tr
-                            key={index}
-                            className="bg-white transition hover:bg-[#7094ff]/5 dark:bg-[#020617] dark:hover:bg-white/[0.03]"
-                          >
-                            {/* IP ADDRESS */}
-                            <td className="overflow-hidden text-ellipsis whitespace-nowrap border-b border-slate-100 px-4 py-3 text-left align-middle font-medium text-sky-600 dark:border-white/[0.05] dark:text-sky-400">
-                              {row.ipAddress || "NA"}
-                            </td>
-
-                            {/* USERNAME */}
-                            <td className="overflow-hidden text-ellipsis whitespace-nowrap border-b border-slate-100 px-4 py-3 text-left align-middle text-slate-700 dark:border-white/[0.05] dark:text-white/80">
-                              {row.username || "NA"}
-                            </td>
-
-                            {/* EVENT TYPE */}
-                            <td
-                              className={`overflow-hidden text-ellipsis whitespace-nowrap border-b border-slate-100 px-4 py-3 text-left align-middle font-medium dark:border-white/[0.05] ${eventTypeColor(
-                                row.eventType
-                              )}`}
+                      <thead>
+                        <tr>
+                          {incidentColumns.map((column) => (
+                            <th
+                              key={column.accessor}
+                              className="sticky top-0 z-20 h-[38px] whitespace-nowrap border-b border-[#1e293b] bg-[#111827] px-3 text-left text-[10px] font-semibold tracking-wide text-slate-400"
                             >
-                              {row.eventType || "NA"}
-                            </td>
+                              {column.header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
 
-                            {/* FILE DETAILS */}
+                      <tbody>
+                        {incidentLoading ? (
+                          <tr>
                             <td
-                              className="overflow-hidden text-ellipsis whitespace-nowrap border-b border-slate-100 px-4 py-3 text-left align-middle text-slate-400 dark:border-white/[0.05] dark:text-white/30"
-                              title={row.fileDetails}
+                              colSpan={incidentColumns.length}
+                              className="py-12 text-center text-[12px] text-slate-500"
                             >
-                              {row.fileDetails || "NA"}
-                            </td>
-
-                            {/* TIMESTAMP - LEFT ALIGNED */}
-                            <td className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-left align-middle font-medium text-slate-400 dark:border-white/[0.05] dark:text-white/40">
-                              {row.timestamp || "NA"}
+                              Loading incident details...
                             </td>
                           </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={incidentColumns.length}
-                            className="px-3 py-10 text-center text-slate-400 dark:text-white/30"
-                          >
-                            No records found
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        ) : incidentError ? (
+                          <tr>
+                            <td
+                              colSpan={incidentColumns.length}
+                              className="py-12 text-center text-[12px] text-rose-400"
+                            >
+                              {String(incidentError)}
+                            </td>
+                          </tr>
+                        ) : paginatedRows.length > 0 ? (
+                          paginatedRows.map((row, index) => (
+                            <tr
+                              key={row.id ?? index}
+                              className="bg-[#020617] transition-colors hover:bg-[#0f172a]"
+                            >
+                              {incidentColumns.map((column) => (
+                                <td
+                                  key={column.accessor}
+                                  title={String(
+                                    row[column.accessor] ?? "NA"
+                                  )}
+                                  className={`h-[40px] max-w-[280px] overflow-hidden text-ellipsis whitespace-nowrap border-b border-[#111827] px-3 text-[12px] ${
+                                    column.accessor === "action"
+                                      ? "font-medium text-cyan-400"
+                                      : "text-slate-400"
+                                  }`}
+                                >
+                                  {row[column.accessor] ?? "NA"}
+                                </td>
+                              ))}
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={incidentColumns.length}
+                              className="py-12 text-center text-[12px] text-slate-500"
+                            >
+                              No incidents found for this time slot
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
 
-                {/* PAGINATION FOOTER */}
-                <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.02] sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-[12px] text-slate-500 dark:text-white/40">
-                    Showing {startRecord}-{endRecord} of{" "}
-                    {filteredRows.length}
-                  </span>
-
-                  <div className="flex items-center gap-2">
-                    {/* PREVIOUS */}
-                    <button
-                      type="button"
-                      disabled={safePage === 1}
-                      onClick={() =>
-                        setCurrentPage((prev) =>
-                          Math.max(1, prev - 1)
-                        )
-                      }
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
-                    >
-                      <ChevronLeft size={14} />
-                      Prev
-                    </button>
-
-                    {/* PAGE NUMBER */}
-                    <span className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10">
-                      {safePage} / {totalPages}
+                  {/* FOOTER / PAGINATION */}
+                  <div className="flex h-[48px] shrink-0 items-center justify-between gap-3 border-t border-[#1e293b] bg-[#080d1c] px-3">
+                    <span className="text-[10px] text-slate-500">
+                      Showing {startRecord}-{endRecord} of{" "}
+                      {filteredRows.length}
                     </span>
 
-                    {/* NEXT */}
-                    <button
-                      type="button"
-                      disabled={safePage === totalPages}
-                      onClick={() =>
-                        setCurrentPage((prev) =>
-                          Math.min(totalPages, prev + 1)
-                        )
-                      }
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
-                    >
-                      Next
-                      <ChevronRight size={14} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={
+                          safePage === 1 || incidentLoading
+                        }
+                        onClick={() =>
+                          setCurrentPage((page) =>
+                            Math.max(1, page - 1)
+                          )
+                        }
+                        className="inline-flex h-[27px] items-center gap-1 rounded-md border border-[#263247] bg-[#0b1120] px-2.5 text-[11px] font-medium text-slate-400 transition hover:bg-[#172033] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft size={13} />
+                        Prev
+                      </button>
+
+                      <span className="flex h-[27px] min-w-[38px] items-center justify-center rounded-md border border-[#263247] bg-[#111827] px-2 text-[11px] font-semibold text-slate-300">
+                        {safePage} / {totalPages}
+                      </span>
+
+                      <button
+                        type="button"
+                        disabled={
+                          safePage === totalPages ||
+                          incidentLoading
+                        }
+                        onClick={() =>
+                          setCurrentPage((page) =>
+                            Math.min(totalPages, page + 1)
+                          )
+                        }
+                        className="inline-flex h-[27px] items-center gap-1 rounded-md border border-[#263247] bg-[#0b1120] px-2.5 text-[11px] font-medium text-slate-400 transition hover:bg-[#172033] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Next
+                        <ChevronRight size={13} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

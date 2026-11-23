@@ -44,7 +44,7 @@ const CreateNetworkPolicy = () => {
   const [regularExpressions, setRegularExpressions] = useState([]);
   const [keywords, setKeywords] = useState([]);
   const [keyword, setKeyword] = useState("");
-  const [mode, setMode] = useState("Content Based");
+  const [mode, setMode] = useState("Content");
   const [selectedSeverityLevel, setSelectedSeverityLevel] = useState(""); 
   const [submitting, setSubmitting] = useState(false);
   const [attemptedSteps, setAttemptedSteps] = useState([]); // steps where Next/Create was pressed
@@ -80,7 +80,7 @@ const CreateNetworkPolicy = () => {
     { name: "Safari", description: "Apple Safari web browser", icon: <Globe size={20} /> },
     { name: "Iexplore", description: "Microsoft Internet Explorer web browser", icon: <Globe size={20} /> },
     { name: "Brave", description: "Brave privacy-focused web browser", icon: <Shield size={20} /> },
-    { name: "Ms-teams", description: "ms-teams.exe customizable web browser", icon: <Globe size={20} /> },
+    { name: "Ms-eams", description: "ms-teams.exe customizable web browser", icon: <Globe size={20} /> },
     { name: "Edge", description: "Microsoft Edge web browser", icon: <Globe size={20} /> },
     { name: "Opera", description: "Opera web browser", icon: <Globe size={20} /> },
     { name: "WinSCP", description: "Secure file transfer application", icon: <Share2 size={20} /> },
@@ -178,7 +178,7 @@ const CreateNetworkPolicy = () => {
 
 
   const buildPolicyPayload = () => {
-    const isContentBased = mode === "Content Based";
+    const isContentBased = mode === "Content";
 
     return {
       policyName: policyName.trim(),
@@ -192,8 +192,8 @@ const CreateNetworkPolicy = () => {
       //   regularExpressions: isContentBased ? regularExpressions : [],
       // },
       mode: mode,
-      keywords: keywords,
-      regex: regularExpressions,
+      keywords: isContentBased ? keywords : [],
+      regex: isContentBased ? regularExpressions : [],
       channels: selectedChannels,
       severity: selectedSeverityLevel,
     };
@@ -284,7 +284,7 @@ const CreateNetworkPolicy = () => {
       case 0: return policyName.trim() !== "";
       case 1: return selectedFileTypes.length > 0;
       case 2: return selectedApplications.length > 0;
-      case 3: return mode === "Block Based" || keywords.length > 0 || regularExpressions.length > 0;
+      case 3: return mode === "Block" || keywords.length > 0 || regularExpressions.length > 0;
       case 4: return selectedChannels.length > 0;
       case 5: return selectedSeverityLevel !== "";
       default: return true;
@@ -484,7 +484,7 @@ const CreateNetworkPolicy = () => {
         );
 
       case 3:
-        const isBlockMode = mode === "Block Based";
+        const isBlockMode = mode === "Block";
         return (
           <div className="space-y-6">
             {/* Mode Toggle */}
@@ -495,9 +495,9 @@ const CreateNetworkPolicy = () => {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setMode("Content Based")}
+                  onClick={() => setMode("Content")}
                   className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${
-                    mode === "Content Based"
+                    mode === "Content"
                       ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
                       : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 dark:bg-[#0f172a] dark:text-gray-300 dark:border-[#334155] dark:hover:bg-[#1e293b]"
                   }`}
@@ -506,9 +506,9 @@ const CreateNetworkPolicy = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMode("Block Based")}
+                  onClick={() => setMode("Block")}
                   className={`px-6 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${
-                    mode === "Block Based"
+                    mode === "Block"
                       ? "bg-[#5A7BFF] text-white border-[#5A7BFF] shadow-lg shadow-blue-500/30"
                       : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 dark:bg-[#0f172a] dark:text-gray-300 dark:border-[#334155] dark:hover:bg-[#1e293b]"
                   }`}
@@ -764,7 +764,7 @@ const CreateNetworkPolicy = () => {
               </SummaryCard>
 
               <SummaryCard icon={FileCode} title="Policy Condition">
-                <SummaryRow label="Mode" values={mode ? [mode] : []} tone="orange" emptyText="None" />
+                <SummaryRow label="Mode" values={mode ? [`${mode} Based`] : []} tone="orange" emptyText="None" />
                 <SummaryRow label="Keywords" values={keywords} tone="orange" emptyText="None" />
                 <SummaryRow label="Regular Expressions" values={regularExpressions} tone="orange" emptyText="None" />
               </SummaryCard>

@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
     INCIDENT_BY_CHANNEL:"/incidents/by-channel",
     MAIL_INCIDENT:"/email-monitoring/emailwisecount",
     ORGANIZATION_INCIDENT:"/NetworkDLP/timeSlotHostCounts",
+     ORGANISATION_INCIDENT: "/NetworkDLP/Incident",
     LATEST_INCIDENT:"/NetworkDLP/latest-incidents",
     PREVENTED_APPLICATION:"/ApplicationControl/last7daysapplicationinfo-counts",
    INCIDENT_BY_CHANNEL_MODAL:"/DashboardModal/IncidentbyChannelModal",
