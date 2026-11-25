@@ -80,6 +80,7 @@ APPLICATION_CONTROL:{
 USB_Policy: {
   USB_Policy: "/UsbProtection/getUsbPolicies",
   ADD_USB_POLICY:"/UsbProtection/addUsbPolicy",
+  ADD_USB_ENCRYPTION_POLICY:"/UsbProtection/addUsbEncryptionPolicy"
 },
 
 Drive_Control: {

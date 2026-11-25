@@ -16,6 +16,7 @@ import {
 import { useTheme } from "../../context/ThemeContext";
 import { alert as showAlert } from "../../components/ui/AlertModal";
 import { dashboardService } from "../../services/dashboardService";
+import PolicyStatusTracker from "../PolicyStatusTracker/PolicyStatusTracker";
 
 /* =========================================================
    STATIC POLICIES - VIEW ONLY
@@ -510,6 +511,17 @@ function AddForm({ branches, onAdd }) {
   const [fetchedDevices, setFetchedDevices] = useState([]);
   const [selectedDevices, setSelectedDevices] = useState([]);
 
+  const [trackedEventIds, setTrackedEventIds] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const isTracking = trackedEventIds.length > 0;
+  const trackerRef = useRef(null);
+
+  useEffect(() => {
+    if (isTracking) {
+      trackerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isTracking]);
+
   const isEnabled = form.encryption === "Enable";
 
   const branchOptions = (branches || [])
@@ -608,7 +620,7 @@ const isValid =
   const handleSubmit = async () => {
   setSubmitted(true);
 
-  if (!isValid) return;
+  if (!isValid || busy || isTracking) return;
 
   const payload = {
     encryption: form.encryption,
@@ -618,42 +630,58 @@ const isValid =
   };
 
   // Show payload alert
-  const result = await showAlert({
-    icon: "warning",
-    title: "Confirm USB Encryption Policy",
-    text: JSON.stringify(payload, null, 2),
-    confirmButtonText: "Confirm",
-    cancelButtonText: "Cancel",
-    showCancelButton: true,
-  });
+  // const result = await showAlert({
+  //   icon: "warning",
+  //   title: "Confirm USB Encryption Policy",
+  //   text: JSON.stringify(payload, null, 2),
+  //   confirmButtonText: "Confirm",
+  //   cancelButtonText: "Cancel",
+  //   showCancelButton: true,
+  // });
 
-  if (!result?.isConfirmed) return;
+  // if (!result?.isConfirmed) return;
 
+  setBusy(true);
   try {
-    await dashboardService.addUSBEncryptionPolicy(payload);
+    const response = await dashboardService.addUSBEncryptionPolicy(payload);
 
-    await showAlert({
-      icon: "success",
-      title: "Success",
-      text: "USB encryption policy submitted successfully.",
-      confirmButtonText: "OK",
-    });
+    const body = response?.data;
+    const eventIds = Array.isArray(body)
+      ? body
+      : Array.isArray(body?.data)
+      ? body.data
+      : Array.isArray(response)
+      ? response
+      : [];
 
-    if (onAdd) {
-      await onAdd();
+    if (eventIds.length > 0) {
+      setTrackedEventIds(eventIds);
+    } else {
+      await showAlert({
+        icon: "error",
+        title: "Policy Failed",
+        text: response?.message || "Error sending policy",
+        confirmButtonText: "Cancel",
+      });
     }
-
-    handleReset();
-
   } catch (err) {
+    console.error("Error adding USB encryption policy:", err);
     await showAlert({
       icon: "error",
       title: "Policy Failed",
       text: err?.response?.data?.message || "Error sending policy",
-      confirmButtonText: "OK",
+      confirmButtonText: "Cancel",
     });
+  } finally {
+    setBusy(false);
   }
 };
+
+  const handleTrackerClose = async () => {
+    setTrackedEventIds([]);
+    handleReset();
+    if (onAdd) await onAdd();
+  };
 
   const labelCls = `block text-[11px] font-semibold uppercase tracking-wider mb-1.5 ${
     isDark ? "text-slate-500" : "text-slate-400"
@@ -662,6 +690,7 @@ const isValid =
   const dim = !isEnabled ? "opacity-40 pointer-events-none select-none" : "";
 
   return (
+    <>
     <GlassCard className="p-6 mb-5">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
 
@@ -783,7 +812,7 @@ const isValid =
           onClick={handleReset}
           variant="default"
           className="px-4 py-2"
-          disabled={!form.encryption}
+          disabled={!form.encryption || busy || isTracking}
         >
           <RotateCcw size={13} />
           Reset
@@ -791,15 +820,34 @@ const isValid =
 
         <GlassButton
           onClick={handleSubmit}
-          disabled={!isValid}
+          disabled={!isValid || busy || isTracking}
           variant="primary"
           className="px-5 py-2 font-semibold"
         >
           <Plus size={13} />
-          Submit
+          {busy || isTracking ? "Processing…" : "Submit"}
         </GlassButton>
       </div>
     </GlassCard>
+
+    {isTracking && (
+      <div
+        ref={trackerRef}
+        className="mb-5 scroll-mt-5"
+        style={{
+          boxShadow: isDark
+            ? "0 4px 24px rgba(0,0,0,0.5)"
+            : "0 2px 16px rgba(0,0,0,0.08)",
+        }}
+      >
+        <PolicyStatusTracker
+          title="USB Encryption Policy"
+          eventIds={trackedEventIds}
+          onClose={handleTrackerClose}
+        />
+      </div>
+    )}
+    </>
   );
 }
 

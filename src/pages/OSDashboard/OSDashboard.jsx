@@ -10,9 +10,7 @@ import {
   Pencil,
   X,
   Save,
-  ChevronDown,
   Loader2,
-  Search,
 } from "lucide-react";
 
 import { useTheme } from "../../context/ThemeContext";
@@ -49,10 +47,6 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
 
   const isTracking = trackedEventIds.length > 0;
 
-  // Custom Dropdown States
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const dropdownRef = useRef(null);
 
   const getRequestKey = (osName, branch) => `${osName}::${branch}`;
 
@@ -80,23 +74,6 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       document.removeEventListener("mousedown", handleOutsideClick);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, []);
-
-  // Close custom dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // --------------------------------------------------
@@ -232,10 +209,8 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       name: deviceName,
     });
 
-    setNewBranch(branch);
+    setNewBranch("");
     setModalError("");
-    setSearchQuery("");
-    setIsDropdownOpen(false);
     setOpenMenu(null);
     setShowModifyModal(true);
   };
@@ -245,8 +220,10 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
   // --------------------------------------------------
 
   const handleSaveBranch = async () => {
-    if (!selectedDevice || !newBranch) {
-      setModalError("Please select a branch.");
+    const typedBranch = newBranch.trim();
+
+    if (!selectedDevice || !typedBranch) {
+      setModalError("Please enter a branch name.");
       return;
     }
 
@@ -257,7 +234,7 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
       name,
     } = selectedDevice;
 
-    if (oldBranch === newBranch) {
+    if (oldBranch === typedBranch) {
       setShowModifyModal(false);
       return;
     }
@@ -265,11 +242,11 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
     const payload = {
       pcName: name,
       oldBranch: oldBranch,
-      newBranch: newBranch,
+      newBranch: typedBranch,
     };
 
     const oldKey = getRequestKey(osName, oldBranch);
-    const newKey = getRequestKey(osName, newBranch);
+    const newKey = getRequestKey(osName, typedBranch);
 
     try {
       setSaving(true);
@@ -317,7 +294,7 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
 
       setSelectedBranches((prev) => ({
         ...prev,
-        [osName]: newBranch,
+        [osName]: typedBranch,
       }));
 
       setShowModifyModal(false);
@@ -515,9 +492,6 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
     },
   ];
 
-  const filteredBranches = branches.filter((b) =>
-    b.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <div style={styles.page}>
@@ -918,165 +892,47 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
                 letterSpacing: "0.5px",
               }}
             >
-              SELECT NEW BRANCH
+              NEW BRANCH NAME
             </label>
 
-            {/* BRANCH DROPDOWN */}
-            <div
-              style={{
-                position: "relative",
-                marginBottom: "20px",
+            {/* BRANCH INPUT */}
+            <input
+              type="text"
+              value={newBranch}
+              onChange={(e) => {
+                setNewBranch(e.target.value);
+                if (modalError) setModalError("");
               }}
-              ref={dropdownRef}
-            >
-              <div
-                onClick={() =>
-                  !saving && setIsDropdownOpen(!isDropdownOpen)
-                }
-                style={{
-                  width: "100%",
-                  padding: "12px 14px",
-                  borderRadius: "8px",
-                  border: `1px solid ${
-                    isDropdownOpen ? activeBlue : borderColor
-                  }`,
-                  background: innerBackground,
-                  color: textColor,
-                  fontSize: "13px",
-                  cursor: saving ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  boxShadow: isDropdownOpen
-                    ? `0 0 0 2px ${activeBlue}33`
-                    : "none",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    flex: 1,
-                  }}
-                >
-                  <Search size={16} color={mutedColor} />
-
-                  <input
-                    type="text"
-                    value={isDropdownOpen ? searchQuery : newBranch}
-                    onChange={(e) =>
-                      setSearchQuery(e.target.value)
-                    }
-                    onClick={(e) => {
-                      e.stopPropagation();
-
-                      if (!isDropdownOpen) {
-                        setIsDropdownOpen(true);
-                      }
-                    }}
-                    placeholder={newBranch || "Select Branch"}
-                    disabled={saving}
-                    style={{
-                      border: "none",
-                      background: "transparent",
-                      color: textColor,
-                      fontSize: "13px",
-                      outline: "none",
-                      width: "100%",
-                      cursor: isDropdownOpen ? "text" : "pointer",
-                    }}
-                  />
-                </div>
-
-                <ChevronDown
-                  size={16}
-                  color={mutedColor}
-                  style={{
-                    transform: isDropdownOpen
-                      ? "rotate(180deg)"
-                      : "rotate(0deg)",
-                    transition: "transform 0.2s ease",
-                  }}
-                />
-              </div>
-
-              {isDropdownOpen && !saving && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 4px)",
-                    left: 0,
-                    right: 0,
-                    background: innerBackground,
-                    border: `1px solid ${borderColor}`,
-                    borderRadius: "8px",
-                    zIndex: 50,
-                    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      maxHeight: "160px",
-                      overflowY: "auto",
-                    }}
-                  >
-                    {filteredBranches.length === 0 ? (
-                      <div
-                        style={{
-                          padding: "12px",
-                          fontSize: "13px",
-                          color: mutedColor,
-                          textAlign: "center",
-                        }}
-                      >
-                        No branches found.
-                      </div>
-                    ) : (
-                      filteredBranches.map((branch) => (
-                        <div
-                          key={branch}
-                          onClick={() => {
-                            setNewBranch(branch);
-                            setIsDropdownOpen(false);
-                            setSearchQuery("");
-                          }}
-                          style={{
-                            padding: "12px 16px",
-                            cursor: "pointer",
-                            fontSize: "13px",
-                            color: textColor,
-                            background:
-                              newBranch === branch
-                                ? isDark
-                                  ? "#1e293b"
-                                  : "#f1f5f9"
-                                : "transparent",
-                            borderBottom: `1px solid ${borderColor}`,
-                          }}
-                          onMouseEnter={(e) => {
-                            if (newBranch !== branch) {
-                              e.currentTarget.style.background =
-                                isDark ? "#1e293b" : "#f1f5f9";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (newBranch !== branch) {
-                              e.currentTarget.style.background =
-                                "transparent";
-                            }
-                          }}
-                        >
-                          {branch}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !saving) handleSaveBranch();
+              }}
+              placeholder="Enter branch name"
+              disabled={saving}
+              autoFocus
+              maxLength={100}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "12px 14px",
+                marginBottom: "20px",
+                borderRadius: "8px",
+                border: `1px solid ${modalError ? "#ef4444" : borderColor}`,
+                background: innerBackground,
+                color: textColor,
+                fontSize: "13px",
+                outline: "none",
+                cursor: saving ? "not-allowed" : "text",
+                transition: "all 0.2s ease",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = activeBlue;
+                e.currentTarget.style.boxShadow = `0 0 0 2px ${activeBlue}33`;
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = modalError ? "#ef4444" : borderColor;
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            />
 
             {modalError && (
               <div
@@ -1122,7 +978,7 @@ export default function OSDashboard({ onUpdateDeviceBranch }) {
 
               <button
                 type="button"
-                disabled={saving || !newBranch || isTracking}
+                disabled={saving || !newBranch.trim() || isTracking}
                 onClick={handleSaveBranch}
                 style={{
                   display: "flex",

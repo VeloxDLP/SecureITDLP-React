@@ -371,6 +371,14 @@ getOrganisationIncident: async (timeSlot) => {
     return data;
   },
 
+   addUSBEncryptionPolicy: async (requestData) => {
+    const { data } = await axiosInstance.post(
+      API_ENDPOINTS.USB_Policy.ADD_USB_ENCRYPTION_POLICY,
+      requestData,
+    );
+    return data;
+  },
+
   addSelfProtectionPolicy: async (requestData) => {
     const { data } = await axiosInstance.post(
       API_ENDPOINTS.SELF_PROTECTION.ADD_SELF_PROTECTION_POLICY,
